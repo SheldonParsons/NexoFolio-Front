@@ -1,0 +1,69 @@
+/* Adapted from Transitions.dev — Modal open / close.
+ * https://transitions.dev/detail.html?t=modal-open-close
+ * Original scale/easing/durations preserved; data-state animations let Reka
+ * Presence retain the dialog until its exit completes. See docs/component-sources.md.
+ */
+:root {
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.t-modal {
+  transform-origin: center;
+}
+.t-modal[data-state='open'] {
+  animation: modal-open var(--modal-open-dur) var(--modal-ease);
+}
+.t-modal[data-state='closed'] {
+  animation: modal-close var(--modal-close-dur) var(--modal-ease);
+  pointer-events: none;
+}
+.dialog-overlay[data-state='open'] {
+  animation: overlay-open var(--modal-open-dur) ease;
+}
+.dialog-overlay[data-state='closed'] {
+  animation: overlay-close var(--modal-close-dur) ease;
+}
+@keyframes modal-open {
+  from {
+    opacity: 0;
+    transform: scale(var(--modal-scale));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes modal-close {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--modal-scale));
+  }
+}
+@keyframes overlay-open {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes overlay-close {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .t-modal[data-state],
+  .dialog-overlay[data-state] {
+    animation-duration: 1ms;
+  }
+}

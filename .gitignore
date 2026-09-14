@@ -1,0 +1,30 @@
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+.vite/
+.pnpm-store/
+*.tsbuildinfo
+
+# Local configuration (examples are versioned)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+
+# Logs and local verification artifacts
+*.log
+artifacts/
+test-results/
+playwright-report/
+
+# Editors and operating system
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo

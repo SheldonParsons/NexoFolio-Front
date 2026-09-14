@@ -1,0 +1,39 @@
+{
+  "name": "nexofolio-front",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "build": "pnpm typecheck && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm format:check && pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "@lucide/vue": "1.45.0",
+    "lucide": "1.45.0",
+    "morphicons": "1.7.1",
+    "pinia": "3.0.4",
+    "reka-ui": "2.10.4",
+    "vue": "3.5.42",
+    "vue-router": "4.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.2",
+    "@vitejs/plugin-vue": "6.0.9",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitest": "3.2.7",
+    "vue-tsc": "3.3.11"
+  }
+}

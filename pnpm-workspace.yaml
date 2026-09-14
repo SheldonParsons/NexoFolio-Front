@@ -1,0 +1,7 @@
+packages:
+  - '.'
+minimumReleaseAgeExclude:
+  - '@vitejs/plugin-vue@6.0.9'
+allowBuilds:
+  esbuild: true
+  vue-demi: true

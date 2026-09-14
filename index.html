@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="NexoFolio — 为人和 Agent 整理接口知识。" />
+    <meta name="color-scheme" content="light dark" />
+    <title>NexoFolio</title>
+    <script>
+      try {
+        var theme = localStorage.getItem('nexofolio.theme')
+        document.documentElement.dataset.theme =
+          theme === 'dark' ||
+          (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            ? 'dark'
+            : 'light'
+      } catch (_) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
