@@ -1,0 +1,13 @@
+{
+  "contract_version": "1.1.0",
+  "files": {
+    "behavior.md": "e8706e44ab39701251a85753219ea1d3519df5e178033486b013d59465fd1aa2",
+    "candidate.schema.json": "f8e8e36e7f6baac6de218e1877555cbcd67cc382888b9527f755632b9eb89161",
+    "detail.schema.json": "5d3704129486fd9eb8f9bc1cd0c3531f5938e210aff99ad73bcf6915707e19fd",
+    "page.schema.json": "50f2de7de772fbdde249485efc2a3f81b1032f4c4e7744a8c75a8a7a5d4d9a33",
+    "prompt.txt": "5b380e87b72f8dbe1ca06ee17b95c89b65fbdb6a8c30e3eae18d7c3d4bfa6f76",
+    "snapshot.schema.json": "f0f40cbd0acaa8f6b91d1a669aea0165788e172f03309ba6d6c808b5c08badae",
+    "task.schema.json": "8f220de73133bcc043a86f4c45da09f666dfd6b34f81d165b3f991790c6d1d8b",
+    "types.generated.ts": "1903357e6174ff8d4eea3a3cd92c2ccbc88dc910ca6cde2287a4fd593012781e"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "src/main.ts": "7c778cc3c89d90bdd3bc46d6790bb3c861b2f9e8c4def3019a307fc5ec3b4c74",
+  "src/app/App.vue": "8d2d9f22df710bf24cd8dea2bb69ac5709000f3f037bf19de870b41515491559",
+  "src/app/projectRefreshLoading.ts": "6895c4a48c6acd69a6f4346d43c214d75583cfb2a817b78513987889768839da",
+  "src/api/client.ts": "6fabb7d4be5c7ac07358eeed6e8881454c0f6d4282841dd97c0d2fbf23aeef78",
+  "src/api/index.ts": "6745dedcfbd584cf9a63b6a576e478bba4aaf42469f64e2685f04c295ed332a8",
+  "src/api/auth.ts": "bce846cf50e82aecd82cb859e3d1996909b93c17f2161bb36b0ad1c7bc767b4c",
+  "src/stores/navigationTransition.ts": "a3f3fe7c509d6a763ddd5533514d4464afdc39c8287dce13fc76615e3ca87e95",
+  "src/components/brand/BrandTransition.vue": "ebc662c454feda7f341bb81b0c4d7c87b37bc6bc62fa757a31c23cfa6d040736",
+  "src/features/catalog/useOfficialCatalog.ts": "38ee98a622a47f18530541cd4ed77936913a5137791469f4389d75aaecd11db0",
+  "src/features/documents/useDocumentWorkspace.ts": "0c020fe552dcaa3ceec9abfdf34332c30a29f8a6db1bd327d3cc283655785ea9",
+  "src/features/catalog-preview/useCatalogPreview.ts": "7340beae29cce1763c670848b4c50e8b1ec15bb2a6e9d4254d1b55e5e6792b44",
+  "src/features/maintenance/useMaintenancePage.ts": "fd9fb19852b2e97bf057570be31ca6ac6c8ff56f28a7aa033dfd6890dbf92390",
+  "tests/project-refresh.test.ts": "801c0a187aea44045f9a18dde294568f49b9af01535e47096d0df26f4e65d1dd"
+}

@@ -1,0 +1,9 @@
+{
+  "version": 8,
+  "source": "nexofolio-elastic-coupled",
+  "sourceFrames": 120,
+  "sourceFps": 30,
+  "playbackDuration": 2,
+  "viewRollDegrees": -8,
+  "mode": "simple collision merge only"
+}

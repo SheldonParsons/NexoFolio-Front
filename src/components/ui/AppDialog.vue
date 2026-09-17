@@ -11,8 +11,8 @@ import {
 } from 'reka-ui'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
-defineProps<{ title: string; description: string }>()
-const emit = defineEmits<{ openAutoFocus: [event: Event] }>()
+defineProps<{ title: string; description: string; tone?: 'dark' }>()
+const emit = defineEmits<{ openAutoFocus: [event: Event]; closeAutoFocus: [event: Event] }>()
 const open = defineModel<boolean>('open', { default: false })
 </script>
 
@@ -23,7 +23,9 @@ const open = defineModel<boolean>('open', { default: false })
       <DialogOverlay class="dialog-overlay" />
       <DialogContent
         class="dialog-content t-modal"
+        :class="{ 'dialog-content--dark': tone === 'dark' }"
         @open-auto-focus="emit('openAutoFocus', $event)"
+        @close-auto-focus="emit('closeAutoFocus', $event)"
       >
         <div class="dialog-heading">
           <div>
@@ -39,3 +41,15 @@ const open = defineModel<boolean>('open', { default: false })
     </DialogPortal>
   </DialogRoot>
 </template>
+
+<style scoped>
+.dialog-content--dark {
+  --surface: #0d0d0d;
+  --surface-muted: #1b1b1b;
+  --text: #efefef;
+  --muted: #a1a1a1;
+  --border: #303030;
+  --focus: #ddd;
+  color-scheme: dark;
+}
+</style>

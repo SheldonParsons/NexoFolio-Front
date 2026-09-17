@@ -1,0 +1,19 @@
+{
+  "contract_version": "1.3.0",
+  "files": {
+    "activation.schema.json": "2cf909c313b119634d8a2f1ef87c3227c6936e40cfef0c3ba2376efdfca2e7e2",
+    "behavior.md": "7dfdeb22ae306424213d17a59460bbd0089b7d39c16354004ef79bd2c2bfc484",
+    "candidate.schema.json": "71eb083c75e58fa59743ddac0bed5732178fab8f3f3e181e3cbfa216a044fb5c",
+    "detail.schema.json": "4f6382f2d967c349b6e9819340a7e4a450b0a3c2d37b325b74932301177d126b",
+    "official-interfaces.schema.json": "33c61fffe9600a66dada37636fbec7f314ec3fd1f120d29448f6e0546063d991",
+    "official.schema.json": "184b684a8c5c3ae7d41af6cd061eb89a42ff30a9f5f04bf62e48500dced8cac1",
+    "page.schema.json": "50f2de7de772fbdde249485efc2a3f81b1032f4c4e7744a8c75a8a7a5d4d9a33",
+    "prompt.txt": "bed74da48bae90620729dfc68d7ed5e19607e317c36a2c0e640bcd49d5eba441",
+    "publish.schema.json": "f556afb27026635b8adbb9b1954ce21b41b0b105f52d71ea894a538acfb358c6",
+    "restore.schema.json": "49c58f32c70d7a5c1bac5db8a0306d48546f547096e694c60d9bae28b2eecf07",
+    "snapshot.schema.json": "e5356f43aa3bfb4a6c4498cd5be1ec12b74050a3a186a7bbe10006f8f7005f15",
+    "task.schema.json": "1bfed4248f8572bb44d233b39291028366d0eb20283e329235d63a68568e8c16",
+    "types.generated.ts": "d140850807fc6a3597927ff9aa8ffc395100ba1f5dd6496373de35af1693a52e",
+    "versions.schema.json": "978ae69d3b946fcb610c5945321eda6c0573e8309b3dd566d83d52b72b55da17"
+  }
+}

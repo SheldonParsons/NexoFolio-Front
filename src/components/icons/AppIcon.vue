@@ -1,10 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { MorphIcon } from 'morphicons/vue'
 import { icons, staticIcons, type IconName } from './registry'
 
-withDefaults(
-  defineProps<{ name: IconName; size?: number; label?: string; mode?: 'morph' | 'static' }>(),
+const props = withDefaults(
+  defineProps<{
+    name: IconName
+    activeName?: IconName
+    active?: boolean
+    size?: number
+    label?: string
+    mode?: 'morph' | 'static'
+  }>(),
   { size: 20, mode: 'morph' },
+)
+const currentName = computed(() =>
+  props.active && props.activeName ? props.activeName : props.name,
 )
 </script>
 
@@ -12,15 +23,17 @@ withDefaults(
   <MorphIcon
     v-if="mode === 'morph'"
     class="app-icon"
-    :icon="icons[name]"
+    :icon="icons[currentName]"
+    :data-icon="currentName"
     :size="size"
     :stroke-width="1.7"
     :label="label"
     reduced-motion="user"
-    spring="smooth"
+    :spring="activeName ? 'snappy' : 'smooth'"
   />
   <component
-    :is="staticIcons[name]"
+    :is="staticIcons[currentName]"
+    :data-icon="currentName"
     v-else
     class="app-icon"
     :size="size"

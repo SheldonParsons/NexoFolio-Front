@@ -1,0 +1,152 @@
+/* Portal-safe styles for AppSelect only. Never style generic listbox/body selectors. */
+.nf-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 40px;
+  min-width: 144px;
+  padding: 0 14px;
+  border: var(--line-width, 1.5px) solid var(--border, #e5e5e5);
+  border-radius: 8px;
+  background: var(--bg, #fff);
+  color: var(--text, #171717);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color 160ms,
+    background-color 160ms,
+    box-shadow 160ms;
+}
+.nf-select-trigger:hover {
+  background: var(--surface-muted, #f5f5f5);
+}
+.nf-select-trigger[data-state='open'] {
+  border-color: var(--input-focus-border, #000);
+  box-shadow: inset 0 0 0 0.5px var(--input-focus-border, #000);
+}
+.nf-select-trigger:focus-visible {
+  outline: 2px solid var(--input-focus-border, #000);
+  outline-offset: -2px;
+}
+.nf-select-trigger .nf-select-chevron {
+  transform: translateY(0);
+  color: var(--muted, #666);
+  transition: transform 180ms;
+}
+.nf-select-trigger:hover[data-state='closed'] .nf-select-chevron {
+  transform: translateY(2px);
+}
+.nf-select-trigger[data-state='open'] .nf-select-chevron {
+  transform: translateY(0);
+}
+.nf-select-content {
+  box-sizing: border-box;
+  z-index: 80;
+  width: max(190px, var(--reka-select-trigger-width, 144px));
+  max-width: calc(100vw - 24px);
+  max-height: var(--reka-select-content-available-height, 320px);
+  border: var(--line-width, 1.5px) solid var(--border, #e5e5e5);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text, #171717);
+  box-shadow:
+    0 8px 24px #00000018,
+    0 2px 5px #00000008;
+  overflow: hidden;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  transform-origin: var(--reka-select-content-transform-origin);
+}
+.nf-select-content[data-state='open'] {
+  animation: nf-select-enter 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nf-select-content[data-state='closed'] {
+  animation: nf-select-exit 120ms ease-in;
+}
+.nf-select-viewport {
+  box-sizing: border-box;
+  padding: 6px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.nf-select-item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  position: relative;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted, #666);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 100ms,
+    color 100ms;
+}
+.nf-select-item[data-highlighted] {
+  background: var(--surface-muted, #f5f5f5);
+  color: var(--text, #171717);
+}
+.nf-select-item[data-state='checked'] {
+  color: var(--text, #171717);
+  font-weight: 500;
+}
+.nf-select-check {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  color: var(--text, #171717);
+}
+@keyframes nf-select-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes nf-select-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nf-select-content[data-state] {
+    animation: none;
+  }
+  .nf-select-trigger,
+  .nf-select-trigger:hover[data-state] .nf-select-chevron,
+  .nf-select-trigger .nf-select-chevron {
+    transition: none;
+    transform: none;
+  }
+}
+
+.nf-select-item-text {
+  flex: 1;
+}
+.nf-select-check-slot {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  flex: none;
+}

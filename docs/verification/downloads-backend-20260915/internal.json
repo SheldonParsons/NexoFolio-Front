@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "desktop_channel": "internal",
+  "fetcher": {
+    "status": "ready",
+    "release": {
+      "version": "0.1.0",
+      "url": "https://asynctest.oss-cn-shenzhen.aliyuncs.com/nexofolio_fetcher/NexoFolio-Fetcher-0.1.0-dev.zip",
+      "filename": "NexoFolio-Fetcher-0.1.0-dev.zip",
+      "size": 176441,
+      "sha256": "47cb3660480b873b8b1c1cfe3546fc5dec667c76722564ad62ecfb1295cddcf3",
+      "minimum_chrome_version": "125",
+      "channel": "development",
+      "installation": "load-unpacked"
+    }
+  },
+  "desktop": [
+    {
+      "platform": "windows",
+      "status": "ready",
+      "release": {
+        "version": "3.3.10",
+        "url": "https://asynctest.oss-cn-shenzhen.aliyuncs.com/core/updates/internal/win/x64/AsyncTest_Setup_3.3.10_x64_internal.exe",
+        "filename": "AsyncTest_Setup_3.3.10_x64_internal.exe",
+        "size": 160597550
+      }
+    },
+    {
+      "platform": "mac-arm64",
+      "status": "ready",
+      "release": {
+        "version": "3.3.10",
+        "url": "https://asynctest.oss-cn-shenzhen.aliyuncs.com/core/updates/internal/mac/arm64/AsyncTest-3.3.10-arm64.dmg",
+        "filename": "AsyncTest-3.3.10-arm64.dmg",
+        "size": 193724780
+      }
+    },
+    {
+      "platform": "mac-x64",
+      "status": "ready",
+      "release": {
+        "version": "3.3.10",
+        "url": "https://asynctest.oss-cn-shenzhen.aliyuncs.com/core/updates/internal/mac/x64/AsyncTest-3.3.10.dmg",
+        "filename": "AsyncTest-3.3.10.dmg",
+        "size": 201287310
+      }
+    }
+  ]
+}

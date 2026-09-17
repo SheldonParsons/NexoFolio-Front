@@ -1,0 +1,272 @@
+{
+  "environment": "Isolated Chromium, mocked auth/project responses; no live backend acceptance",
+  "checks": [
+    {
+      "name": "three planned categories",
+      "ok": true
+    },
+    {
+      "name": "MCP describes documentation destination",
+      "ok": true
+    },
+    {
+      "name": "header layout 3448",
+      "ok": true,
+      "detail": {
+        "width": 3448,
+        "headerWidth": 3448,
+        "brandLeft": 32,
+        "utilityRight": 3416,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 3448
+      }
+    },
+    {
+      "name": "full width with 32px gutter 3448",
+      "ok": true,
+      "detail": {
+        "width": 3448,
+        "headerWidth": 3448,
+        "brandLeft": 32,
+        "utilityRight": 3416,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 3448
+      }
+    },
+    {
+      "name": "menu containment 3448",
+      "ok": true,
+      "detail": {
+        "x": 73.34844970703125,
+        "y": 69.5,
+        "width": 626,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 1920",
+      "ok": true,
+      "detail": {
+        "width": 1920,
+        "headerWidth": 1920,
+        "brandLeft": 32,
+        "utilityRight": 1888,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1920
+      }
+    },
+    {
+      "name": "full width with 32px gutter 1920",
+      "ok": true,
+      "detail": {
+        "width": 1920,
+        "headerWidth": 1920,
+        "brandLeft": 32,
+        "utilityRight": 1888,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1920
+      }
+    },
+    {
+      "name": "menu containment 1920",
+      "ok": true,
+      "detail": {
+        "x": 73,
+        "y": 69.5,
+        "width": 626,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 1440",
+      "ok": true,
+      "detail": {
+        "width": 1440,
+        "headerWidth": 1440,
+        "brandLeft": 32,
+        "utilityRight": 1408,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1440
+      }
+    },
+    {
+      "name": "full width with 32px gutter 1440",
+      "ok": true,
+      "detail": {
+        "width": 1440,
+        "headerWidth": 1440,
+        "brandLeft": 32,
+        "utilityRight": 1408,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1440
+      }
+    },
+    {
+      "name": "menu containment 1440",
+      "ok": true,
+      "detail": {
+        "x": 73,
+        "y": 69.5,
+        "width": 626,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 1150",
+      "ok": true,
+      "detail": {
+        "width": 1150,
+        "headerWidth": 1150,
+        "brandLeft": 32,
+        "utilityRight": 1118,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1150
+      }
+    },
+    {
+      "name": "menu containment 1150",
+      "ok": true,
+      "detail": {
+        "x": 73,
+        "y": 69.5,
+        "width": 626,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 1101",
+      "ok": true,
+      "detail": {
+        "width": 1101,
+        "headerWidth": 1101,
+        "brandLeft": 32,
+        "utilityRight": 1069,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1101
+      }
+    },
+    {
+      "name": "menu containment 1101",
+      "ok": true,
+      "detail": {
+        "x": 73,
+        "y": 69.5,
+        "width": 626,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 1024",
+      "ok": true,
+      "detail": {
+        "width": 1024,
+        "headerWidth": 1024,
+        "brandLeft": 16,
+        "utilityRight": 1008,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 1024
+      }
+    },
+    {
+      "name": "menu containment 1024",
+      "ok": true,
+      "detail": {
+        "x": 64.76014709472656,
+        "y": 106,
+        "width": 625.9999847412109,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 768",
+      "ok": true,
+      "detail": {
+        "width": 768,
+        "headerWidth": 768,
+        "brandLeft": 16,
+        "utilityRight": 752,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 768
+      }
+    },
+    {
+      "name": "menu containment 768",
+      "ok": true,
+      "detail": {
+        "x": 10.029335021972656,
+        "y": 106,
+        "width": 626.0000228881836,
+        "height": 226
+      }
+    },
+    {
+      "name": "header layout 375",
+      "ok": true,
+      "detail": {
+        "width": 375,
+        "headerWidth": 375,
+        "brandLeft": 16,
+        "utilityRight": 359,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 375
+      }
+    },
+    {
+      "name": "menu containment 375",
+      "ok": true,
+      "detail": {
+        "x": 10.0573148727417,
+        "y": 154,
+        "width": 342.99999713897705,
+        "height": 235
+      }
+    },
+    {
+      "name": "header layout 320",
+      "ok": true,
+      "detail": {
+        "width": 320,
+        "headerWidth": 320,
+        "brandLeft": 16,
+        "utilityRight": 304,
+        "overflow": false,
+        "overlap": false,
+        "scroll": 320
+      }
+    },
+    {
+      "name": "menu containment 320",
+      "ok": true,
+      "detail": {
+        "x": 22,
+        "y": 202,
+        "width": 288,
+        "height": 235
+      }
+    },
+    {
+      "name": "project list keeps bounded header",
+      "ok": true,
+      "detail": {
+        "width": 1440
+      }
+    },
+    {
+      "name": "no browser errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "errors": []
+}

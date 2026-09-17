@@ -1,0 +1,19 @@
+{
+  "contract_version": "1.0.0",
+  "files": {
+    "activation.schema.json": "6faaf6a0bbf5c99df16c5ba9e45e4a7c7c444b41b9c951fcda5d9d641e8b1354",
+    "candidate.schema.json": "fea17fdd2f3244e285c294f381332e0d05bb21bf4813146eb0953bb10085d24f",
+    "interface-knowledge.schema.json": "fd731496c7b0802b5cd750d73dd1848e4ed2c066e49d5fccab00ccdf94517626",
+    "page.schema.json": "1a365cd7ca767b279806ba5ec6583c997c5a5d26c5f2c3c889952293b0a92050",
+    "plan.schema.json": "aaa1b624ba7593ea03594222dd6709a0fd443b552789e0e1a12c30f532cf706d",
+    "publish.schema.json": "2f55daa3ad3f09e77b63f37d02461d8aa93a3547c2b67f9143fea99d4a665fd3",
+    "reply.schema.json": "ed44457d75a8d498354d3db7099227a41872a4c8488b9d49c7bf5f9c75804832",
+    "restore.schema.json": "1991ccf9df27855d08a6787bcba7749f8a62b0106596342091ee37b029d78e00",
+    "run.schema.json": "1d26780352cd1b8aeb6b3a16b5ee7c81acc3ff3a422e2acf0b841d7368e91262",
+    "snapshot.schema.json": "19059dfadfc777eb1ef4c9a3d908fe9db4bc22bce385f5d998877674f96f1d50",
+    "start.schema.json": "d1613937133f6782d99a9deb5f99ba33419ddce7d487b512a64e6d583056471d",
+    "versions.schema.json": "1c75217a5f96bb3df42a414f4860568313bd1724f812469052aafc09c39e984e",
+    "types.generated.ts": "c6ec5b997bed1ac3dd682c62dc744ca24a476db40800d03e80b35b099b07a799",
+    "behavior.md": "ffd6def19d1419d44e9a9faeb3347cf1ad7cee2c676d68baec1dd7c41704c33d"
+  }
+}

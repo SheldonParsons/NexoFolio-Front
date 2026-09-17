@@ -1,0 +1,199 @@
+{
+  "environment": "Isolated Chromium hard reloads with synthetic auth/catalog APIs; deep route registered only in intercepted dev module",
+  "rows": [
+    {
+      "lastFixtureResponse": 295.19999998807907,
+      "type": "reload",
+      "start": 107.80000001192093,
+      "end": 2111.300000011921,
+      "requests": [
+        {
+          "url": "auth/me",
+          "start": 108.10000002384186,
+          "end": 135.30000001192093
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+          "start": 243.80000001192093,
+          "end": 270.4000000357628
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog/interfaces?directory_id=2b1b43ec-eb9c-468f-b4d4-ef7a1ce23e4e&page=1&limit=100&expected_generation=0",
+          "start": 272.30000001192093,
+          "end": 295.60000002384186
+        }
+      ],
+      "inert": false,
+      "path": "/projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+      "duration": 2003.5,
+      "name": "fast",
+      "errors": [],
+      "requestEnd": 295.60000002384186,
+      "expectedEnd": 2107.800000011921,
+      "ok": true
+    },
+    {
+      "lastFixtureResponse": 3675.599999964237,
+      "type": "reload",
+      "start": 95.5,
+      "end": 3686.800000011921,
+      "requests": [
+        {
+          "url": "auth/me",
+          "start": 95.69999998807907,
+          "end": 120.19999998807907
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+          "start": 213.39999997615814,
+          "end": 1169.199999988079
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog/interfaces?directory_id=2b1b43ec-eb9c-468f-b4d4-ef7a1ce23e4e&page=1&limit=100&expected_generation=0",
+          "start": 1170.5,
+          "end": 3677.199999988079
+        }
+      ],
+      "inert": false,
+      "path": "/projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+      "duration": 3591.300000011921,
+      "name": "slow-chain",
+      "errors": [],
+      "requestEnd": 3677.199999988079,
+      "expectedEnd": 3677.199999988079,
+      "ok": true
+    },
+    {
+      "lastFixtureResponse": 2735.399999976158,
+      "type": "reload",
+      "start": 96.59999996423721,
+      "end": 2740.099999964237,
+      "requests": [
+        {
+          "url": "auth/me",
+          "start": 96.89999997615814,
+          "end": 2407.099999964237
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+          "start": 2526.199999988079,
+          "end": 2630.399999976158
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog/interfaces?directory_id=2b1b43ec-eb9c-468f-b4d4-ef7a1ce23e4e&page=1&limit=100&expected_generation=0",
+          "start": 2631.399999976158,
+          "end": 2736.099999964237
+        }
+      ],
+      "inert": false,
+      "path": "/projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+      "duration": 2643.5,
+      "name": "slow-auth",
+      "errors": [],
+      "requestEnd": 2736.099999964237,
+      "expectedEnd": 2736.099999964237,
+      "ok": true
+    },
+    {
+      "lastFixtureResponse": 2725.2999999523163,
+      "type": "reload",
+      "start": 77.89999997615814,
+      "end": 2732,
+      "requests": [
+        {
+          "url": "auth/me",
+          "start": 78.19999998807907,
+          "end": 103.19999998807907
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+          "start": 195.5999999642372,
+          "end": 219.69999998807907
+        }
+      ],
+      "inert": false,
+      "path": "/projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+      "duration": 2654.100000023842,
+      "name": "list-failure",
+      "errors": [],
+      "requestEnd": 2725.2999999523163,
+      "expectedEnd": 2725.2999999523163,
+      "ok": true
+    },
+    {
+      "lastFixtureResponse": 3026.800000011921,
+      "type": "reload",
+      "start": 94.69999998807907,
+      "end": 3036.100000023842,
+      "requests": [
+        {
+          "url": "auth/me",
+          "start": 95.10000002384186,
+          "end": 119.5
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+          "start": 211.80000001192093,
+          "end": 717.5
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog/interfaces?directory_id=2b1b43ec-eb9c-468f-b4d4-ef7a1ce23e4e&page=1&limit=100&expected_generation=0",
+          "start": 721.6999999880791,
+          "end": 3028.400000035763
+        }
+      ],
+      "inert": false,
+      "path": "/projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog/interface/123123123",
+      "duration": 2941.400000035763,
+      "name": "deep-registered-route",
+      "errors": [],
+      "requestEnd": 3028.400000035763,
+      "expectedEnd": 3028.400000035763,
+      "ok": true
+    },
+    {
+      "lastFixtureResponse": 261.30000001192093,
+      "type": "reload",
+      "start": 95.5,
+      "end": 2098.400000035763,
+      "requests": [
+        {
+          "url": "auth/me",
+          "start": 95.90000003576279,
+          "end": 118.40000003576279
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+          "start": 211.5,
+          "end": 235.80000001192093
+        },
+        {
+          "url": "projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog/interfaces?directory_id=2b1b43ec-eb9c-468f-b4d4-ef7a1ce23e4e&page=1&limit=100&expected_generation=0",
+          "start": 238.19999998807907,
+          "end": 261.60000002384186
+        }
+      ],
+      "inert": false,
+      "path": "/projects/9568a877-eb48-42ee-acbc-f9217f052386/catalog",
+      "duration": 2002.9000000357628,
+      "name": "reduced-motion",
+      "errors": [],
+      "requestEnd": 261.60000002384186,
+      "expectedEnd": 2095.5,
+      "ok": true
+    },
+    {
+      "lastFixtureResponse": 120.09999996423721,
+      "type": "reload",
+      "start": 95.5,
+      "end": 149.19999998807907,
+      "requests": [],
+      "inert": false,
+      "path": "/",
+      "duration": 53.69999998807907,
+      "name": "expired-session",
+      "errors": [],
+      "ok": true
+    }
+  ]
+}

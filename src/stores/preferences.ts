@@ -7,9 +7,9 @@ const STORAGE_KEY = 'nexofolio.theme'
 function readTheme(): ThemePreference {
   try {
     const value = localStorage.getItem(STORAGE_KEY)
-    return value === 'light' || value === 'dark' ? value : 'system'
+    return value === 'light' || value === 'dark' || value === 'system' ? value : 'light'
   } catch {
-    return 'system'
+    return 'light'
   }
 }
 

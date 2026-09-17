@@ -10,9 +10,13 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
-      proxy: env.DEV_API_PROXY_TARGET
-        ? { '/api': { target: env.DEV_API_PROXY_TARGET, changeOrigin: true } }
-        : undefined,
+      proxy: {
+        '/api': {
+          target: env.DEV_API_PROXY_TARGET || 'http://127.0.0.1:18080',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api(?=\/|$)/, ''),
+        },
+      },
     },
     preview: { port: 4173, strictPort: true },
   }

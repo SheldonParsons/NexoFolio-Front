@@ -1,0 +1,14 @@
+{
+  "frontend_origin": "http://localhost:5187",
+  "backend_origin": "http://127.0.0.1:18981",
+  "auth_and_catalog": "synthetic page fixture",
+  "download_metadata": "actual backend route and real OSS",
+  "version_requests": [
+    "/api/v1/downloads?desktop_channel=internal",
+    "/api/v1/downloads?desktop_channel=public",
+    "/api/v1/downloads?desktop_channel=public"
+  ],
+  "browser_oss_manifest_requests": [],
+  "active_channel": "public",
+  "project_transition_ms": 2002
+}

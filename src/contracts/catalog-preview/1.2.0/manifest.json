@@ -1,0 +1,13 @@
+{
+  "contract_version": "1.2.0",
+  "files": {
+    "behavior.md": "0d2327878503fbb66592b5549b2e85abb84af1722f58e3472a97398c40eb7767",
+    "candidate.schema.json": "71eb083c75e58fa59743ddac0bed5732178fab8f3f3e181e3cbfa216a044fb5c",
+    "detail.schema.json": "4f6382f2d967c349b6e9819340a7e4a450b0a3c2d37b325b74932301177d126b",
+    "page.schema.json": "50f2de7de772fbdde249485efc2a3f81b1032f4c4e7744a8c75a8a7a5d4d9a33",
+    "prompt.txt": "b66e8d354dffc6844438550ca76ac4e9d3f2b047557be76630446351d1d7ac6a",
+    "snapshot.schema.json": "e5356f43aa3bfb4a6c4498cd5be1ec12b74050a3a186a7bbe10006f8f7005f15",
+    "task.schema.json": "1bfed4248f8572bb44d233b39291028366d0eb20283e329235d63a68568e8c16",
+    "types.generated.ts": "120bce564fae7d8c14cd12a94e803ab602134a83348ae206b71cba433a2ac90b"
+  }
+}

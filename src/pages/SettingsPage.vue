@@ -6,8 +6,8 @@ import type { IconName } from '@/components/icons/registry'
 
 const preferences = usePreferencesStore()
 const themes: { value: ThemePreference; label: string; icon: IconName; description: string }[] = [
-  { value: 'light', label: '浅色', icon: 'sun', description: '清晰、轻盈的日间工作空间' },
-  { value: 'dark', label: '深色', icon: 'moon', description: '柔和、专注的夜间工作空间' },
+  { value: 'light', label: '浅色', icon: 'sun', description: '纯白底色，清晰呈现内容' },
+  { value: 'dark', label: '深色', icon: 'moon', description: '纯黑底色，专注当前内容' },
   { value: 'system', label: '跟随系统', icon: 'monitor', description: '根据设备外观自动切换' },
 ]
 </script>
@@ -57,9 +57,9 @@ const themes: { value: ThemePreference; label: string; icon: IconName; descripti
     <section class="settings-section settings-row">
       <div>
         <h2>恢复默认外观</h2>
-        <p>将主题恢复为跟随系统，不影响任何项目数据。</p>
+        <p>将主题恢复为浅色，不影响任何项目数据。</p>
       </div>
-      <AppButton :disabled="preferences.theme === 'system'" @click="preferences.setTheme('system')"
+      <AppButton :disabled="preferences.theme === 'light'" @click="preferences.setTheme('light')"
         >恢复默认</AppButton
       >
     </section>

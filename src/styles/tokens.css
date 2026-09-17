@@ -8,38 +8,57 @@
     'Microsoft YaHei',
     sans-serif;
   color-scheme: light;
-  --bg: #fafbf9;
+  --brand-logo-filter: none;
+  --project-watermark-opacity: 0.025;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --sidebar: #f3f5f1;
-  --surface-muted: #f5f7f3;
-  --text: #23352b;
-  --muted: #657168;
-  --border: #e5e9e1;
-  --accent: #397b56;
-  --accent-hover: #2d6846;
-  --accent-soft: #e6f1e6;
-  --accent-ink: #336744;
-  --shadow: 0 18px 60px #213d241a;
-  --overlay: #14241955;
+  --sidebar: #ffffff;
+  --surface-muted: #f5f5f5;
+  --status-success: #00a875;
+  --text: #171717;
+  --muted: #666666;
+  --border: #e5e5e5;
+  --accent: #171717;
+  --accent-hover: #333333;
+  --accent-soft: #f0f0f0;
+  --accent-ink: #171717;
+  --shadow: 0 18px 60px #0000001a;
+  --overlay: #00000055;
+  --line-width: 1.5px;
   --radius-sm: 7px;
   --radius: 12px;
   --radius-lg: 18px;
-  --focus: #5c9870;
+  --focus: #737373;
+  --input-focus-border: #000000;
+}
+
+html[data-page='home'],
+html[data-page='home'] body {
+  background: #000;
+  color-scheme: dark;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #171c19;
-  --surface: #1e2520;
-  --sidebar: #141a16;
-  --surface-muted: #232b25;
-  --text: #e0e9df;
-  --muted: #9aa89d;
-  --border: #303a32;
-  --accent: #9ccaa4;
-  --accent-hover: #b8dfbf;
-  --accent-soft: #293c2d;
-  --accent-ink: #b2d6b8;
+  --brand-logo-filter: invert(1);
+  --project-watermark-opacity: 0.045;
+  --bg: #000000;
+  --surface: #000000;
+  --sidebar: #000000;
+  --surface-muted: #141414;
+  --status-success: #008a60;
+  --text: #f5f5f5;
+  --muted: #a3a3a3;
+  --border: #292929;
+  --accent: #f5f5f5;
+  --accent-hover: #d4d4d4;
+  --accent-soft: #1c1c1c;
+  --accent-ink: #f5f5f5;
   --shadow: 0 18px 60px #0005;
   --overlay: #0008;
-  --focus: #abd6b3;
+  --focus: #a3a3a3;
+  --input-focus-border: #ffffff;
+}
+
+html {
+  background: var(--bg);
 }

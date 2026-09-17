@@ -1,0 +1,5 @@
+{
+  "src/layouts/WorkspaceHeader.vue": "0d8bfb449a2a56da63b950c3d7ca48ce04916762bee55b81a60830c91202dad1",
+  "src/features/navigation/WorkspaceNavigation.vue": "267a5a4e0bd3df39d6f1833429f03a6d4d5611e7f3dd61a5e7040176936f1969",
+  "src/features/navigation/workspace-navigation.css": "813b77fb67821dcc54393208ce548e9c94dbe63812e1c40f15f6041176af243c"
+}

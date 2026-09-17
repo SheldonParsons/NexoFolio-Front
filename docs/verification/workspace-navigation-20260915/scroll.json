@@ -1,0 +1,22 @@
+{
+  "environment": "Isolated Chromium, mocked auth/project responses; no live backend acceptance",
+  "checks": [
+    {
+      "name": "landscape content can scroll",
+      "ok": true,
+      "detail": {
+        "before": {
+          "top": 0,
+          "height": 251,
+          "scroll": 300
+        },
+        "after": 49
+      }
+    },
+    {
+      "name": "pointer remains in open panel",
+      "ok": true
+    }
+  ],
+  "errors": []
+}

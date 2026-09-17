@@ -1,94 +1,146 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import AppIcon from '@/components/icons/AppIcon.vue'
-import AppButton from '@/components/ui/AppButton.vue'
+import { onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { ApiError } from '@/api/client'
+import { clearCredential } from '@/api/session'
+import { useAuthStore } from '@/stores/auth'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import AppDialog from '@/components/ui/AppDialog.vue'
-import EmptyState from '@/components/ui/EmptyState.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import ProjectSearch from '@/features/projects/ProjectSearch.vue'
+import ProjectIntro from '@/features/projects/ProjectIntro.vue'
+import ProjectTable from '@/features/projects/ProjectTable.vue'
+import ProjectPagination from '@/features/projects/ProjectPagination.vue'
+import { projectSource, projectScope, supportsProjectQuery } from '@/features/projects/source'
+import { useProjectBrowser } from '@/features/projects/useProjectBrowser'
+import { useProjectEntry } from '@/features/projects/useProjectEntry'
+import { accessLabels, type ProjectAccess } from '@/features/projects/types'
+import '@/features/projects/projects.css'
 
-const guideOpen = ref(false)
+const auth = useAuthStore()
+const router = useRouter()
+const watermarkUrl = `url("${import.meta.env.BASE_URL}brand/nexofolio-icon.svg")`
+const scope = `${projectScope}:${auth.user?.id ?? 'anonymous'}`
+const browser = useProjectBrowser(projectSource, scope, supportsProjectQuery)
+const {
+  query,
+  access,
+  page,
+  items,
+  total,
+  recent,
+  recentReady,
+  hasResult,
+  busy,
+  showProgress,
+  error,
+  revision,
+  scrollTop,
+  restoreScroll,
+  activeFilters,
+  pages,
+  limit,
+} = browser
+const { openingId, explanation, projectName, dialogOpen, open } = useProjectEntry(
+  projectSource,
+  scope,
+  (id) => {
+    recent.value = recent.value.filter((project) => project.project_id !== id)
+  },
+)
+const accessOptions: { value: 'all' | ProjectAccess; label: string }[] = [
+  { value: 'all', label: '全部权限' },
+  ...Object.entries(accessLabels).map(([value, label]) => ({
+    value: value as ProjectAccess,
+    label,
+  })),
+]
+function saveScroll(top: number) {
+  scrollTop.value = top
+  browser.persist()
+}
+watch(error, (cause) => {
+  if (cause instanceof ApiError && cause.status === 401) {
+    clearCredential()
+    auth.user = null
+    auth.requestLogin('/projects', '登录已过期，请重新登录。')
+    void router.push('/')
+  }
+})
+onMounted(() => {
+  void browser.load()
+})
 </script>
-
 <template>
-  <div class="page-container">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">YOUR WORKSPACE</p>
-        <h1>项目空间</h1>
-        <p class="page-description">把分散的接口，整理成有上下文的知识。</p>
+  <section class="project-browser" :style="{ '--project-mark-image': watermarkUrl }">
+    <ProjectIntro />
+    <div class="project-collection">
+      <div class="project-toolbar">
+        <div class="project-collection-heading">
+          <h2>{{ activeFilters ? '搜索结果' : '全部项目' }}</h2>
+          <span v-if="hasResult && !error" class="project-total">{{ total }}</span>
+        </div>
+        <div class="project-tools">
+          <ProjectSearch
+            :model-value="query"
+            :busy="showProgress"
+            :disabled="!supportsProjectQuery"
+            @update:model-value="browser.changeQuery"
+            @submit="browser.submitQuery"
+            @clear="browser.clearQuery"
+            @composition-start="browser.compositionStart"
+            @composition-end="browser.compositionEnd"
+          />
+          <div class="project-filter">
+            <AppSelect
+              :model-value="access"
+              label="项目访问权限"
+              :options="accessOptions"
+              :disabled="!supportsProjectQuery"
+              @update:model-value="browser.changeAccess"
+            />
+          </div>
+        </div>
       </div>
-      <span class="subtle-badge"><span class="status-dot"></span>等待接入</span>
+      <p v-if="!supportsProjectQuery" class="project-service-note">
+        当前服务仅支持项目列表，全项目搜索与权限筛选将在接口就绪后开放。
+      </p>
+      <ProjectTable
+        :items="items"
+        :recent="recent"
+        :recent-ready="recentReady"
+        :has-result="hasResult"
+        :busy="busy"
+        :show-progress="showProgress"
+        :error="error instanceof Error ? error.message : error ? '项目暂时无法加载。' : ''"
+        :filtered="activeFilters"
+        :opening-id="openingId"
+        :revision="revision"
+        :scroll-top="scrollTop"
+        :restore-scroll="restoreScroll"
+        :limit="limit"
+        @open="open"
+        @retry="browser.load()"
+        @clear="browser.resetFilters"
+        @scroll="saveScroll"
+        @restored="restoreScroll = false"
+      />
+      <ProjectPagination
+        :has-result="hasResult"
+        :show-progress="showProgress"
+        :page="page"
+        :pages="pages"
+        :total="total"
+        :limit="limit"
+        :busy="busy"
+        :filtered="activeFilters"
+        :error="!!error"
+        @page="browser.changePage"
+      />
     </div>
-    <section class="intro-banner">
-      <div class="intro-banner-icon"><AppIcon name="layers" :size="23" /></div>
-      <div>
-        <strong>从项目开始，让知识自然连接。</strong>
-        <p>每个项目都有独立的接口目录、调用证据与变更记录。</p>
-      </div>
-      <span class="banner-decoration" aria-hidden="true"
-        ><span></span><span></span><span></span
-      ></span>
-    </section>
-    <div class="section-heading">
-      <h2>全部项目</h2>
-      <span>同步自禅道</span>
-    </div>
-    <div class="empty-panel">
-      <EmptyState
-        title="你的项目，即将在这里相遇"
-        description="项目服务尚未接入。完成禅道账号与项目同步后，你可以在这里浏览自己的知识空间。"
-      >
-        <AppDialog
-          v-model:open="guideOpen"
-          title="项目如何进入 NexoFolio"
-          description="沿用你已有的项目，让知识集中在同一个地方。"
-        >
-          <template #trigger
-            ><AppButton variant="primary" icon="book"
-              >了解项目同步<AppIcon name="arrow-right" :size="16" /></AppButton
-          ></template>
-          <ol class="guide-steps">
-            <li>
-              <span>01</span>
-              <div>
-                <strong>使用禅道身份登录</strong>
-                <p>由后端验证账号，NexoFolio 保留必要的基础用户信息。</p>
-              </div>
-            </li>
-            <li>
-              <span>02</span>
-              <div>
-                <strong>同步已有项目</strong>
-                <p>项目来自禅道，本平台不提供手动创建项目入口。</p>
-              </div>
-            </li>
-            <li>
-              <span>03</span>
-              <div>
-                <strong>让接口知识归位</strong>
-                <p>在授权范围内接收接口信息，逐步组织目录和调用证据。</p>
-              </div>
-            </li>
-          </ol>
-          <div class="inline-notice">账号登录与项目同步将在后端接入后开放。</div>
-        </AppDialog>
-      </EmptyState>
-      <div class="empty-panel-footer">
-        <AppIcon name="folder" :size="15" /><span>保留已有项目结构，专注沉淀接口知识。</span>
-      </div>
-    </div>
-    <div class="feature-notes">
-      <div>
-        <AppIcon name="network" :size="20" /><strong>有组织的目录</strong>
-        <p>从业务上下文发现接口。</p>
-      </div>
-      <div>
-        <AppIcon name="code" :size="20" /><strong>有依据的知识</strong>
-        <p>定义、样例与变更各有来源。</p>
-      </div>
-      <div>
-        <AppIcon name="layers" :size="20" /><strong>共享的工作空间</strong>
-        <p>为团队与 Agent 提供同一份知识。</p>
-      </div>
-    </div>
-  </div>
+    <AppDialog v-model:open="dialogOpen" :title="projectName" description="项目访问说明"
+      ><p class="project-access-message" role="status">{{ explanation }}</p>
+      <AppButton @click="dialogOpen = false">知道了</AppButton></AppDialog
+    >
+  </section>
 </template>

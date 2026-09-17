@@ -1,0 +1,477 @@
+{
+  "environment": "Isolated Chromium, mocked auth/project responses; no live backend acceptance",
+  "checks": [
+    {
+      "name": "project menu opens",
+      "ok": true
+    },
+    {
+      "name": "same viewport through switch",
+      "ok": true,
+      "detail": {
+        "samples": 40
+      }
+    },
+    {
+      "name": "intermediate animated dimensions",
+      "ok": true,
+      "detail": {
+        "widths": [
+          578,
+          590,
+          600,
+          608,
+          614,
+          618,
+          621,
+          622,
+          624,
+          625,
+          626
+        ]
+      }
+    },
+    {
+      "name": "project selection guidance",
+      "ok": true
+    },
+    {
+      "name": "rapid switching settles on final menu",
+      "ok": true
+    },
+    {
+      "name": "ArrowDown enters content",
+      "ok": true
+    },
+    {
+      "name": "Escape closes and restores trigger",
+      "ok": true
+    },
+    {
+      "name": "Enter opens menu",
+      "ok": true
+    },
+    {
+      "name": "outside click closes",
+      "ok": true
+    },
+    {
+      "name": "viewport containment 320",
+      "ok": true,
+      "detail": {
+        "width": 320,
+        "scroll": 320,
+        "left": 10,
+        "right": 298,
+        "bottom": 350,
+        "headerOverflow": false
+      }
+    },
+    {
+      "name": "viewport containment 375",
+      "ok": true,
+      "detail": {
+        "width": 375,
+        "scroll": 375,
+        "left": 10,
+        "right": 353,
+        "bottom": 350,
+        "headerOverflow": false
+      }
+    },
+    {
+      "name": "viewport containment 768",
+      "ok": true,
+      "detail": {
+        "width": 768,
+        "scroll": 768,
+        "left": 10,
+        "right": 588,
+        "bottom": 369.5,
+        "headerOverflow": false
+      }
+    },
+    {
+      "name": "viewport containment 1024",
+      "ok": true,
+      "detail": {
+        "width": 1024,
+        "scroll": 1024,
+        "left": 10,
+        "right": 588,
+        "bottom": 369.5,
+        "headerOverflow": false
+      }
+    },
+    {
+      "name": "landscape height containment",
+      "ok": true,
+      "detail": {
+        "x": 10,
+        "y": 106,
+        "width": 578,
+        "height": 251
+      }
+    },
+    {
+      "name": "context link interfaces",
+      "ok": true
+    },
+    {
+      "name": "context link catalog",
+      "ok": true
+    },
+    {
+      "name": "context link catalog-preview",
+      "ok": true
+    },
+    {
+      "name": "context link maintenance",
+      "ok": true
+    },
+    {
+      "name": "link navigates and closes",
+      "ok": true
+    },
+    {
+      "name": "reduced motion disables transitions",
+      "ok": true
+    },
+    {
+      "name": "pointer leave closes",
+      "ok": true
+    },
+    {
+      "name": "upcoming documentation has no dead link",
+      "ok": true
+    },
+    {
+      "name": "no browser runtime errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "frames": [
+    {
+      "t": 7.20000001192102,
+      "w": 578,
+      "h": 300,
+      "x": 10,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 23.80000001192093,
+      "w": 578,
+      "h": 300,
+      "x": 10,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 40.40000001192084,
+      "w": 578,
+      "h": 300,
+      "x": 10,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 57.10000001192111,
+      "w": 590.09375,
+      "h": 297.21875,
+      "x": 27.895904541015625,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 73.80000001192093,
+      "w": 600.21875,
+      "h": 294.90625,
+      "x": 42.87663269042969,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 90.50000001192075,
+      "w": 608.0625,
+      "h": 293.09375,
+      "x": 54.47943115234375,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 107.20000001192102,
+      "w": 613.796875,
+      "h": 291.78125,
+      "x": 62.95314025878906,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 123.80000001192093,
+      "w": 617.796875,
+      "h": 290.875,
+      "x": 68.88223266601562,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 140.50000001192075,
+      "w": 620.578125,
+      "h": 290.234375,
+      "x": 72.99687194824219,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 157.1000000119211,
+      "w": 622.46875,
+      "h": 289.796875,
+      "x": 75.78713989257812,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 173.80000001192093,
+      "w": 623.75,
+      "h": 289.5,
+      "x": 77.68630981445312,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 190.50000001192075,
+      "w": 624.609375,
+      "h": 289.3125,
+      "x": 78.95578002929688,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 207.1000000119211,
+      "w": 625.171875,
+      "h": 289.1875,
+      "x": 79.78628540039062,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 223.80000001192093,
+      "w": 625.53125,
+      "h": 289.09375,
+      "x": 80.32221984863281,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 240.50000001192075,
+      "w": 625.75,
+      "h": 289.046875,
+      "x": 80.65206909179688,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 257.1000000119211,
+      "w": 625.890625,
+      "h": 289.015625,
+      "x": 80.84197998046875,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 273.90000001192084,
+      "w": 625.953125,
+      "h": 289,
+      "x": 80.9425048828125,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 290.50000001192075,
+      "w": 625.984375,
+      "h": 289,
+      "x": 80.98585510253906,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 307.200000011921,
+      "w": 625.984375,
+      "h": 289,
+      "x": 80.99885559082031,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 323.90000001192084,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 340.50000001192075,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 357.1000000119211,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 373.80000001192093,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 390.50000001192075,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 407.1000000119211,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 423.80000001192093,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 440.50000001192075,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 457.1000000119211,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 473.80000001192093,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 490.40000001192084,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 507.200000011921,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 523.8000000119209,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 540.5000000119207,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 557.200000011921,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 573.8000000119209,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 590.4000000119208,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 607.1000000119211,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 623.8000000119209,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 640.5000000119207,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    },
+    {
+      "t": 657.200000011921,
+      "w": 626,
+      "h": 289,
+      "x": 81,
+      "open": "open",
+      "same": true
+    }
+  ]
+}

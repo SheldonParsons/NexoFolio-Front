@@ -1,0 +1,242 @@
+.navigation-download-item--first {
+  margin-left: auto;
+}
+.workspace-navigation-trigger.navigation-download-trigger {
+  padding-inline: 10px;
+  gap: 6px;
+  font-size: 12px;
+}
+.navigation-download-logo {
+  display: block;
+  object-fit: contain;
+  flex: none;
+}
+.navigation-download-logo--fetcher {
+  filter: var(--brand-logo-filter, none);
+}
+.navigation-download-logo--asynctest {
+  padding: 2px;
+  border-radius: 4px;
+  background: #fff;
+}
+.navigation-download-version {
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.navigation-development-badge {
+  display: inline-block;
+  flex: none;
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: var(--muted);
+}
+.navigation-download-panel {
+  width: min(430px, calc(100vw - 32px));
+  padding: 24px;
+  max-height: calc(100dvh - 92px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.download-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+.download-heading > strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.download-description {
+  margin: 8px 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.download-primary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--bg);
+  background: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+.download-primary > span {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 400;
+}
+.download-primary:hover {
+  opacity: 0.85;
+}
+.download-status {
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.download-install-steps {
+  margin: 18px 0 12px;
+  padding-left: 18px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.9;
+}
+.download-install-steps li + li {
+  margin-top: 5px;
+}
+.download-install-steps code {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.download-footnote {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.download-retry {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin-top: 12px;
+  min-height: 32px;
+  color: var(--text);
+  font-size: 11px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.download-retry:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+.download-retry:focus-visible {
+  outline: 2px solid var(--input-focus-border);
+  outline-offset: 3px;
+}
+.download-platforms {
+  display: grid;
+  gap: 4px;
+}
+.download-channel-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 4px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--surface-muted);
+}
+.download-channel-switch label {
+  position: relative;
+  cursor: pointer;
+}
+.download-channel-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.download-channel-switch span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  transition:
+    background-color 160ms,
+    color 160ms;
+}
+.download-channel-switch input:checked + span {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.download-channel-switch input:focus-visible + span {
+  outline: 2px solid var(--input-focus-border);
+  outline-offset: -2px;
+}
+.download-platform {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 9px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background-color 160ms;
+}
+a.download-platform:hover {
+  background: var(--surface-muted);
+}
+.download-platform strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+}
+.download-platform small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.download-platform-arrow {
+  margin-left: auto;
+}
+.download-platform--unavailable {
+  color: var(--muted);
+}
+@media (max-width: 1280px) {
+  .navigation-download-item--first {
+    margin-left: 0;
+  }
+  .navigation-download-panel {
+    max-height: calc(100dvh - 124px);
+  }
+}
+@media (max-width: 480px) {
+  .workspace-navigation-trigger.navigation-download-trigger {
+    padding-inline: 6px;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .navigation-download-trigger .navigation-development-badge {
+    padding-inline: 4px;
+    font-size: 9px;
+  }
+  .navigation-download-trigger .navigation-download-version {
+    font-size: 9px;
+  }
+}
+@media (max-width: 720px) {
+  .navigation-download-panel {
+    max-height: calc(100dvh - 172px);
+    padding: 18px;
+  }
+}
+@media (max-width: 360px) {
+  .navigation-download-panel {
+    max-height: calc(100dvh - 220px);
+  }
+}

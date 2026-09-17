@@ -8,14 +8,17 @@
     <meta name="color-scheme" content="light dark" />
     <title>NexoFolio</title>
     <script>
+      if (location.pathname === '%BASE_URL%') document.documentElement.dataset.page = 'home'
       try {
         var theme = localStorage.getItem('nexofolio.theme')
         document.documentElement.dataset.theme =
           theme === 'dark' ||
-          (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
             ? 'dark'
             : 'light'
-      } catch (_) {}
+      } catch (_) {
+        document.documentElement.dataset.theme = 'light'
+      }
     </script>
   </head>
   <body>

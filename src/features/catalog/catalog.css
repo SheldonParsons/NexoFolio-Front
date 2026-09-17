@@ -1,0 +1,115 @@
+.catalog-live-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.catalog-live-toolbar > span {
+  color: var(--muted);
+}
+.catalog-system-note {
+  padding: 10px 24px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.catalog-live-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.catalog-live-body .catalog-columns {
+  min-height: 280px;
+}
+.catalog-live-body .catalog-interfaces > .catalog-panel-scroll {
+  flex: 1;
+}
+.catalog-system-directory {
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.catalog-system-directory > p {
+  padding: 0 8px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.catalog-live-error {
+  padding: 12px 24px;
+  color: var(--text);
+  background: var(--surface-muted);
+  font-size: 13px;
+}
+.catalog-live-history {
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+  padding: 24px;
+}
+.catalog-history {
+  font-size: 13px;
+}
+.catalog-history > p {
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.catalog-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.catalog-history-row > div {
+  min-width: 0;
+}
+.catalog-history-row p {
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  margin-top: 5px;
+}
+.catalog-history-row strong {
+  font-weight: 500;
+}
+.catalog-restore-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  font-size: 13px;
+}
+.catalog-restore-choice code {
+  overflow-wrap: anywhere;
+}
+.catalog-change-dialog {
+  display: grid;
+  gap: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.catalog-change-target {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.catalog-change-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .catalog-live-history {
+    padding: 16px;
+  }
+  .catalog-live-toolbar {
+    padding: 12px 16px;
+  }
+}

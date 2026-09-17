@@ -16,6 +16,9 @@ export interface ApiClientOptions {
   timeoutMs?: number
   fetcher?: typeof fetch
   onUnauthorized?: () => void
+  getAccessToken?: () => string | undefined
+  /** Optional observer; release after the body is read, including error/abort paths. */
+  onRequestStart?: (path: string) => (() => void) | undefined
 }
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
@@ -43,11 +46,15 @@ export function createApiClient({
   timeoutMs = 15_000,
   fetcher = fetch,
   onUnauthorized,
+  getAccessToken,
+  onRequestStart,
 }: ApiClientOptions) {
   async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = joinPath(baseUrl, path)
     const { json, signal, ...init } = options
     const headers = new Headers(init.headers)
+    const token = getAccessToken?.()
+    if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
     headers.set('Accept', 'application/json')
     if (json !== undefined) headers.set('Content-Type', 'application/json')
     const controller = new AbortController()
@@ -59,7 +66,9 @@ export function createApiClient({
       timedOut = true
       controller.abort()
     }, timeoutMs)
+    let releaseRequest: (() => void) | undefined
     try {
+      releaseRequest = onRequestStart?.(path)
       const response = await fetcher(url, {
         credentials: 'same-origin',
         ...init,
@@ -100,6 +109,7 @@ export function createApiClient({
     } finally {
       clearTimeout(timer)
       signal?.removeEventListener('abort', cancel)
+      releaseRequest?.()
     }
   }
   return { request }

@@ -1,0 +1,8 @@
+{
+  "contract_version": "1.2.0",
+  "files": {
+    "behavior.md": "43726387ff0a1166098dcbb2f4716e2c2d8e2282a405b1abcdbe6b388c716585",
+    "responses.schema.json": "8a49413bac6c12e74b4500ae4fd7fd69844eb0b77efa575455216e5c9db43c85"
+  },
+  "types_sha256": "fc93dfd942f4942255415b097dd3425d379ec90fb85fc9f1c12cda5f6a7883ad"
+}

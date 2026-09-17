@@ -3,3 +3,6 @@ dist
 coverage
 pnpm-lock.yaml
 artifacts
+src/contracts
+public/nexofolio/*.mjs
+vendor/nexofolio-elastic/*

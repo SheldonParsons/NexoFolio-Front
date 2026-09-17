@@ -1,0 +1,14 @@
+{
+  "contract_version": "2.0.0",
+  "files": {
+    "behavior.md": "a1c1a825d896c4b676ace5502c80d3714b73f4997a3b36bb3a33bef961ad4c4f",
+    "responses.schema.json": "3c026fa24eb50683a8943bbe500fe8711175a2f28bbb3cca77f103bf3c88b13b",
+    "assessment-page.schema.json": "995dcbfe27db3e078f2fcc7bc5226a7b8bdf73dd4d6a2c7e5f39cc157e347b37",
+    "assessment.schema.json": "3867a9f25ce5ca9b6115336e757815cd86eaaf23d316714881a13b071d0ca50b",
+    "observed-field-ref.schema.json": "b9203a05f42feb2ed542e59ae86e055b4cd593d46ed329b6afaec5400abdb19c",
+    "fixtures/assessment-historical.json": "490603505ea0b5e7fd14d293847867c00aec58f7f530def5e441325ea35219e1",
+    "fixtures/assessment-mixed.json": "710512686f00b93816b983e8539e032b2e61c0ae0f3e31f19153d43bfe6f6d43",
+    "fixtures/observed-field-ref.json": "f31fb7e669609f99591e834f63650093bd1f02a23e6952f479c65aa3e5afe235"
+  },
+  "types_sha256": "ce0a0c547c3b1932274b4ea6e530c9267ce6fa1965a06a6dbe2f4aa9bfe14af7"
+}

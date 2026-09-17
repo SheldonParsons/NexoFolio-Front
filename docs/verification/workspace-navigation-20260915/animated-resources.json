@@ -1,0 +1,99 @@
+{
+  "environment": "Isolated Chromium, mocked auth/project responses; no live backend acceptance",
+  "checks": [
+    {
+      "name": "all three categories expand",
+      "ok": true
+    },
+    {
+      "name": "static illustration replaced by SVG",
+      "ok": true
+    },
+    {
+      "name": "hover motion loops beyond one cycle",
+      "ok": true,
+      "detail": {
+        "one": {
+          "pose": "translate(-10.0477px, -7.53579px) rotate(-1.67462deg) scale(1.01842)",
+          "color": "rgb(125,208,232)"
+        },
+        "two": {
+          "pose": "translate(-8.08347px, -18.6645px) rotate(-1.00401deg) scale(1.02446)",
+          "color": "rgb(182,163,241)"
+        },
+        "three": {
+          "pose": "translate(-5.70667px, 2.18668px) rotate(0.188001deg) scale(1.00709)",
+          "color": "rgb(128,205,242)"
+        }
+      }
+    },
+    {
+      "name": "resources expands with all upcoming items",
+      "ok": true
+    },
+    {
+      "name": "resource copy includes MCP documentation",
+      "ok": true
+    },
+    {
+      "name": "no fake resource links",
+      "ok": true
+    },
+    {
+      "name": "old animation unmounted",
+      "ok": true
+    },
+    {
+      "name": "unmounted animation stops",
+      "ok": true
+    },
+    {
+      "name": "three-way rapid switching settles",
+      "ok": true
+    },
+    {
+      "name": "Escape closes resources",
+      "ok": true
+    },
+    {
+      "name": "resource panel fits 375",
+      "ok": true,
+      "detail": {
+        "x": 21.99509620666504,
+        "y": 106,
+        "width": 342.99999046325684,
+        "height": 270
+      }
+    },
+    {
+      "name": "resource panel fits 320",
+      "ok": true,
+      "detail": {
+        "x": 22,
+        "y": 106,
+        "width": 288,
+        "height": 270
+      }
+    },
+    {
+      "name": "reduced motion remains still",
+      "ok": true,
+      "detail": {
+        "reducedOne": {
+          "pose": "none",
+          "color": "rgb(112,221,183)"
+        },
+        "reducedTwo": {
+          "pose": "none",
+          "color": "rgb(112,221,183)"
+        }
+      }
+    },
+    {
+      "name": "no browser errors",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "errors": []
+}
