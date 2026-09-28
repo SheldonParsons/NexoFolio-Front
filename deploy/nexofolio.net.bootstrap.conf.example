@@ -1,0 +1,15 @@
+# First-time HTTP configuration for certificate issuance only.
+# Copy to /etc/nginx/conf.d/nexofolio.net.conf, then replace with the HTTPS config.
+server {
+    listen 80;
+    server_name nexofolio.net;
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+        default_type text/plain;
+        try_files $uri =404;
+    }
+    location / {
+        default_type text/plain;
+        return 503 'NexoFolio HTTPS setup in progress';
+    }
+}

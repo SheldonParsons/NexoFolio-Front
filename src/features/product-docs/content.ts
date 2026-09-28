@@ -41,9 +41,9 @@ export const productArticles: ProductArticle[] = [
   {
     slug: 'api',
     path: '/docs/api',
-    title: '开放 API',
+    title: '收集接口',
     section: '开放 API',
-    description: '让自己的工具与工作流，成为接口知识的入口。',
+    description: '把自己的采集工具接入 NexoFolio：按批提交调用记录和接口声明。',
     body: api,
   },
   {

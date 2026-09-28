@@ -9,6 +9,6 @@
 - 不依赖截图。Markdown 支持段落、列表、表格、引用与代码片段。
 - 产品日志只能记录实际发布内容。当前 `product-docs-preview` 是明确标记的文档预览，不能当成产品安装包发布记录。
 
-入口：`/docs`、`/docs/mcp`、`/changelog`；开放 API 概览在 `/docs/api`。这些路由允许未登录阅读，工作空间权限与下载功能保持原有边界。
+入口：`/docs`、`/docs/mcp`、`/changelog`；收集接口文档在 `/docs/api`，其中的校验工具读取 `src/contracts/collect/1.0.0`，JSON 示例由 `tests/collect-contract.test.ts` 按合同校验。这些路由允许未登录阅读，工作空间权限与下载功能保持原有边界。
 
 部署继续使用现有 Vite 静态构建与 NGINX history fallback；直接访问文章路径需要回退到 `index.html`。

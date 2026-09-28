@@ -1,0 +1,437 @@
+.after-collect {
+  --ink: #efede8;
+  --muted: #8f8d86;
+  --rule: #23221f;
+  --pencil: #d6c8ad;
+  --serif: 'Songti SC', 'Noto Serif SC', 'Source Han Serif SC', STSong, serif;
+  --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --gutter: 2.75rem;
+  --code: 19.5rem;
+  --note: 25rem;
+  color: var(--ink);
+  text-align: left;
+}
+
+/* Scroll track: the pinned stage plays while this passes by. The stage keeps
+   its own height; script sets `top` so it pins centered in the viewport. */
+.ac-track {
+  height: 320vh;
+}
+.ac-pin {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  padding-block: 40px;
+}
+
+/* Intro */
+.ac-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+.ac-intro h2 {
+  margin: 0;
+  font-size: clamp(30px, 3.5vw, 46px);
+  font-weight: 500;
+  letter-spacing: -1.6px;
+  line-height: 1.35;
+}
+.ac-intro p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #d0ccc2;
+}
+.ac-intro p span {
+  color: #7e7d76;
+}
+
+/* Request line + phases */
+.ac-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 44px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.ac-request {
+  margin: 0;
+  font: 13px/1.5 var(--mono);
+  color: #a9a69e;
+}
+.ac-request span {
+  margin-right: 12px;
+  color: var(--ink);
+}
+.ac-phases {
+  display: flex;
+  gap: 26px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #4d4c48;
+}
+.ac-phases li {
+  transition: color 400ms;
+}
+.ac-phases li.is-on {
+  color: var(--ink);
+}
+.ac-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+}
+.ac-progress i {
+  display: block;
+  height: 100%;
+  background: var(--pencil);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* Stage */
+.ac-stage {
+  position: relative;
+  padding: 26px 0 30px;
+}
+.ac-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.ac-lines path {
+  fill: none;
+  stroke: var(--pencil);
+  stroke-width: 1;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+
+.ac-row {
+  --lit: 0;
+  --dim: 1;
+  display: grid;
+  grid-template-columns: var(--gutter) var(--code) minmax(2rem, 1fr) var(--note);
+  align-items: start;
+  width: 100%;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 6px;
+  background: rgb(22 21 18 / calc(var(--lit) * 100%));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.ac-row code {
+  font: 15px/28px var(--mono);
+  white-space: pre;
+  color: #aaa69c;
+}
+.tk {
+  display: inline-block;
+  white-space: pre;
+  will-change: transform;
+}
+.ac-key {
+  color: #b9b4a9;
+}
+.ac-value {
+  color: var(--ink);
+}
+.ac-value--empty {
+  color: #8a8983;
+}
+.ac-ln {
+  font: 12px/28px var(--mono);
+  color: color-mix(in srgb, var(--pencil) calc(var(--lit) * 100%), #3f3e3a);
+  text-align: right;
+  padding-right: 18px;
+  user-select: none;
+  opacity: var(--built, 1);
+}
+.ac-field {
+  cursor: default;
+}
+.ac-field .ac-code {
+  padding-left: 2ch;
+  opacity: calc(0.4 + 0.6 * var(--dim));
+}
+.is-done .ac-field {
+  cursor: pointer;
+}
+.is-done .ac-field:hover {
+  background: #0f0f0d;
+}
+.is-done .ac-field.is-open {
+  background: #161512;
+}
+.ac-field:focus-visible {
+  outline: 2px solid var(--pencil);
+  outline-offset: 2px;
+}
+
+/* Annotation */
+.ac-leader {
+  height: 1px;
+  margin: 14px 14px 0;
+  background-image: linear-gradient(to right, #4b4944 45%, transparent 0);
+  background-size: 5px 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  /* Other rows' leaders step back so docked clues read cleanly. */
+  opacity: calc(1 - 1.3 * (1 - var(--dim)));
+}
+.ac-note {
+  --w: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  opacity: var(--dim);
+}
+.ac-note-text {
+  font: 15px/28px var(--serif);
+  color: var(--pencil);
+}
+.ch {
+  white-space: pre;
+  --a: clamp(0, calc((var(--w) * (var(--n) + 8) - var(--c)) / 8), 1);
+  display: inline-block;
+  opacity: var(--a);
+  transform: translateY(calc((1 - var(--a)) * 7px));
+}
+.ac-count {
+  flex: none;
+  font-size: 11px;
+  line-height: 28px;
+  color: #6a6863;
+  opacity: 0;
+  transition: opacity 400ms;
+}
+.is-done .ac-count {
+  opacity: 1;
+}
+.is-done .ac-field:hover .ac-count,
+.ac-field.is-open .ac-count {
+  color: var(--pencil);
+}
+
+/* Closing line, written where the clue pool used to be. */
+.ac-summary {
+  position: absolute;
+  left: var(--gutter);
+  right: 0;
+  margin: 0;
+  font: 17px/34px var(--serif);
+  color: #8b877d;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Clues: each source keeps the look of where it came from. */
+.clue {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.clue--badge {
+  padding: 4px 10px 4px 8px;
+  border: 1px solid #2f3a2e;
+  border-radius: 999px;
+  background: #101510;
+  color: #b8cdb2;
+  font-size: 12px;
+}
+.clue--badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7fae78;
+}
+.clue--heading {
+  padding: 6px 12px;
+  border: 1px solid #2a2926;
+  border-radius: 6px;
+  background: #0d0d0c;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #d8d4ca;
+}
+.clue--person {
+  padding: 5px 12px 5px 5px;
+  border: 1px solid #2a2926;
+  border-radius: 999px;
+  background: #0d0d0c;
+  font-size: 13px;
+  color: #d8d4ca;
+}
+.clue--person i {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #3b3528;
+  color: #eadfc7;
+  font-size: 11px;
+  font-style: normal;
+}
+.clue--person small {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #77756f;
+}
+.clue--call {
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid #3d3b36;
+  font: 12px/1.6 var(--mono);
+  color: #a3a097;
+}
+.clue--call b {
+  font-weight: 500;
+  color: var(--ink);
+}
+.clue--note {
+  font: 15px/1.6 var(--serif);
+  color: var(--pencil);
+}
+.clue--text {
+  padding: 5px 10px;
+  border: 1px solid #2a2926;
+  border-radius: 6px;
+  background: #0d0d0c;
+  font-size: 12px;
+  color: #a9a69e;
+}
+
+.ac-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-size: 12px;
+  color: #8a8882;
+}
+.ac-foot span + span {
+  color: #55544f;
+}
+
+/* Reduced motion: no pinning, show the finished document. */
+.is-static .ac-track {
+  height: auto;
+}
+.is-static .ac-pin {
+  position: static;
+}
+.is-static .ac-count {
+  transition: none;
+}
+
+@media (max-width: 1080px) {
+  .after-collect {
+    --code: 17.5rem;
+    --note: 21rem;
+  }
+  .ac-row code {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 820px) {
+  .ac-track {
+    height: 280vh;
+  }
+  .ac-pin {
+    padding-block: 24px;
+  }
+  .ac-intro {
+    display: block;
+  }
+  .ac-intro h2 {
+    font-size: 30px;
+  }
+  .ac-intro p {
+    margin-top: 10px;
+  }
+  .ac-bar {
+    margin-top: 26px;
+  }
+  .ac-phases {
+    gap: 16px;
+  }
+  .ac-stage {
+    padding-block: 16px 20px;
+  }
+  .ac-row {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    padding: 2px 0;
+  }
+  .ac-ln {
+    padding-right: 12px;
+  }
+  .ac-row code {
+    font-size: 13px;
+    line-height: 24px;
+  }
+  .ac-ln {
+    line-height: 24px;
+  }
+  .ac-leader,
+  .ac-count {
+    display: none;
+  }
+  .ac-note {
+    grid-column: 2;
+    padding-left: 2ch;
+  }
+  .ac-summary {
+    left: 2rem;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .ac-note-text {
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .clue--heading {
+    font-size: 14px;
+  }
+  .clue--note {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ac-request {
+    font-size: 11px;
+  }
+  .ac-request span {
+    margin-right: 8px;
+  }
+  .ac-foot span + span {
+    display: none;
+  }
+}

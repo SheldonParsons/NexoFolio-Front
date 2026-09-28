@@ -3,19 +3,19 @@ const assetRoot = `${import.meta.env.BASE_URL}illustrations/`
 const steps = [
   {
     title: '收集',
-    image: 'knowledge-collection.png',
+    image: 'knowledge-collection.webp',
     alt: '雾蓝色纸面上，一只张开的手接住散落的资料片段。',
-    connector: 'knowledge-ink-rise.png',
+    connector: 'knowledge-ink-rise.webp',
   },
   {
     title: '整理',
-    image: 'knowledge-review.png',
+    image: 'knowledge-review.webp',
     alt: '暖砂色纸面上，一只手将记录逐一整理对齐。',
-    connector: 'knowledge-ink-fall.png',
+    connector: 'knowledge-ink-fall.webp',
   },
   {
     title: '积累',
-    image: 'knowledge-accumulation.png',
+    image: 'knowledge-accumulation.webp',
     alt: '灰绿色纸面上，一只手将新的记录叠放在已有资料上。',
     connector: null,
   },
@@ -31,8 +31,8 @@ const steps = [
             class="knowledge-flow-image"
             :src="assetRoot + step.image"
             :alt="step.alt"
-            width="1254"
-            height="1254"
+            width="500"
+            height="500"
             loading="lazy"
             decoding="async"
           />
@@ -42,8 +42,8 @@ const steps = [
             :src="assetRoot + step.connector"
             alt=""
             aria-hidden="true"
-            width="1536"
-            height="1024"
+            width="400"
+            height="267"
             loading="lazy"
             decoding="async"
             draggable="false"

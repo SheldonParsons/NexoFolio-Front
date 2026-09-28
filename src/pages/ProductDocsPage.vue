@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import { productArticles } from '@/features/product-docs/content'
+import { renderArticle } from '@/features/product-docs/markdown'
 import MarkdownContent from '@/features/product-docs/MarkdownContent.vue'
 import PhilosophyArticle from '@/features/product-docs/PhilosophyArticle.vue'
 import DocsSearch from '@/features/product-docs/DocsSearch.vue'
+import CollectApiArticle from '@/features/collect-docs/CollectApiArticle.vue'
 const route = useRoute()
 const article = computed(() =>
   productArticles.find((item) => item.slug === (route.params.docSlug || 'philosophy')),
@@ -23,6 +25,33 @@ watch(
   },
   { immediate: true },
 )
+
+// Long reference pages get an in-page outline on wide screens.
+const tocSlugs = new Set(['api'])
+const toc = computed(() =>
+  article.value && tocSlugs.has(article.value.slug)
+    ? renderArticle(article.value.body, article.value.slug).headings.filter((h) => h.level === 2)
+    : [],
+)
+const scroller = ref<HTMLElement>()
+const activeHeading = ref('')
+let frame = 0
+function trackHeading() {
+  cancelAnimationFrame(frame)
+  frame = requestAnimationFrame(() => {
+    const container = scroller.value
+    if (!container || !toc.value.length) return
+    const line = container.getBoundingClientRect().top + container.clientHeight * 0.25
+    let current = toc.value[0]!.id
+    for (const heading of toc.value) {
+      const element = document.getElementById(heading.id)
+      if (element && element.getBoundingClientRect().top <= line) current = heading.id
+    }
+    activeHeading.value = current
+  })
+}
+watch(toc, () => void nextTick(trackHeading), { immediate: true })
+onBeforeUnmount(() => cancelAnimationFrame(frame))
 </script>
 <template>
   <section class="pd-frame">
@@ -55,7 +84,12 @@ watch(
         <p>让每一次调用，<br />成为下一次的知识。</p>
       </div>
     </aside>
-    <div class="pd-content-scroll" data-scroll-container>
+    <div
+      ref="scroller"
+      class="pd-content-scroll"
+      data-scroll-container
+      @scroll.passive="trackHeading"
+    >
       <button
         class="pd-mobile-menu"
         type="button"
@@ -68,7 +102,7 @@ watch(
         <h1>没有找到这篇文档</h1>
         <RouterLink to="/docs">返回使用文档 <AppIcon name="arrow-right" :size="16" /></RouterLink>
       </div>
-      <div v-else class="pd-reading-grid">
+      <div v-else class="pd-reading-grid" :class="{ 'has-toc': toc.length }">
         <main id="main-content" class="pd-article" tabindex="-1" :key="article.slug">
           <header class="pd-article-header">
             <h1>{{ article.title }}</h1>
@@ -76,6 +110,11 @@ watch(
           </header>
           <PhilosophyArticle
             v-if="article.slug === 'philosophy'"
+            :body="article.body"
+            :prefix="article.slug"
+          />
+          <CollectApiArticle
+            v-else-if="article.slug === 'api'"
             :body="article.body"
             :prefix="article.slug"
           />
@@ -90,6 +129,17 @@ watch(
             ></RouterLink>
           </footer>
         </main>
+        <nav v-if="toc.length" class="pd-toc" aria-label="本页内容">
+          <h2>本页内容</h2>
+          <RouterLink
+            v-for="heading in toc"
+            :key="heading.id"
+            :to="{ hash: `#${heading.id}` }"
+            :class="{ 'is-active': activeHeading === heading.id }"
+            :aria-current="activeHeading === heading.id ? 'location' : undefined"
+            >{{ heading.title }}</RouterLink
+          >
+        </nav>
       </div>
     </div>
   </section>

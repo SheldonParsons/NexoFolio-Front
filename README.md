@@ -84,6 +84,8 @@ DEV_API_PROXY_TARGET=http://127.0.0.1:18080
 
 ## Nginx 静态部署
 
+阿里云 `nexofolio.net` 的 OSS 上传、服务器拉取、Certbot 免费证书、HTTPS 与回退流程见 [部署操作手册](deploy/aliyun.md)。本地入口为 `./upload-server.sh`，服务器入口为 `deploy/update-front.sh`。
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm build

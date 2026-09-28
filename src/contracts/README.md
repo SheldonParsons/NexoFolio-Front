@@ -6,6 +6,7 @@ These bundles are copied byte-for-byte from the backend working tree, not rebuil
 - `ingestion/2.2.0`: environment page/types and the synthetic capture fixture, with the full manifest bundle retained.
 - `catalog-preview/1.4.0`: candidate and official directory views, versions and activation contracts; 14 manifest files pinned. Nullable source_task_id identifies legacy previews and source_run_id identifies maintenance runs. Restore retains explicit nullable targets.
 - `maintenance/1.5.0`: rebuild tasks, snapshots, semantic annotations, publication/restore and checkpoint pages; 15 manifest files verified.
+- `collect/1.0.0`: the public collect API (`POST /v1/collect/batches`) from the backend's `contracts/collect/v1`: batch, receipt and error schemas plus 35 fixtures; 39 manifest files verified on 2026-09-24. Used by the `/docs/api` workbench only; no client submits batches yet.
 - `capture/1.2.0`: project-scoped single facts, observations and image assets; 15 manifest files verified. This frontend only reads evidence and does not control recording or upload.
 
 Earlier pinned bundles are retained for history; active feature imports use the versions above.

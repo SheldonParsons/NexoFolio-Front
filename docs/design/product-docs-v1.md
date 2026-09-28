@@ -7,7 +7,7 @@
 - `/docs`：NexoFolio 的理念。
 - `/docs/fetcher`：Fetcher 的定位、项目/环境绑定与开放接入方式。
 - `/docs/workflow`：阅读、重构审阅、发布回退的简要流程。
-- `/docs/api`：开放 API 的定位和基本约定，不冒充完整的公共接入手册。
+- `/docs/api`：收集接口的完整接入文档，设计见 [收集接口文档页](collect-api-docs.md)。
 - `/docs/mcp`：面向 Agent 的知识访问方向，明确当前未提供可直接使用的连接配置。
 - `/changelog`：按产品筛选的版本时间线。
 - `/changelog/product-docs-preview`：文档预览记录；没有虚构 NexoFolio/Fetcher 安装包版本。

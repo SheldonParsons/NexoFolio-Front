@@ -10,8 +10,8 @@ const sections = computed(() =>
     return { before, insert, after }
   }),
 )
-const illustration = `${import.meta.env.BASE_URL}illustrations/philosophy-interweaving.png`
-const humanAgentIllustration = `${import.meta.env.BASE_URL}illustrations/philosophy-human-agent.png`
+const illustration = `${import.meta.env.BASE_URL}illustrations/philosophy-interweaving.webp`
+const humanAgentIllustration = `${import.meta.env.BASE_URL}illustrations/philosophy-human-agent.webp`
 </script>
 <template>
   <div class="pd-philosophy">

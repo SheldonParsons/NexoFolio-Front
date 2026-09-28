@@ -5,6 +5,7 @@ import AppIcon from '@/components/icons/AppIcon.vue'
 import KnowledgePreview from '@/features/home/KnowledgePreview.vue'
 import NexoLogoHero from '@/components/brand/NexoLogoHero.vue'
 import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
+import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
 </script>
 
 <template>
@@ -20,12 +21,18 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
     </header>
     <main id="main-content" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">
+        <HeroLightBackground />
         <div class="hero-copy">
           <div class="hero-kicker">
-            <span></span>为团队与 Agent 而设计<span class="kicker-separator">/</span>产品预览
+            <span></span>为团队与 Agent 而设计
           </div>
-          <h1 id="hero-title">每个接口，<br /><span>都值得被理解。</span></h1>
-          <p>从真实调用到业务上下文。<br />把分散的接口，变成一份持续生长的知识。</p>
+          <h1 id="hero-title">
+            <span class="hero-title-line"><span class="hero-title-text">每个接口，</span></span>
+            <span class="hero-title-line hero-title-line--second"
+              ><span class="hero-title-text">都值得被理解。</span></span
+            >
+          </h1>
+          <p>从接口调用到业务上下文。<br />把分散的接口，变成一份持续生长的知识。</p>
           <div class="hero-actions">
             <EnterNexoButton class="home-button home-button--primary" />
             <RouterLink to="/docs" class="home-button home-button--quiet"
@@ -42,9 +49,6 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
         aria-label="接口知识的组织方式"
       >
         <KnowledgePreview />
-        <div class="overview-caption">
-          <span>CAPTURE. CONNECT. UNDERSTAND.</span><span>让知识随着每一次调用，逐渐清晰。</span>
-        </div>
       </section>
       <section id="for-agents" class="home-container agents-section">
         <div class="section-index">01 / BUILT FOR YOUR AGENT</div>
@@ -111,6 +115,7 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: none;
+  scrollbar-width: none;
   --text: #f5f5f3;
   --focus: #e6d3b0;
   background: #000;
@@ -124,6 +129,9 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
     'PingFang SC',
     'Microsoft YaHei',
     sans-serif;
+}
+.homepage::-webkit-scrollbar {
+  display: none;
 }
 .home-container {
   max-width: 1120px;
@@ -206,8 +214,47 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
   font-weight: 550;
   margin-top: 25px;
 }
-.hero h1 > span {
+.hero-title-line {
+  display: block;
+  overflow: hidden;
+}
+.hero-title-text {
+  display: block;
+  opacity: 0;
+  transform: translateY(105%);
+  animation: hero-title-enter 820ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+.hero-title-line--second {
   color: #bfbfb9;
+}
+.hero-title-line--second .hero-title-text {
+  animation:
+    hero-title-enter 820ms cubic-bezier(0.22, 1, 0.36, 1) 390ms both,
+    hero-title-sheen 1150ms ease-out 820ms both;
+  background: linear-gradient(100deg, #bfbfb9 40%, #f3f2ec 50%, #bfbfb9 60%);
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@keyframes hero-title-enter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes hero-title-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-title-text,
+  .hero-title-line--second .hero-title-text {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
 }
 .hero-copy > p {
   font-size: 14px;
@@ -266,7 +313,8 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
   margin-top: 20px;
 }
 .overview-section {
-  max-width: 1030px;
+  max-width: 1120px;
+  padding-top: 32px;
 }
 .overview-caption {
   display: flex;
@@ -632,6 +680,8 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
 }
 .hero {
   max-width: 1280px;
+  position: relative;
+  isolation: isolate;
   margin-inline: auto;
   display: grid;
   grid-template-columns: 1fr 1.15fr;
@@ -654,6 +704,8 @@ import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
 }
 .hero-visual {
   min-width: 0;
+  position: relative;
+  z-index: 1;
 }
 @media (max-width: 900px) {
   .hero {
