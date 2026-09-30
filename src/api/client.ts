@@ -23,6 +23,8 @@ export interface ApiClientOptions {
 
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   json?: unknown
+  /** Overrides the client default. Curation waits on a model, so it needs longer. */
+  timeoutMs?: number
 }
 
 /** Paths stay under the configured base; callers cannot accidentally send credentials elsewhere. */
@@ -51,7 +53,7 @@ export function createApiClient({
 }: ApiClientOptions) {
   async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const url = joinPath(baseUrl, path)
-    const { json, signal, ...init } = options
+    const { json, signal, timeoutMs: requestTimeoutMs, ...init } = options
     const headers = new Headers(init.headers)
     const token = getAccessToken?.()
     if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`)
@@ -65,7 +67,7 @@ export function createApiClient({
     const timer = setTimeout(() => {
       timedOut = true
       controller.abort()
-    }, timeoutMs)
+    }, requestTimeoutMs ?? timeoutMs)
     let releaseRequest: (() => void) | undefined
     try {
       releaseRequest = onRequestStart?.(path)
