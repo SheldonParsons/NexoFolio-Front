@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import { clearCredential } from '@/api/session'
 import { useAuthStore } from '@/stores/auth'
 import AppSelect from '@/components/ui/AppSelect.vue'

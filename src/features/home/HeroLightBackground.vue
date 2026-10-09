@@ -7,10 +7,19 @@ let sizeObserver: ResizeObserver | undefined
 let visibilityObserver: IntersectionObserver | undefined
 let preference: MediaQueryList | undefined
 let area: HTMLElement | null = null
-let width = 0, height = 0, ratio = 1
-let time = 0, lastFrame = 0, frame = 0
-let visible = false, reduced = false, disposed = false
-let pointerX = 0, pointerY = 0, driftX = 0, driftY = 0
+let width = 0,
+  height = 0,
+  ratio = 1
+let time = 0,
+  lastFrame = 0,
+  frame = 0
+let visible = false,
+  reduced = false,
+  disposed = false
+let pointerX = 0,
+  pointerY = 0,
+  driftX = 0,
+  driftY = 0
 
 function draw() {
   const ctx = context
@@ -43,7 +52,14 @@ function draw() {
     const x = (index - 11) * width * 0.008 + Math.sin(time * 0.13) * width * 0.1
     ctx.beginPath()
     ctx.moveTo(x - width * 0.035, -height * 0.55)
-    ctx.bezierCurveTo(x + width * 0.08, -height * 0.15, x - width * 0.06, height * 0.2, x + width * 0.04, height * 0.52)
+    ctx.bezierCurveTo(
+      x + width * 0.08,
+      -height * 0.15,
+      x - width * 0.06,
+      height * 0.2,
+      x + width * 0.04,
+      height * 0.52,
+    )
     ctx.strokeStyle = `rgba(163,175,194,${0.009 * (1 - Math.abs(index - 11) / 12)})`
     ctx.lineWidth = 2
     ctx.stroke()
@@ -69,7 +85,8 @@ function tick(now: number) {
   frame = requestAnimationFrame(tick)
 }
 function wake() {
-  if (!frame && !disposed && !reduced && visible && !document.hidden) frame = requestAnimationFrame(tick)
+  if (!frame && !disposed && !reduced && visible && !document.hidden)
+    frame = requestAnimationFrame(tick)
 }
 function resize() {
   if (!canvas.value || !context) return
@@ -84,17 +101,31 @@ function resize() {
 function move(event: PointerEvent) {
   if (reduced || event.pointerType === 'touch' || !area) return
   const bounds = area.getBoundingClientRect()
-  pointerX = (event.clientX - bounds.left) / bounds.width * 2 - 1
-  pointerY = (event.clientY - bounds.top) / bounds.height * 2 - 1
+  pointerX = ((event.clientX - bounds.left) / bounds.width) * 2 - 1
+  pointerY = ((event.clientY - bounds.top) / bounds.height) * 2 - 1
 }
-function leave() { pointerX = 0; pointerY = 0 }
-function visibility() { if (document.hidden) stop(); else wake() }
-function changePreference() {
-  reduced = preference?.matches ?? false
-  if (reduced) { stop(); driftX = 0; driftY = 0; time = 0; draw() }
+function leave() {
+  pointerX = 0
+  pointerY = 0
+}
+function visibility() {
+  if (document.hidden) stop()
   else wake()
 }
-function pageShow() { resize(); wake() }
+function changePreference() {
+  reduced = preference?.matches ?? false
+  if (reduced) {
+    stop()
+    driftX = 0
+    driftY = 0
+    time = 0
+    draw()
+  } else wake()
+}
+function pageShow() {
+  resize()
+  wake()
+}
 onMounted(() => {
   if (!canvas.value) return
   context = canvas.value.getContext('2d')
@@ -106,7 +137,8 @@ onMounted(() => {
   sizeObserver.observe(canvas.value)
   visibilityObserver = new IntersectionObserver(([entry]) => {
     visible = entry?.isIntersecting ?? false
-    if (visible) wake(); else stop()
+    if (visible) wake()
+    else stop()
   })
   if (area) visibilityObserver.observe(area)
   area?.addEventListener('pointermove', move, { passive: true })
@@ -135,14 +167,34 @@ onBeforeUnmount(() => {
 <template><canvas ref="canvas" class="hero-light-background" aria-hidden="true" /></template>
 
 <style scoped>
-.hero-light-background { position: absolute; top: -94px; left: 50%; transform: translateX(-50%); width: 100vw; height: calc(100% + 154px); z-index: 0; pointer-events: none;
+.hero-light-background {
+  position: absolute;
+  top: -94px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: calc(100% + 154px);
+  z-index: 0;
+  pointer-events: none;
   /* Fade behind the copy and at the top/bottom edges. Static, so the
      compositor applies it instead of the canvas redrawing it every frame. */
-  --fade-x: linear-gradient(to right, rgba(0,0,0,0.24), rgba(0,0,0,0.17) 36%, rgba(0,0,0,0.94) 59%, #000);
+  --fade-x: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.24),
+    rgba(0, 0, 0, 0.17) 36%,
+    rgba(0, 0, 0, 0.94) 59%,
+    #000
+  );
   --fade-y: linear-gradient(transparent, #000 18%, #000 72%, transparent);
   -webkit-mask: var(--fade-x), var(--fade-y);
   -webkit-mask-composite: source-in;
   mask: var(--fade-x), var(--fade-y);
-  mask-composite: intersect; }
-@media (max-width: 650px) { .hero-light-background { top: -79px; height: calc(100% + 109px); } }
+  mask-composite: intersect;
+}
+@media (max-width: 650px) {
+  .hero-light-background {
+    top: -79px;
+    height: calc(100% + 109px);
+  }
+}
 </style>

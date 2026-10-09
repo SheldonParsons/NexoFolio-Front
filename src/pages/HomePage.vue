@@ -6,6 +6,7 @@ import KnowledgePreview from '@/features/home/KnowledgePreview.vue'
 import NexoLogoHero from '@/components/brand/NexoLogoHero.vue'
 import EnterNexoButton from '@/features/auth/EnterNexoButton.vue'
 import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
+const filingIcon = `${import.meta.env.BASE_URL}brand/public-security-filing.png`
 </script>
 
 <template>
@@ -23,9 +24,7 @@ import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
       <section class="hero" aria-labelledby="hero-title">
         <HeroLightBackground />
         <div class="hero-copy">
-          <div class="hero-kicker">
-            <span></span>为团队与 Agent 而设计
-          </div>
+          <div class="hero-kicker"><span></span>为团队与 Agent 而设计</div>
           <h1 id="hero-title">
             <span class="hero-title-line"><span class="hero-title-text">每个接口，</span></span>
             <span class="hero-title-line hero-title-line--second"
@@ -36,7 +35,7 @@ import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
           <div class="hero-actions">
             <EnterNexoButton class="home-button home-button--primary" />
             <RouterLink to="/docs" class="home-button home-button--quiet"
-              >探索 NexoFolio<span aria-hidden="true">↘</span></RouterLink
+              >NexoFolio 文档<span aria-hidden="true">↘</span></RouterLink
             >
           </div>
           <div class="hero-note">少一点反复寻找，多一点真正理解。</div>
@@ -103,8 +102,25 @@ import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
       </section>
     </main>
     <footer class="home-footer home-container">
-      <span>© {{ new Date().getFullYear() }} NexoFolio</span><span>为人，也为 Agent。</span
-      ><RouterLink :to="{ hash: '#top' }">回到顶部<span aria-hidden="true">↑</span></RouterLink>
+      <div class="home-footer-meta">
+        <div class="home-footer-legal">
+          <span>© {{ new Date().getFullYear() }} NexoFolio</span>
+          <a
+            class="home-footer-filing-link"
+            href="https://beian.mps.gov.cn/#/query/webSearch?code=44049002001317"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img class="home-footer-filing-icon" :src="filingIcon" width="18" height="20" alt="" />
+            <span>粤公网安备44049002001317号</span>
+            <AppIcon name="arrow-up-right" :size="12" mode="static" />
+          </a>
+        </div>
+        <span class="home-footer-tagline">为人，也为 Agent。</span>
+        <RouterLink :to="{ hash: '#top' }" class="home-footer-top"
+          >回到顶部<span aria-hidden="true">↑</span></RouterLink
+        >
+      </div>
     </footer>
   </div>
 </template>
@@ -243,8 +259,12 @@ import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
   }
 }
 @keyframes hero-title-sheen {
-  from { background-position: 100% 0; }
-  to { background-position: 0 0; }
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-title-text,
@@ -471,25 +491,56 @@ import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
   margin-top: 15px;
 }
 .home-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  min-height: 94px;
+  padding-block: 18px 16px;
   color: #929292;
   font-size: 10px;
 }
-.home-footer > span:nth-child(2) {
+.home-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 20px;
+  min-height: 60px;
+}
+.home-footer-legal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+.home-footer-tagline {
   color: #888;
 }
 .home-footer a {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
   min-height: 44px;
+  transition:
+    color 150ms,
+    background-color 150ms;
 }
 .home-footer a:hover {
   color: white;
+}
+.home-footer-top {
+  gap: 16px;
+}
+.home-footer-filing-link {
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: #929292;
+  font-size: inherit;
+}
+.home-footer-filing-link:hover {
+  background: #111;
+}
+.home-footer-filing-icon {
+  flex: none;
+  width: 18px;
+  height: 20px;
+  object-fit: contain;
 }
 @media (min-width: 1600px) {
   .hero {
@@ -648,9 +699,24 @@ import HeroLightBackground from '@/features/home/HeroLightBackground.vue'
   }
   .home-footer {
     font-size: 9px;
-    min-height: 80px;
+    padding-block: 14px 12px;
   }
-  .home-footer > span:nth-child(2) {
+  .home-footer-meta {
+    gap: 4px 8px;
+    min-height: 52px;
+  }
+  .home-footer-legal {
+    gap: 6px;
+  }
+  .home-footer-filing-link {
+    gap: 4px;
+    padding-inline: 4px;
+  }
+  .home-footer-top {
+    gap: 8px;
+    margin-left: auto;
+  }
+  .home-footer-tagline {
     display: none;
   }
 }

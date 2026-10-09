@@ -1,405 +1,383 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
 import AppIcon from '@/components/icons/AppIcon.vue'
-import AppSelect from '@/components/ui/AppSelect.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useActiveProject } from '@/features/projects/useActiveProject'
 import { clearCredential } from '@/api/session'
-import { documentsAreMock } from '@/features/documents/source'
 import { useDocumentWorkspace } from '@/features/documents/useDocumentWorkspace'
+import { useDocumentNavigation } from '@/features/documents/useDocumentNavigation'
+import { provideDocumentPreview } from '@/features/documents/useDocumentPreview'
+import DocumentHeading from '@/features/documents/DocumentHeading.vue'
+import CurationPanel from '@/features/curation/CurationPanel.vue'
+import CurationStartDialog from '@/features/curation/CurationStartDialog.vue'
+import DocumentFolderOverview from '@/features/documents/DocumentFolderOverview.vue'
+import DocumentBreadcrumbs from '@/features/documents/DocumentBreadcrumbs.vue'
+import DocumentShare from '@/features/documents/DocumentShare.vue'
 import InterfaceList from '@/features/documents/InterfaceList.vue'
-import DefinitionView from '@/features/documents/DefinitionView.vue'
-import InterfaceSemantics from '@/features/maintenance/InterfaceSemantics.vue'
-import ObservationViewer from '@/features/documents/ObservationViewer.vue'
-import DocumentPager from '@/features/documents/DocumentPager.vue'
-import { formatTime, outcomeLabels, shortId } from '@/features/documents/presentation'
+import DocumentSamples from '@/features/documents/samples/DocumentSamples.vue'
+import FieldStructure from '@/features/documents/FieldStructure.vue'
+import { groupFields } from '@/features/knowledge/fieldPresentation'
+import { formatTime } from '@/features/documents/presentation'
+import { useMarqueeOverflow } from '@/features/knowledge/useMarqueeOverflow'
 import '@/features/documents/documents.css'
-import '@/features/catalog-preview/catalog-preview.css'
-
+import '@/features/documents/document-navigation.css'
 const route = useRoute()
-const router = useRouter()
 const auth = useAuthStore()
-let expired = false
-function unauthorized() {
-  if (expired) return
-  expired = true
-  clearCredential()
-  auth.user = null
-  auth.requestLogin(route.fullPath, '登录已过期，请重新登录。')
-  void router.push('/')
-}
+const activeProject = useActiveProject()
+const startConfirmationOpen = ref(false)
 const workspace = useDocumentWorkspace(
   () => String(route.params.projectId),
   () => {
-    if (expired) return
-    expired = true
     clearCredential()
     auth.user = null
     auth.requestLogin(route.fullPath, '登录已过期，请重新登录。')
-    void router.push('/')
   },
 )
 const {
   project,
-  projectLoading,
-  projectError,
   environments,
   environmentId,
-  environmentLoading,
-  environmentError,
-  environmentPage,
-  environmentTotal,
-  draftQuery,
-  queryError,
-  list,
-  listBusy,
-  listError,
-  listPages,
+  loading,
+  error,
+  query,
+  visibleEntries,
   selectedId,
-  definition,
-  definitionLoading,
-  definitionError,
-  activeTab,
-  observations,
-  observationsLoading,
-  observationsError,
-  observationPages,
-  selectedObservationId,
-  observation,
-  observationLoading,
-  observationError,
-  observationTab,
+  selectedCard,
+  detail,
+  detailLoading,
+  detailError,
+  examples,
+  sample,
+  sampleId,
+  sampleLoading,
+  sampleError,
+  displayedSampleId,
+  comparisonIds,
+  baselineId,
+  samplePayloads,
+  sampleErrors,
+  samplesPending,
+  comparisonReady,
+  describing,
+  progress,
+  busy,
+  notice,
+  noticeError,
+  projectEndpointCount,
+  folderCount,
 } = workspace
-const environmentOptions = computed(() =>
-  environments.value.map((item) => ({ value: item.id, label: item.name })),
+watch(
+  [project, environmentId],
+  ([value, environment]) => {
+    if (value?.project_id === String(route.params.projectId))
+      activeProject.remember(value, environment)
+  },
+  { immediate: true },
 )
-const moreEnvironments = computed(() => environments.value.length < environmentTotal.value)
+const navigation = useDocumentNavigation(workspace, route, useRouter())
+const {
+  target,
+  tree: sections,
+  folder,
+  path: folderPath,
+  folderError,
+  environmentError,
+  activeTab,
+} = navigation
+const preview = provideDocumentPreview()
+watch(() => route.fullPath, preview.close)
+watch(workspace.documentIndex, preview.close)
+const note = computed(() => detail.value?.knowledge?.note)
+const endpointName = computed(
+  () => note.value?.name || selectedCard.value?.name || selectedCard.value?.path || '',
+)
+const endpointPath = computed(() => detail.value?.facts.summary.path_template || '')
+const nameElement = ref<HTMLElement>()
+const pathElement = ref<HTMLElement>()
+const nameMarquee = useMarqueeOverflow(nameElement, endpointName)
+const pathMarquee = useMarqueeOverflow(pathElement, endpointPath)
+const usage = computed(() =>
+  detail.value?.facts.summary.environments.find((e) => e.environment_id === environmentId.value),
+)
+const groups = computed(() =>
+  groupFields(
+    (detail.value?.facts.fields ?? []).filter(
+      (field) =>
+        field.location.in === 'path' ||
+        field.labels.some(
+          (l) => l.environment_id === environmentId.value && l.label.label !== 'absent',
+        ),
+    ),
+  ),
+)
+const fieldCount = computed(() => groups.value.reduce((n, group) => n + group.fields.length, 0))
+const recentObservation = computed(() => {
+  const value = usage.value?.last_seen
+  if (!value) return ''
+  const date = new Date(value)
+  return Number.isFinite(date.getTime())
+    ? new Intl.DateTimeFormat('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(date)
+    : value
+})
+watch([detail, () => route.query.sample], ([current, sample]) => {
+  if (
+    current &&
+    current.facts.summary.id === selectedId.value &&
+    typeof sample === 'string' &&
+    sample &&
+    sample !== sampleId.value
+  ) {
+    activeTab.value = 'examples'
+    void workspace.selectExample(sample)
+  }
+})
+function showExample(id: string) {
+  activeTab.value = 'examples'
+  void workspace.selectExample(id)
+}
+function askToOrganize() {
+  if (!busy.value && !loading.value && projectEndpointCount.value)
+    startConfirmationOpen.value = true
+}
+watch(
+  () => route.fullPath,
+  () => {
+    startConfirmationOpen.value = false
+  },
+)
+function confirmationUnauthorized() {
+  startConfirmationOpen.value = false
+  clearCredential()
+  auth.user = null
+  auth.requestLogin(route.fullPath, '登录已过期，请重新登录。')
+}
 </script>
-
 <template>
-  <section class="document-workspace" :class="{ 'has-selection': !!selectedId }">
-    <header class="document-workspace-heading">
-      <div class="document-project-context">
-        <RouterLink
-          to="/projects"
-          class="document-project-return"
-          aria-label="返回项目列表"
-          title="返回项目列表"
-          ><AppIcon name="arrow-left" :size="18"
-        /></RouterLink>
-        <div>
-          <p class="document-eyebrow">接口文档</p>
-          <h1 :title="project?.name">{{ project?.name || '项目接口' }}</h1>
+  <section class="document-workspace" :class="{ 'has-selection': !!target }">
+    <DocumentHeading
+      :project-id="String(route.params.projectId)"
+      :name="project?.name || '项目接口'"
+      :endpoint-count="projectEndpointCount"
+      :folder-count="folderCount"
+      :environments="environments"
+      :environment-id="environmentId"
+      :busy="busy"
+      :loading="loading"
+      @environment="navigation.selectEnvironment"
+      @organize="askToOrganize"
+    />
+    <div class="documents-board">
+      <InterfaceList
+        :sections="sections"
+        :loading="loading"
+        :error="error"
+        :selected-id="selectedId"
+        :environment-id="environmentId"
+        :query="query"
+        :project-id="String(route.params.projectId)"
+        :selected-folder-id="target?.kind === 'folder' ? target.id : ''"
+        :ancestors="folderPath.map((folder) => folder.id)"
+        @query="query = $event"
+        @retry="workspace.loadProject"
+      />
+      <section
+        id="document-detail"
+        class="document-detail"
+        aria-label="接口文档详情"
+        :aria-busy="detailLoading"
+      >
+        <div
+          v-if="error || environmentError || folderError"
+          class="document-large-state"
+          role="alert"
+        >
+          <p>{{ error || environmentError || folderError }}</p>
         </div>
-        <span v-if="documentsAreMock" class="document-chip document-fixture-label">契约示例</span>
-      </div>
-      <div class="document-heading-actions">
-        <RouterLink
-          :to="`/projects/${encodeURIComponent(String(route.params.projectId))}/maintenance`"
-          class="document-secondary-button"
-          >重构 / 知识维护</RouterLink
-        >
-        <RouterLink
-          :to="`/projects/${encodeURIComponent(String(route.params.projectId))}/catalog`"
-          class="document-secondary-button"
-          >接口目录</RouterLink
-        >
-        <RouterLink
-          :to="`/projects/${encodeURIComponent(String(route.params.projectId))}/catalog-preview`"
-          class="document-catalog-entry"
-          ><AppIcon name="network" :size="16" />候选目录</RouterLink
-        >
-        <div class="document-environment-picker">
-          <label>环境 <span aria-hidden="true">·</span> 必选</label>
-          <AppSelect
-            :model-value="environmentId"
-            :options="environmentOptions"
-            label="选择项目环境"
-            placeholder="选择环境"
-            :disabled="
-              !project || (environmentLoading && !environments.length) || !environments.length
-            "
-            @update:model-value="workspace.selectEnvironment"
-          />
-          <span v-if="environmentLoading" class="document-environment-state" role="status"
-            >读取环境中…</span
-          >
-          <button
-            v-else-if="moreEnvironments"
-            type="button"
-            class="document-text-button"
-            @click="workspace.loadEnvironments(environmentPage + 1)"
-          >
-            更多环境（{{ environments.length }}/{{ environmentTotal }}）
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <div v-if="projectLoading && !project" class="document-large-state" role="status">
-      <AppIcon name="layers" :size="32" />
-      <h2>正在打开项目</h2>
-      <p>读取项目及环境信息…</p>
-    </div>
-    <div v-else-if="projectError" class="document-large-state" role="alert">
-      <AppIcon name="lock" :size="32" />
-      <h2>暂时无法打开项目</h2>
-      <p>{{ projectError }}</p>
-      <button type="button" class="document-secondary-button" @click="workspace.loadProject">
-        重新读取项目
-      </button>
-    </div>
-    <template v-else-if="project">
-      <div v-if="environmentError" class="document-notice" role="alert">
-        <span>{{ environmentError }}</span
-        ><button
-          type="button"
-          class="document-text-button"
-          @click="workspace.loadEnvironments(environmentPage ? environmentPage + 1 : 1)"
-        >
-          重新读取环境
-        </button>
-      </div>
-      <div v-else-if="!environmentLoading && !environments.length" class="document-notice">
-        <span>项目还没有环境。环境创建或同步后，可重新读取。</span
-        ><button type="button" class="document-text-button" @click="workspace.loadEnvironments()">
-          重新读取环境
-        </button>
-      </div>
-      <div class="documents-board">
-        <InterfaceList
-          :page="list"
-          :loading="listBusy"
-          :error="listError"
-          :selected-id="selectedId"
+        <DocumentFolderOverview
+          v-else-if="folder && target?.kind === 'folder'"
+          :folder="folder"
+          :path="folderPath"
+          :project-id="String(route.params.projectId)"
           :environment-id="environmentId"
-          :query="draftQuery"
-          :query-error="queryError"
-          :pages="listPages"
-          @select="workspace.selectInterface"
-          @query="workspace.changeQuery"
-          @submit="workspace.submitQuery"
-          @clear="workspace.clearQuery"
-          @composition-start="workspace.compositionStart"
-          @composition-end="workspace.compositionEnd"
-          @page="workspace.loadList"
-          @retry="workspace.loadList(list?.page || 1)"
+          :environment-name="workspace.currentEnvironment.value?.name ?? ''"
         />
-        <section
-          id="document-detail"
-          class="document-detail"
-          aria-label="接口定义与调用样例"
-          :aria-busy="definitionLoading"
-        >
-          <button
-            v-if="selectedId"
-            class="document-mobile-back"
-            type="button"
-            @click="workspace.deselectInterface"
-          >
-            <AppIcon name="arrow-left" :size="16" />接口列表
-          </button>
-          <div v-if="!selectedId" class="document-large-state document-selection-state">
-            <span class="document-empty-symbol"
-              ><AppIcon :name="environmentId ? 'code' : 'layers'" :size="36"
-            /></span>
-            <p class="document-eyebrow">OBSERVED KNOWLEDGE</p>
-            <h2>{{ environmentId ? '从一个接口开始' : '先选择项目环境' }}</h2>
-            <p>
-              {{
-                environmentId
-                  ? '选择左侧接口，查看该环境的当前观测定义与调用样例。'
-                  : '不同环境分别保存自己的观测基线。选择环境后，接口会显示在左侧。'
-              }}
-            </p>
-          </div>
-          <div v-else-if="definitionLoading" class="document-large-state" role="status">
-            <AppIcon name="code" :size="28" />
-            <h2>正在读取当前定义</h2>
-          </div>
-          <div v-else-if="definitionError" class="document-large-state" role="alert">
-            <h2>暂时无法读取接口</h2>
-            <p>{{ definitionError }}</p>
-            <button
-              class="document-secondary-button"
-              type="button"
-              @click="workspace.loadDefinition"
-            >
-              重新读取定义
+        <div v-else-if="!selectedId" class="document-large-state">
+          <AppIcon name="code" :size="32" />
+          <h2>{{ loading ? '正在读取项目文档' : '从目录或接口开始' }}</h2>
+          <p>左侧选择目录查看概览，或选择接口查看用途、字段和真实调用样本。</p>
+        </div>
+        <div v-else-if="detailLoading && !detail" class="document-large-state" role="status">
+          正在读取接口…
+        </div>
+        <div v-else-if="detailError" class="document-large-state" role="alert">
+          <p>{{ detailError }}</p>
+        </div>
+        <template v-else-if="detail">
+          <header class="document-definition-heading">
+            <button type="button" class="document-mobile-back" @click="navigation.deselect">
+              <AppIcon name="arrow-left" :size="16" />返回接口列表
             </button>
-          </div>
-          <template v-else-if="definition">
-            <header class="document-definition-heading">
-              <div class="document-definition-title">
-                <span
-                  class="http-method http-method--large"
-                  :class="{ 'http-method--write': definition.method !== 'GET' }"
-                  >{{ definition.method }}</span
-                >
-                <h2>
-                  <code>{{ definition.path }}</code>
-                </h2>
-              </div>
-              <div class="document-definition-meta">
-                <span class="document-chip">观测所得</span
-                ><span class="document-chip">{{
-                  definition.classification === 'classified' ? '已分类' : '待分类'
-                }}</span
-                ><span>{{ definition.environment.name }}</span
-                ><button
-                  v-if="definition.pending_difference_count"
-                  type="button"
-                  class="document-difference-link"
-                  @click="workspace.setTab('observations')"
-                >
-                  {{ definition.pending_difference_count }} 条待处理差异
-                  <AppIcon name="arrow-right" :size="13" />
-                </button>
-              </div>
-              <dl class="document-inline-provenance">
-                <div>
-                  <dt>观测版本</dt>
-                  <dd>
-                    <code :title="definition.revision_id">{{
-                      shortId(definition.revision_id)
-                    }}</code>
-                  </dd>
-                </div>
-                <div>
-                  <dt>建档时间</dt>
-                  <dd>
-                    <time :datetime="definition.created_at" :title="definition.created_at">{{
-                      formatTime(definition.created_at)
-                    }}</time>
-                  </dd>
-                </div>
-              </dl>
-            </header>
-            <TabsRoot
-              class="document-content-tabs"
-              :model-value="activeTab"
-              @update:model-value="workspace.setTab"
-            >
-              <TabsList class="document-tabs" aria-label="接口内容"
-                ><TabsTrigger value="definition" class="document-tab">当前定义</TabsTrigger
-                ><TabsTrigger value="observations" class="document-tab">调用样例与差异</TabsTrigger
-                ><button class="document-origin-link" type="button" @click="workspace.readOrigin">
-                  <AppIcon name="code" :size="15" />查看源样例
-                </button></TabsList
+            <DocumentBreadcrumbs
+              :path="folderPath"
+              :project-id="String(route.params.projectId)"
+              :environment-id="environmentId"
+            />
+            <p v-if="!usage" class="document-scope-notice" role="status">
+              此接口在当前环境尚无观测，以下说明为项目共享知识。
+            </p>
+            <div class="document-definition-title">
+              <span class="http-method" :data-method="detail.facts.summary.method">{{
+                detail.facts.summary.method
+              }}</span>
+              <h2
+                ref="nameElement"
+                :title="endpointName"
+                :class="{ 'is-overflowing': nameMarquee.overflowing.value }"
+                :style="nameMarquee.style()"
               >
-              <TabsContent
-                value="definition"
-                class="document-scroll document-tab-panel"
-                data-scroll-container
-                data-scroll-restoration="managed"
-                ><DefinitionView :definition="definition.definition" /><InterfaceSemantics
-                  v-if="!documentsAreMock"
-                  :project-id="definition.project_id"
-                  :interface-id="definition.interface_id"
-                  :environment-id="definition.environment.id"
-                  :revision-id="definition.revision_id"
-                  @unauthorized="unauthorized"
-              /></TabsContent>
-              <TabsContent
-                value="observations"
-                class="document-scroll document-tab-panel"
-                data-scroll-container
-                data-scroll-restoration="managed"
-              >
-                <header class="observations-heading">
-                  <div>
-                    <h3>调用样例</h3>
-                    <p>列表仅展示处理摘要，选择记录后读取原文或差异。</p>
-                  </div>
-                  <span v-if="observations" class="document-count">{{ observations.total }}</span>
-                </header>
-                <p
-                  v-if="observationsLoading && !observations"
-                  class="document-empty-inline"
-                  role="status"
-                >
-                  正在读取样例摘要…
-                </p>
-                <div v-else-if="observationsError" class="document-notice" role="alert">
-                  <span>{{ observationsError }}</span
-                  ><button
-                    type="button"
-                    class="document-text-button"
-                    @click="workspace.loadObservations(observations?.page || 1)"
-                  >
-                    重新读取摘要
-                  </button>
-                </div>
-                <template v-else-if="observations">
-                  <div
-                    v-if="observations.items.length"
-                    class="observation-list"
-                    :aria-busy="observationsLoading"
-                  >
-                    <button
-                      v-for="item in observations.items"
-                      :key="item.ingestion_id"
-                      class="observation-list-item"
-                      type="button"
-                      :class="{ 'is-selected': selectedObservationId === item.ingestion_id }"
-                      :disabled="observationsLoading"
-                      :aria-label="`${outcomeLabels[item.outcome]}，${formatTime(item.processed_at)}`"
-                      @click="
-                        workspace.selectObservation(
-                          item.ingestion_id,
-                          item.outcome === 'difference_recorded',
-                        )
-                      "
-                    >
-                      <span
-                        ><strong>{{ outcomeLabels[item.outcome] }}</strong
-                        ><code :title="item.ingestion_id">{{
-                          shortId(item.ingestion_id)
-                        }}</code></span
-                      ><time :datetime="item.processed_at">{{ formatTime(item.processed_at) }}</time
-                      ><AppIcon name="chevron-right" :size="16" />
-                    </button>
-                  </div>
-                  <p v-else class="document-empty-inline">暂无已处理的样例摘要。</p>
-                  <DocumentPager
-                    :page="observations.page"
-                    :pages="observationPages"
-                    :total="observations.total"
-                    :loading="observationsLoading"
-                    label="样例分页"
-                    @change="workspace.loadObservations"
-                  />
-                </template>
-                <div v-if="observationLoading" class="document-sample-loading" role="status">
-                  正在按需读取观测记录…
-                </div>
-                <div v-else-if="observationError" class="document-notice" role="alert">
-                  <span>{{ observationError }}</span
-                  ><button
-                    class="document-text-button"
-                    type="button"
-                    @click="workspace.refreshObservation"
-                  >
-                    重新读取样例
-                  </button>
-                </div>
-                <ObservationViewer
-                  v-else-if="observation"
-                  v-model:view="observationTab"
-                  :record="observation"
-                  :baseline="definition"
-                  @close="workspace.closeObservation"
-                  @refresh="workspace.refreshObservation"
+                <b>{{ endpointName }}</b>
+              </h2>
+              <span v-if="detail.facts.summary.external" class="document-chip">外部服务</span>
+              <div class="document-description-action">
+                <DocumentShare
+                  :to="{ path: route.path, query: { ...route.query, env: environmentId } }"
                 />
-                <p v-else-if="!selectedObservationId" class="document-observed-note">
-                  选择上方记录查看原文。待处理差异不会改变当前定义。
-                </p>
-              </TabsContent>
-            </TabsRoot>
-          </template>
-        </section>
-      </div>
-    </template>
+                <button
+                  v-if="note"
+                  type="button"
+                  class="document-describe"
+                  :disabled="busy"
+                  :aria-busy="describing === selectedId"
+                  :title="
+                    note?.author.by === 'curate'
+                      ? '根据当前证据重新整理接口与字段说明'
+                      : '重新整理这个接口的名称、用途和字段说明'
+                  "
+                  @click="workspace.describe(selectedId)"
+                >
+                  <AppIcon name="scan-search" :size="15" />
+                  {{ describing === selectedId ? '正在整理接口' : '重新整理接口' }}
+                </button>
+                <span v-else class="document-description-source">说明会在整理文档时一并补全</span>
+              </div>
+            </div>
+            <p
+              ref="pathElement"
+              class="document-endpoint-path"
+              :title="endpointPath"
+              :class="{ 'is-overflowing': pathMarquee.overflowing.value }"
+              :style="pathMarquee.style()"
+            >
+              <b>{{ endpointPath }}</b>
+            </p>
+            <p v-if="note?.purpose" class="document-purpose">{{ note.purpose }}</p>
+          </header>
+          <TabsRoot class="document-content-tabs" v-model="activeTab">
+            <TabsList class="document-tabs" aria-label="接口内容">
+              <TabsTrigger value="fields" class="document-tab"
+                >字段 <span>{{ fieldCount }}</span></TabsTrigger
+              >
+              <TabsTrigger value="examples" class="document-tab"
+                >真实样本 <span>{{ examples.length }}</span></TabsTrigger
+              >
+              <span v-if="usage" class="document-tab-meta">
+                <span>调用 {{ usage.calls }} 次</span>
+                <time :datetime="usage.last_seen" :title="formatTime(usage.last_seen)"
+                  >最近 {{ recentObservation }}</time
+                >
+              </span>
+            </TabsList>
+            <TabsContent
+              value="fields"
+              class="document-scroll document-tab-panel"
+              data-scroll-container
+            >
+              <section v-for="group in groups" :key="group.label" class="document-field-group">
+                <h3>
+                  {{ group.label }} <small>{{ group.fields.length }}</small>
+                </h3>
+                <FieldStructure
+                  :fields="group.fields"
+                  :notes="detail.knowledge?.fields ?? []"
+                  :environment-id="environmentId"
+                  :endpoint-id="selectedId"
+                  :entries="visibleEntries"
+                  @related="navigation.selectInterface"
+                  @example="showExample"
+                />
+              </section>
+              <p v-if="!groups.length" class="document-small-state">此环境尚未观测到字段结构。</p>
+            </TabsContent>
+            <TabsContent
+              value="examples"
+              class="document-samples-panel document-tab-panel"
+              data-scroll-container
+            >
+              <DocumentSamples
+                :examples="examples"
+                :sample="sample"
+                :sample-id="sampleId"
+                :displayed-id="displayedSampleId"
+                :loading="sampleLoading"
+                :error="sampleError"
+                :comparison-ids="comparisonIds"
+                :baseline-id="baselineId"
+                :payloads="samplePayloads"
+                :errors="sampleErrors"
+                :pending="samplesPending"
+                :comparison-ready="comparisonReady"
+                @select="workspace.selectExample"
+                @compare="workspace.toggleComparison"
+                @baseline="baselineId = $event"
+                @clear="workspace.clearComparison"
+                @retry="workspace.retrySample"
+              />
+            </TabsContent>
+          </TabsRoot>
+        </template>
+      </section>
+    </div>
+    <CurationPanel
+      :project-id="String(route.params.projectId)"
+      :page-key="route.fullPath"
+      :environment-id="environmentId"
+      :ready="!loading && !!project"
+      :progress="progress"
+      :busy="busy"
+      :error="noticeError ? notice : ''"
+      :notice-candidate-id="workspace.noticeCandidateId.value"
+      :requested-run-key="workspace.requestedRunKey.value"
+      @retry="workspace.fillGaps($event)"
+      @cancel="workspace.cancel"
+      @observe="workspace.observeCuration"
+      @unauthorized="confirmationUnauthorized"
+    />
+    <CurationStartDialog
+      v-model:open="startConfirmationOpen"
+      :project-id="String(route.params.projectId)"
+      :project-name="project?.name ?? '当前项目'"
+      :environment-id="environmentId"
+      :busy="busy || loading || !projectEndpointCount"
+      @confirm="workspace.organize"
+      @resume="workspace.fillGaps($event)"
+      @progress="workspace.loadProject"
+      @unauthorized="confirmationUnauthorized"
+    />
   </section>
 </template>
+
+<style scoped>
+.document-samples-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+</style>

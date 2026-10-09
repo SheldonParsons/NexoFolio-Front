@@ -1,0 +1,724 @@
+{
+  "catalog": {
+    "project_id": "fixture-navigation",
+    "folders": [
+      {
+        "id": "root",
+        "parent": null,
+        "name": "订单协作",
+        "summary": "保存的目录摘要：覆盖订单创建与流程查询。",
+        "position": 0,
+        "endpoints": 0,
+        "endpoints_deep": 3
+      },
+      {
+        "id": "child",
+        "parent": "root",
+        "name": "技术咨询与流程处理的较长目录名称",
+        "summary": "保存的用途：查看技术咨询记录与流程任务。",
+        "position": 0,
+        "endpoints": 2,
+        "endpoints_deep": 2
+      },
+      {
+        "id": "empty",
+        "parent": "root",
+        "name": "暂无观测",
+        "summary": null,
+        "position": 1,
+        "endpoints": 0,
+        "endpoints_deep": 0
+      },
+      {
+        "id": "other",
+        "parent": null,
+        "name": "组织与权限",
+        "summary": "用于关联部门信息。",
+        "position": 1,
+        "endpoints": 1,
+        "endpoints_deep": 1
+      }
+    ],
+    "unplaced": 0
+  },
+  "entries": [
+    {
+      "interface_id": "endpoint-0",
+      "method": "GET",
+      "path": "/api/consultations/0/long/path/for/document/navigation/preview",
+      "name": "查询技术咨询记录（较长中文名称用于预览排版验证）",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "child",
+      "summary": {
+        "id": "endpoint-0",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/0/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-1",
+      "method": "POST",
+      "path": "/api/consultations/1/long/path/for/document/navigation/preview",
+      "name": "完成流程任务",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "child",
+      "summary": {
+        "id": "endpoint-1",
+        "project_id": "fixture-navigation",
+        "method": "POST",
+        "path_template": "/api/consultations/1/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          },
+          {
+            "environment_id": "empty-env",
+            "calls": 1,
+            "first_seen": "",
+            "last_seen": ""
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-2",
+      "method": "GET",
+      "path": "/api/consultations/2/long/path/for/document/navigation/preview",
+      "name": "查询组织 2",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-2",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/2/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-3",
+      "method": "GET",
+      "path": "/api/consultations/3/long/path/for/document/navigation/preview",
+      "name": "查询组织 3",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-3",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/3/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-4",
+      "method": "GET",
+      "path": "/api/consultations/4/long/path/for/document/navigation/preview",
+      "name": "查询组织 4",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-4",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/4/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-5",
+      "method": "GET",
+      "path": "/api/consultations/5/long/path/for/document/navigation/preview",
+      "name": "查询组织 5",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-5",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/5/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-6",
+      "method": "GET",
+      "path": "/api/consultations/6/long/path/for/document/navigation/preview",
+      "name": "查询组织 6",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-6",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/6/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-7",
+      "method": "GET",
+      "path": "/api/consultations/7/long/path/for/document/navigation/preview",
+      "name": "查询组织 7",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-7",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/7/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-8",
+      "method": "GET",
+      "path": "/api/consultations/8/long/path/for/document/navigation/preview",
+      "name": "查询组织 8",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-8",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/8/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-9",
+      "method": "GET",
+      "path": "/api/consultations/9/long/path/for/document/navigation/preview",
+      "name": "查询组织 9",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-9",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/9/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-10",
+      "method": "GET",
+      "path": "/api/consultations/10/long/path/for/document/navigation/preview",
+      "name": "查询组织 10",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-10",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/10/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-11",
+      "method": "GET",
+      "path": "/api/consultations/11/long/path/for/document/navigation/preview",
+      "name": "查询组织 11",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-11",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/11/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-12",
+      "method": "GET",
+      "path": "/api/consultations/12/long/path/for/document/navigation/preview",
+      "name": "查询组织 12",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-12",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/12/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-13",
+      "method": "GET",
+      "path": "/api/consultations/13/long/path/for/document/navigation/preview",
+      "name": "查询组织 13",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-13",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/13/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-14",
+      "method": "GET",
+      "path": "/api/consultations/14/long/path/for/document/navigation/preview",
+      "name": "查询组织 14",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-14",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/14/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-15",
+      "method": "GET",
+      "path": "/api/consultations/15/long/path/for/document/navigation/preview",
+      "name": "查询组织 15",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-15",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/15/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-16",
+      "method": "GET",
+      "path": "/api/consultations/16/long/path/for/document/navigation/preview",
+      "name": "查询组织 16",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-16",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/16/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-17",
+      "method": "GET",
+      "path": "/api/consultations/17/long/path/for/document/navigation/preview",
+      "name": "查询组织 17",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-17",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/17/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-18",
+      "method": "GET",
+      "path": "/api/consultations/18/long/path/for/document/navigation/preview",
+      "name": "查询组织 18",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-18",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/18/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-19",
+      "method": "GET",
+      "path": "/api/consultations/19/long/path/for/document/navigation/preview",
+      "name": "查询组织 19",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-19",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/19/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-20",
+      "method": "GET",
+      "path": "/api/consultations/20/long/path/for/document/navigation/preview",
+      "name": "查询组织 20",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-20",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/20/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-21",
+      "method": "GET",
+      "path": "/api/consultations/21/long/path/for/document/navigation/preview",
+      "name": "查询组织 21",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-21",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/21/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-22",
+      "method": "GET",
+      "path": "/api/consultations/22/long/path/for/document/navigation/preview",
+      "name": "查询组织 22",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-22",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/22/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-23",
+      "method": "GET",
+      "path": "/api/consultations/23/long/path/for/document/navigation/preview",
+      "name": "查询组织 23",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-23",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/23/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-24",
+      "method": "GET",
+      "path": "/api/consultations/24/long/path/for/document/navigation/preview",
+      "name": "查询组织 24",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-24",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/24/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-25",
+      "method": "GET",
+      "path": "/api/consultations/25/long/path/for/document/navigation/preview",
+      "name": "查询组织 25",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-25",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/25/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-26",
+      "method": "GET",
+      "path": "/api/consultations/26/long/path/for/document/navigation/preview",
+      "name": "查询组织 26",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-26",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/26/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "interface_id": "endpoint-27",
+      "method": "GET",
+      "path": "/api/consultations/27/long/path/for/document/navigation/preview",
+      "name": "查询组织 27",
+      "purpose": "已保存用途：查看咨询记录及其关联流程信息。字段来源与调用先后需要依据进一步确认。",
+      "folderId": "other",
+      "summary": {
+        "id": "endpoint-27",
+        "project_id": "fixture-navigation",
+        "method": "GET",
+        "path_template": "/api/consultations/27/long/path/for/document/navigation/preview",
+        "declared": false,
+        "external": false,
+        "environments": [
+          {
+            "environment_id": "test-env",
+            "calls": 3,
+            "first_seen": "2026-10-07T00:00:00Z",
+            "last_seen": "2026-10-07T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ]
+}

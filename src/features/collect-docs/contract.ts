@@ -1,7 +1,7 @@
 import Ajv2020, { type ErrorObject } from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
-import batchSchema from '@/contracts/collect/1.0.0/batch.schema.json'
-import manifest from '@/contracts/collect/1.0.0/manifest.json'
+import batchSchema from '@/contracts/collect/1.1.0/batch.schema.json'
+import manifest from '@/contracts/collect/1.1.0/manifest.json'
 
 // The collect contract is copied byte-for-byte from the backend; this page only reads it.
 // The schema adds `required` in `then` branches and `if` guards without `type`, which strict
@@ -22,13 +22,14 @@ export const collectContract = {
   recordsPerBatch: manifest.limits.records_per_batch,
 }
 
-const rawFixtures = import.meta.glob<string>('@/contracts/collect/1.0.0/fixtures/batch/*/*.json', {
+const rawFixtures = import.meta.glob<string>('@/contracts/collect/1.1.0/fixtures/batch/*/*.json', {
   query: '?raw',
   import: 'default',
   eager: true,
 })
 
 const labels: Record<string, string> = {
+  'multipart-summary': 'multipart 文字与文件元数据摘要',
   'fetcher-exchanges': '浏览器采集的两次调用',
   'exchange-without-context-or-response': '没有上下文和响应的调用',
   'swagger-declarations-without-environment': 'Swagger 同步的接口声明',

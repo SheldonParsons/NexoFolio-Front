@@ -3,13 +3,26 @@ import type { FieldFacts, FieldLocation } from '@/contracts/knowledge/types'
 const LOCATION_LABELS: Record<string, string> = {
   path: '路径参数',
   query: '查询参数',
+  request_header: '请求 Header',
+  response_header: '响应 Header',
   request_body: '请求体',
   response_body: '响应体',
 }
 
+const LOCATION_ORDER: Record<FieldLocation['in'], number> = {
+  path: 0,
+  query: 1,
+  request_header: 2,
+  request_body: 3,
+  response_body: 4,
+  response_header: 5,
+}
+
 export function locationLabel(location: FieldLocation): string {
   const base = LOCATION_LABELS[location.in] ?? location.in
-  return location.in === 'response_body' ? `${base} ${location.status}` : base
+  return location.in === 'response_body' || location.in === 'response_header'
+    ? `${base} ${location.status}`
+    : base
 }
 
 /** `data.list[].sku` — the same rendering the Rust side uses, so the two agree. */
@@ -35,7 +48,9 @@ export function groupFields(fields: FieldFacts[]) {
     if (group) group.fields.push(field)
     else groups.set(label, { label, fields: [field] })
   }
-  return [...groups.values()]
+  return [...groups.values()].sort(
+    (a, b) => LOCATION_ORDER[a.fields[0]!.location.in] - LOCATION_ORDER[b.fields[0]!.location.in],
+  )
 }
 
 export function typeList(types: string[]): string {

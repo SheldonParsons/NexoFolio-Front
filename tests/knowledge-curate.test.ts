@@ -1,36 +1,41 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import * as source from '@/contracts/knowledge/source'
 import { api } from '@/api'
 
 // `restoreMocks` runs between tests, so the spy is installed per test.
-let request: ReturnType<typeof vi.spyOn<typeof api, 'request'>>
+let request: MockInstance<typeof api.request>
 beforeEach(() => {
   request = vi.spyOn(api, 'request')
 })
 
 describe('curate calls', () => {
   it('posts the describe pass at one endpoint of one project', async () => {
-    request.mockResolvedValue({ status: 'ok' })
-    await expect(source.describeEndpoint('p 1', 'e/1')).resolves.toEqual({ status: 'ok' })
+    request.mockResolvedValue({ status: 'running', candidate_id: 'c1' })
+    await expect(source.describeEndpoint('p 1', 'e/1')).resolves.toEqual({
+      status: 'running',
+      candidate_id: 'c1',
+    })
     const [path, options] = request.mock.calls[0]!
     expect(path).toBe('v1/projects/p%201/curate/describe/e%2F1')
     expect(options?.method).toBe('POST')
   })
 
-  it('posts the organize pass at the project', async () => {
-    request.mockResolvedValue({ status: 'ok', commands: 12 })
-    await expect(source.organizeProject('p1')).resolves.toEqual({ status: 'ok', commands: 12 })
-    expect(request.mock.calls[0]![0]).toBe('v1/projects/p1/curate/organize')
+  it('starts the project workflow and reads its progress through the same scoped resource', async () => {
+    request.mockResolvedValue({ status: 'running', completed: 0, total: 47 })
+    await expect(source.startCurate('p1')).resolves.toMatchObject({ status: 'running', total: 47 })
+    expect(request.mock.calls[0]![0]).toBe('v1/projects/p1/curate')
+    expect(request.mock.calls[0]![1]?.method).toBe('POST')
+    await source.curateProgress('p1')
+    expect(request.mock.calls[1]![0]).toBe('v1/projects/p1/curate')
   })
 
-  // A model reply over dozens of endpoints outlasts the client default of 15s.
-  it('gives both passes a timeout long enough for a model', async () => {
-    request.mockResolvedValue({ status: 'skipped' })
+  // Both entry points now start a reviewable background job.
+  it('returns promptly for both single-endpoint and whole-project background jobs', async () => {
+    request.mockResolvedValue({ status: 'running' })
     await source.describeEndpoint('p1', 'e1')
-    await source.organizeProject('p1')
-    for (const call of request.mock.calls) {
-      expect(call[1]?.timeoutMs).toBeGreaterThanOrEqual(60_000)
-    }
+    await source.startCurate('p1')
+    expect(request.mock.calls[0]![1]?.timeoutMs).toBe(15_000)
+    expect(request.mock.calls[1]![1]?.timeoutMs).toBe(15_000)
   })
 
   it('reads a folder page and the unplaced page from different routes', async () => {
@@ -42,4 +47,13 @@ describe('curate calls', () => {
     )
     expect(request.mock.calls[1]![0]).toBe('v1/projects/p1/catalog/unclassified?page=1&limit=50')
   })
+})
+
+it('resumes and cancels the exact candidate through dedicated routes', async () => {
+  request.mockResolvedValue({ status: 'running', candidate_id: 'c/1' })
+  await source.resumeCandidate('p 1', 'c/1')
+  await source.cancelCandidate('p 1', 'c/1')
+  expect(request.mock.calls[0]![0]).toBe('v1/projects/p%201/curate/candidates/c%2F1/resume')
+  expect(request.mock.calls[1]![0]).toBe('v1/projects/p%201/curate/candidates/c%2F1/cancel')
+  expect(request.mock.calls.every(([, options]) => options?.method === 'POST')).toBe(true)
 })

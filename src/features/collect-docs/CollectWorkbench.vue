@@ -10,6 +10,8 @@ import {
   type CollectExample,
 } from './contract'
 
+const emit = defineEmits<{ draftChange: [text: string] }>()
+const customLabel = ref('')
 const groups = [
   { title: '可以通过', examples: validExamples },
   { title: '常见错误', examples: invalidExamples },
@@ -17,10 +19,21 @@ const groups = [
 const selected = ref<CollectExample | undefined>(validExamples[0])
 const text = ref(selected.value?.text ?? '')
 const checked = ref(checkBatch(text.value))
-const edited = computed(() => text.value !== selected.value?.text)
+const customBaseline = ref('')
+const edited = computed(() => text.value !== (selected.value?.text ?? customBaseline.value))
+function loadExample(value: string, label: string) {
+  selected.value = undefined
+  customLabel.value = label
+  customBaseline.value = value
+  clearTimeout(timer)
+  text.value = value
+  checked.value = checkBatch(value)
+}
+defineExpose({ loadExample })
 
 let timer: ReturnType<typeof setTimeout> | undefined
 watch(text, (value) => {
+  emit('draftChange', value)
   clearTimeout(timer)
   timer = setTimeout(() => {
     checked.value = checkBatch(value)
@@ -34,15 +47,15 @@ function choose(example: CollectExample) {
 }
 function restore() {
   clearTimeout(timer)
-  text.value = selected.value?.text ?? ''
+  text.value = selected.value?.text ?? customBaseline.value
   checked.value = checkBatch(text.value)
 }
 
 const summary = computed(() => {
   const result = checked.value
   if (!result.parsed) return '不是合法的 JSON'
-  if (result.valid) return '符合合同'
-  return `${result.issues.length} 处不符合合同`
+  if (result.valid) return '符合格式规范'
+  return `${result.issues.length} 处格式需要修改`
 })
 const counts = computed(() => {
   const { exchanges, declarations } = checked.value.records
@@ -55,10 +68,15 @@ const counts = computed(() => {
 <template>
   <section class="cw" aria-label="校验一个批次">
     <nav class="cw-examples" aria-label="示例批次">
-      <div v-for="group in groups" :key="group.title" class="cw-group">
-        <h3>
+      <details
+        v-for="group in groups"
+        :key="group.title"
+        class="cw-group"
+        :open="group.title === '可以通过'"
+      >
+        <summary>
           {{ group.title }}<span>{{ group.examples.length }}</span>
-        </h3>
+        </summary>
         <button
           v-for="example in group.examples"
           :key="example.name"
@@ -69,13 +87,13 @@ const counts = computed(() => {
         >
           {{ example.label }}
         </button>
-      </div>
+      </details>
     </nav>
 
     <div class="cw-editor">
       <div class="cw-editor-bar">
         <span class="cw-editor-title">
-          {{ selected?.label ?? '批次' }}
+          {{ selected?.label || customLabel || '批次' }}
           <em v-if="edited">已修改</em>
         </span>
         <button v-if="edited" type="button" class="cw-restore" @click="restore">恢复样例</button>
@@ -116,7 +134,7 @@ const counts = computed(() => {
         超过 4 MiB。批次仍会被接收，这条记录会出现在回执的 <code>rejected</code> 里。
       </p>
     </div>
-    <p class="cw-footnote">只在这个页面里校验，内容不会发送到任何地方。</p>
+    <p class="cw-footnote">只在浏览器里检查格式，没有发送或保存到服务端。</p>
   </section>
 </template>
 
@@ -151,7 +169,9 @@ const counts = computed(() => {
 .cw-group + .cw-group {
   margin-top: 18px;
 }
-.cw-group h3 {
+.cw-group summary {
+  cursor: pointer;
+  list-style: none;
   display: flex;
   justify-content: space-between;
   margin: 0 8px 6px;
@@ -160,7 +180,7 @@ const counts = computed(() => {
   font-weight: 500;
   line-height: 1.6;
 }
-.cw-group h3 span {
+.cw-group summary span {
   font-variant-numeric: tabular-nums;
 }
 .cw-example {

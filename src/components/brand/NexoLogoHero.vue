@@ -55,7 +55,9 @@ async function mount() {
     if (!disposed && current === generation) fallback()
   }
 }
-function pageHide() { cleanup() }
+function pageHide() {
+  cleanup()
+}
 function pageShow(event: PageTransitionEvent) {
   if (event.persisted && !disposed) void mount()
 }
@@ -74,23 +76,92 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="logo-hero" :data-state="status">
-    <img v-if="status === 'fallback'" class="logo-poster" :src="poster" alt="NexoFolio 标志" width="2364" height="1216" />
-    <div ref="host" class="logo-canvas-host" :class="{ 'is-ready': status === 'ready' }" :aria-hidden="status !== 'ready'" />
-    <div v-show="status === 'ready'" ref="caption" class="film-caption" aria-hidden="true">KNOWLEDGE, CONNECTED.</div>
+    <img
+      v-if="status === 'fallback'"
+      class="logo-poster"
+      :src="poster"
+      alt="NexoFolio 标志"
+      width="2364"
+      height="1216"
+    />
+    <div
+      ref="host"
+      class="logo-canvas-host"
+      :class="{ 'is-ready': status === 'ready' }"
+      :aria-hidden="status !== 'ready'"
+    />
+    <div v-show="status === 'ready'" ref="caption" class="film-caption" aria-hidden="true">
+      KNOWLEDGE, CONNECTED.
+    </div>
   </div>
 </template>
 
 <style scoped>
-.logo-hero { position: relative; width: 100%; height: 460px; background: transparent; }
+.logo-hero {
+  position: relative;
+  width: 100%;
+  height: 460px;
+  background: transparent;
+}
 /* The renderer composites transparent glow; no rectangular CSS mask is needed. */
-.logo-canvas-host { position: relative; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
-.logo-canvas-host.is-ready { opacity: 1; }
-.logo-canvas-host :deep(canvas) { position: absolute; left: -40%; top: -40%; display: block; width: 180%; height: 180%; pointer-events: none; }
-.logo-poster { transform: rotate(8deg); position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
-.film-caption { position: absolute; top: 67%; left: 0; right: 0; opacity: 0; text-align: center; font: 9px 'SFMono-Regular', Consolas, monospace; letter-spacing: 2.4px; color: #8f928f; pointer-events: none; }
-@media (max-width: 900px) { .logo-hero { height: 350px; } }
+.logo-canvas-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+.logo-canvas-host.is-ready {
+  opacity: 1;
+}
+.logo-canvas-host :deep(canvas) {
+  position: absolute;
+  left: -40%;
+  top: -40%;
+  display: block;
+  width: 180%;
+  height: 180%;
+  pointer-events: none;
+}
+.logo-poster {
+  transform: rotate(8deg);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.film-caption {
+  position: absolute;
+  top: 67%;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  text-align: center;
+  font:
+    9px 'SFMono-Regular',
+    Consolas,
+    monospace;
+  letter-spacing: 2.4px;
+  color: #8f928f;
+  pointer-events: none;
+}
+@media (max-width: 900px) {
+  .logo-hero {
+    height: 350px;
+  }
+}
 @media (max-width: 650px) {
-  .logo-hero { height: 260px; max-width: 460px; margin-inline: auto; }
-  .film-caption { top: 66%; font-size: 7px; letter-spacing: 1.6px; }
+  .logo-hero {
+    height: 260px;
+    max-width: 460px;
+    margin-inline: auto;
+  }
+  .film-caption {
+    top: 66%;
+    font-size: 7px;
+    letter-spacing: 1.6px;
+  }
 }
 </style>

@@ -96,6 +96,8 @@ pnpm build
 使用 [deploy/nginx.conf](deploy/nginx.conf)，按实际路径修改 `root`，并按服务器部署情况设置监听端口和域名。当前示例监听 8080。
 
 - History 路由使用 SPA 回退，直接访问和刷新 `/settings` 等路径可正常载入。
+- `/docs/mcp` 特殊路由读取构建产物 `mcp.html`，使 Agent 无需执行 JavaScript 即可阅读接入说明；`/mcp.md` 提供同源 Markdown 参考。部署需同步更新 Nginx 文档 location，普通 SPA 回退不会自动提供这份正文。
+- `/docs/api` 同样读取完整静态文档 `api.html`，`/api.md` 供 Agent 直接读取录入 API 的字段、示例、回执和重试规则。部署时一并更新对应 Nginx 文档 location。
 - `index.html` 要求缓存重新验证，带哈希的 assets 长期缓存；不存在的 assets 返回 404。
 - `/api` 与 `/api/` 当前明确返回 503 JSON，避免后端尚未配置时被当成前端页面。
 
@@ -137,6 +139,8 @@ docker run --rm -p 127.0.0.1:8080:8080 nexofolio-front:0.1.0
 
 ## 登录与首页入口
 
+本地与线上发布默认开放登录。`upload-server.sh` 默认传入 `VITE_WORKSPACE_ENABLED=true`，新产物不再默认显示“敬请期待”；该设置在重新构建发布后生效。
+
 首页 `/` 始终展示品牌页面，即使已经登录也不会自动进入项目页。三个“进入 NexoFolio”按钮共用入口：验证本地 Token 对应的 `/v1/auth/me`，成功进入 `/projects`，无凭证或 401 时打开登录弹层。直接访问受保护的项目、接口、设置页面也经过相同检查，未登录时回到首页弹层，成功后返回原目标。
 
 登录使用 `POST /v1/auth/login`，只发送 account/password。普通禅道密码或超级密码由后端判定，前端仅在用户选择“记住账号和密码”并真实登录成功后，将账号密码保存在当前浏览器；取消勾选立即清除。平台 Token 与 expires_at 存放在 localStorage，支持刷新后恢复；浏览器禁止存储时仅在当前标签页内保留。退出登录清除当前浏览器凭证；后端没有撤销接口，因此不宣称会撤销其他设备会话。
@@ -166,10 +170,12 @@ html/body/app 固定视口并禁止外层滚动、回弹。工作空间的顶栏
 
 `components/brand/BrandTransition.vue` 提供全屏 Logo（含字标）流光。进入项目固定 2 秒、登录固定 3 秒；其他受保护路由随准入请求和页面加载完成结束。`stores/navigationTransition.ts` 的 start/settle/finish 用于后续业务接入，未指定时长时不增加固定等待。
 
-### 项目内接口列表与观测文档
+### 项目接口文档
 
-进入项目后，先手动选择环境，再按方法/路径搜索接口。右侧展示当前环境的观测定义、限制及来源；调用样例和完整原文按需读取。差异只作为待处理提议展示，不覆盖当前基线，没有裁决或重处理操作。
+进入项目直接打开 `/projects/:projectId/interfaces`。顶部点击切换环境，默认选中第一个；左侧按业务目录浏览和搜索接口，右侧查看名称、用途、当前环境的观测字段与真实调用样本。目录可折叠，长名称和路径单行渐隐并在悬停时滚动。
 
-本工作区 `.env.local` 已将 `VITE_PROJECTS_SOURCE` 与 `VITE_DOCUMENTS_SOURCE` 同时设为 `live`，使用现有 18080 代理。请从项目列表重新进入真实项目。需要独立的契约示例时，两项一起切为 `mock`；真实读取不会在失败时静默回退为示例。
+每个项目共用一份文档。环境只筛选观测信息；目录、接口名称与用途由各环境共用。顶部“自动整理文档”依次更新接口名称与用途、字段知识，再整理全项目目录，页面显示各阶段进度。字段用位置和路径区分，展示中文含义、观测值和可展开的推断、真实样本、候选接口线索。自身或关联证据变化时旧字段也会更新，无变化的内容复用，人工内容保留；失败后重试补缺失或证据变化的内容。后台任务可在刷新页面后继续显示。右侧“重新整理接口”用于按需更新一个接口及其字段。旧 `/projects/:projectId/catalog` 链接跳转到同一页面。
 
-机器契约固定在 `src/contracts/documents/1.0.0` 与 `src/contracts/ingestion/2.0.0`，运行时按 Schema 校验。详情及“不测试”的验证边界见 [接口文档设计与接入](docs/design/interface-documents.md)。
+当前文档读取 `/v1/projects/{project_id}/catalog`、`/endpoints` 及按需读取的 `/endpoints/{endpoint_id}/examples/{example_id}`，类型定义在 `src/contracts/knowledge`。开发环境使用现有 18080 代理与真实项目数据，读取失败会明确报错。
+
+整理工作流由 `POST /v1/projects/{project_id}/curate` 启动或加入已有任务，`GET` 同一路径读取进度。接口与字段阶段完成后才执行目录阶段；每个项目同一时刻只有一个后台整理任务。单接口重新生成沿用 `/curate/describe/{endpoint_id}`。

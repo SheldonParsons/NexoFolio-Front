@@ -1,5 +1,5 @@
 import { api } from '@/api'
-import type { Catalog, CurateResult, EndpointPage, EndpointDetail } from './types'
+import type { Catalog, CurateProgress, EndpointPage, EndpointDetail } from './types'
 
 export function path(projectId: string): string {
   return `v1/projects/${encodeURIComponent(projectId)}/catalog`
@@ -9,8 +9,6 @@ function curatePath(projectId: string): string {
   return `v1/projects/${encodeURIComponent(projectId)}/curate`
 }
 
-/** A model reply over dozens of endpoints outlasts the default request timeout. */
-const CURATE_TIMEOUT_MS = 180_000
 
 export async function catalog(projectId: string, signal?: AbortSignal): Promise<Catalog> {
   return api.request<Catalog>(`${path(projectId)}`, { signal })
@@ -55,26 +53,38 @@ export async function endpoint(
   )
 }
 
-/** Names one endpoint from its traffic facts. Writes a round, so it is undoable. */
+/** Generates a reviewable proposal for one endpoint in the background. */
 export async function describeEndpoint(
   projectId: string,
   endpointId: string,
   signal?: AbortSignal,
-): Promise<CurateResult> {
-  return api.request<CurateResult>(
+): Promise<CurateProgress> {
+  return api.request<CurateProgress>(
     `${curatePath(projectId)}/describe/${encodeURIComponent(endpointId)}`,
-    { method: 'POST', signal, timeoutMs: CURATE_TIMEOUT_MS },
+    { method: 'POST', signal, timeoutMs: 15_000 },
   )
 }
 
-/** Proposes the whole folder layout at once and places every endpoint it matches. */
-export async function organizeProject(
+/** Starts or joins the background describe -> organize workflow. */
+export async function startCurate(
   projectId: string,
   signal?: AbortSignal,
-): Promise<CurateResult> {
-  return api.request<CurateResult>(`${curatePath(projectId)}/organize`, {
+): Promise<CurateProgress> {
+  return api.request<CurateProgress>(curatePath(projectId), {
     method: 'POST',
     signal,
-    timeoutMs: CURATE_TIMEOUT_MS,
+    timeoutMs: 15_000,
   })
+}
+
+export function curateProgress(projectId: string, signal?: AbortSignal): Promise<CurateProgress> {
+  return api.request<CurateProgress>(curatePath(projectId), { signal, cache: 'no-store' })
+}
+
+/** Resume this exact candidate. This never opens a new generation. */
+export function resumeCandidate(projectId: string, candidateId: string, signal?: AbortSignal): Promise<CurateProgress> {
+  return api.request<CurateProgress>(`${curatePath(projectId)}/candidates/${encodeURIComponent(candidateId)}/resume`, { method: 'POST', signal, timeoutMs: 120_000 })
+}
+export function cancelCandidate(projectId: string, candidateId: string, signal?: AbortSignal): Promise<void> {
+  return api.request<void>(`${curatePath(projectId)}/candidates/${encodeURIComponent(candidateId)}/cancel`, { method: 'POST', signal })
 }

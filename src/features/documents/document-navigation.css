@@ -1,0 +1,327 @@
+/* Shared tree, overview and portalled preview use the existing document theme. */
+.document-preview-host {
+  display: block;
+  min-width: 0;
+}
+.document-folder-heading {
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+}
+.document-folder-heading > .document-preview-host {
+  flex: 1;
+}
+.document-folder-heading.is-selected {
+  background: var(--surface-muted);
+  box-shadow: none;
+}
+.document-folder-arrow {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.document-folder-arrow[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+.document-folder-toggle {
+  min-width: 0;
+  border-radius: 4px;
+}
+.document-folder-toggle span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.document-folder-toggle .document-folder-name {
+  flex: 1;
+  min-width: 0;
+  text-overflow: clip;
+}
+.document-folder-toggle > :is(svg, small) {
+  flex-shrink: 0;
+}
+.document-workspace :is(.interface-item-content strong, .document-folder-name).is-overflowing {
+  mask-image: linear-gradient(90deg, #000 calc(100% - 20px), transparent);
+}
+.document-folder-name b {
+  display: inline-block;
+  white-space: nowrap;
+  font: inherit;
+}
+.document-workspace .document-tree-marquee-track {
+  display: inline-flex;
+  gap: var(--marquee-loop-gap, 32px);
+  width: max-content;
+}
+.document-tree-marquee-track > span {
+  flex: none;
+}
+.document-workspace
+  .document-folder-heading:hover
+  .document-folder-name.is-overflowing
+  .document-tree-marquee-track,
+.document-workspace
+  .document-folder-toggle:focus-visible
+  .document-folder-name.is-overflowing
+  .document-tree-marquee-track,
+.document-workspace
+  .interface-list-item:is(:hover, :focus-visible)
+  .is-overflowing
+  .document-tree-marquee-track {
+  animation: document-tree-marquee var(--marquee-loop-duration, 900ms) linear 260ms infinite;
+}
+@keyframes document-tree-marquee {
+  to {
+    transform: translateX(var(--marquee-loop-shift, 0));
+  }
+}
+.document-folder-items > .document-folder {
+  margin-left: 14px;
+}
+.document-folder-items > .document-preview-host {
+  margin-left: 10px;
+}
+.interface-item-content strong {
+  mask-image: none;
+  text-overflow: ellipsis;
+}
+.document-workspace .interface-item-content strong {
+  text-overflow: clip;
+}
+.document-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.document-breadcrumbs a:hover {
+  color: var(--text);
+}
+.document-overview-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+.document-overview-title h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.document-overview-meta,
+.document-scope-notice {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+.document-overview h3 {
+  font-size: 13px;
+  font-weight: 550;
+  margin: 0 0 10px;
+}
+.document-overview > section + section {
+  margin-top: 24px;
+}
+.document-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 10px;
+}
+.document-overview-card {
+  display: block;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+}
+.document-overview-card:hover {
+  background: var(--surface-muted);
+}
+.document-overview-card strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.document-overview-card small {
+  color: var(--muted);
+  font-weight: 400;
+}
+.document-overview-card p {
+  color: var(--muted);
+  margin: 6px 0 0;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.document-overview-entry {
+  border-bottom: 1px solid var(--border);
+  padding: 5px 0;
+}
+.document-overview-entry > p {
+  margin: 2px 8px 8px 54px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.document-overview-gaps {
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.document-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.document-share button {
+  font-size: 11px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.document-preview {
+  width: min(380px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: var(--reka-popover-content-available-height);
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  z-index: 80;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 8px 28px #00000014;
+  font-family: var(--font-sans);
+  outline: none;
+}
+.document-preview-context {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+.document-preview-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.document-preview-title strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-weight: 550;
+}
+.document-preview-title .http-method {
+  margin-top: 2px;
+}
+.document-preview-purpose {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 6px 0;
+}
+.document-preview-path {
+  display: block;
+  max-height: 60px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  background: var(--surface-muted);
+  padding: 5px 6px;
+  border-radius: 4px;
+}
+.document-preview-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+.document-preview-hint {
+  color: var(--muted);
+  font-size: 10px;
+  margin: 6px 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .document-preview {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+@media (max-width: 760px) {
+  .document-overview-title {
+    align-items: flex-start;
+  }
+  .document-description-action {
+    flex-wrap: wrap;
+    max-width: 45%;
+    justify-content: flex-end;
+  }
+}
+
+.document-preview-copy-path {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+.document-preview-copy-path:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* The selection marker has its own square geometry, independent of row rounding. */
+:is(.document-workspace, .curation-review)
+  :is(.document-folder-heading.is-selected, .interface-list-item.is-selected) {
+  position: relative;
+  box-shadow: none;
+}
+:is(.document-workspace, .curation-review)
+  :is(.document-folder-heading.is-selected, .interface-list-item.is-selected)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--text);
+  border-radius: 0;
+  pointer-events: none;
+}
+/* Sidebar keyboard focus uses the label, so its ring cannot look like a curved selection marker. */
+.document-workspace .interface-list-item:focus-visible,
+.document-workspace .document-folder-toggle:focus-visible {
+  outline: none;
+}
+.document-workspace .interface-list-item:focus-visible strong,
+.document-workspace .document-folder-toggle:focus-visible > span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

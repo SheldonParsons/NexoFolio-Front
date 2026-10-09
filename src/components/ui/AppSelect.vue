@@ -19,6 +19,7 @@ const props = defineProps<{
   options: { value: T; label: string }[]
   disabled?: boolean
   placeholder?: string
+  size?: 'default' | 'compact'
 }>()
 const model = defineModel<T>({ required: true })
 const open = ref(false)
@@ -35,7 +36,7 @@ function update(value: unknown) {
     :disabled="disabled"
     @update:model-value="update"
   >
-    <SelectTrigger class="nf-select-trigger" :aria-label="label"
+    <SelectTrigger class="nf-select-trigger" :data-size="size" :aria-label="label"
       ><SelectValue :placeholder="placeholder" /><span class="sr-only">{{ label }}</span
       ><SelectIcon as-child
         ><AppIcon
@@ -48,6 +49,7 @@ function update(value: unknown) {
     <SelectPortal
       ><SelectContent
         class="nf-select-content"
+        :data-size="size"
         position="popper"
         align="end"
         :side-offset="7"

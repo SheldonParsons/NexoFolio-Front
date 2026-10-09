@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { getCurrentUser, type UserProfile } from '@/api/auth'
 import { clearCredential } from '@/api/session'
 import { clearBrowserViews } from '@/features/projects/browserState'
+import { useProjectContextStore } from './projectContext'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<UserProfile | null>(null)
@@ -41,6 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
     loginOpen.value = true
   }
   function signOut() {
+    useProjectContextStore().clear()
     clearBrowserViews()
     arrival.value = null
     clearCredential()

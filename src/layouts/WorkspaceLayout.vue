@@ -36,27 +36,13 @@ watch(
       </div>
       <div class="nav-heading">工作空间</div>
       <nav class="nav-links">
-        <RouterLink
-          v-for="item in navigation.slice(0, 2)"
-          :key="item.to"
-          :to="item.to"
-          class="nav-link"
+        <RouterLink v-for="item in navigation" :key="item.to" :to="item.to" class="nav-link"
           ><AppIcon :name="item.icon" :size="19" />{{ item.label
           }}<span class="nav-active-dot"></span
         ></RouterLink>
       </nav>
-      <div class="sidebar-note">
-        <span class="note-symbol">✳</span>
-        <p>让每一次调用，<br />成为下一次的知识。</p>
-        <span class="note-line"></span>
-      </div>
-      <div class="sidebar-bottom">
-        <RouterLink to="/settings" class="nav-link"
-          ><AppIcon name="settings" :size="19" />偏好设置</RouterLink
-        >
-        <div class="sidebar-footer">
-          <span class="status-dot"></span><span>个人偏好保存在此浏览器</span>
-        </div>
+      <div class="sidebar-footer">
+        <span class="status-dot"></span><span>个人偏好保存在此浏览器</span>
       </div>
     </aside>
 

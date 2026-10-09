@@ -4,7 +4,7 @@ import schema from '@/contracts/documents/2.2.0/responses.schema.json'
 import environmentSchema from '@/contracts/ingestion/2.2.0/environment-page.schema.json'
 import assessmentPageSchema from '@/contracts/documents/2.2.0/assessment-page.schema.json'
 import type { ObservationAssessmentPage } from '@/contracts/documents/2.2.0/types.generated'
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import type {
   InterfacePage,
   InterfaceDetail,
@@ -23,7 +23,10 @@ interface Responses {
 }
 const ajv = new Ajv2020({ allErrors: false, strict: true })
 addFormats(ajv)
-ajv.addFormat('uint32', { type: 'number', validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= 4294967295 })
+ajv.addFormat('uint32', {
+  type: 'number',
+  validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= 4294967295,
+})
 ajv.addFormat('int64', { type: 'number', validate: Number.isSafeInteger })
 const validators = {
   ObservationAssessmentPage: ajv.compile(assessmentPageSchema),

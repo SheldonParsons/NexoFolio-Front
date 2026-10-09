@@ -14,6 +14,7 @@ const { push, auth, clearCredential } = vi.hoisted(() => ({
 vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
 vi.mock('@/api/session', () => ({ clearCredential }))
+vi.mock('@/features/projects/source', () => ({ projectScope: 'mock:projects' }))
 const item: Project = {
   project_id: 'one',
   name: '项目一',
@@ -65,7 +66,7 @@ describe('project admission and navigation lifecycle', () => {
     expect(transition.current).toBeNull()
     accept(item)
     await first
-    expect(push).toHaveBeenCalledWith('/projects/one/catalog')
+    expect(push).toHaveBeenCalledWith('/projects/one/interfaces')
     expect(transition.current).toMatchObject({ durationMs: 2000, pending: false })
     expect(readVisits('api:mock:user')[0]?.id).toBe('one')
   })

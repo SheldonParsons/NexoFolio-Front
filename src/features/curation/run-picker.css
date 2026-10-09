@@ -1,0 +1,109 @@
+.curation-run-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.curation-run-trigger:hover,
+.curation-run-trigger[data-state='open'] {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.curation-run-trigger:disabled {
+  cursor: default;
+}
+.curation-run-trigger:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.curation-run-menu {
+  z-index: 80;
+  width: min(300px, calc(100vw - 24px));
+  max-height: var(--reka-dropdown-menu-content-available-height, 360px);
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  transform-origin: var(--reka-dropdown-menu-content-transform-origin);
+  scrollbar-width: none;
+}
+.curation-run-menu::-webkit-scrollbar {
+  display: none;
+}
+.curation-run-menu[data-state='open'] {
+  animation: curation-run-enter 160ms ease-out;
+}
+.curation-run-menu[data-state='closed'] {
+  animation: curation-run-exit 100ms ease-in;
+}
+.curation-run-caption {
+  margin: 4px 8px 6px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.curation-run-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  color: var(--text);
+  font-size: 11px;
+  text-decoration: none;
+  outline: none;
+  border-radius: 5px;
+}
+.curation-run-item[data-highlighted],
+.curation-run-item[aria-current='page'] {
+  background: var(--surface-muted);
+}
+.curation-run-item strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+}
+.curation-run-item small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.curation-run-separator {
+  height: 1px;
+  margin: 5px;
+  background: var(--border);
+}
+@keyframes curation-run-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes curation-run-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .curation-run-menu {
+    animation: none !important;
+  }
+}

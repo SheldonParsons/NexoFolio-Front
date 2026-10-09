@@ -34,6 +34,8 @@ import {
   PanelsTopLeft,
   ScanSearch,
   CircleX,
+  UserRound,
+  Ellipsis,
 } from 'lucide'
 import {
   ArrowLeft as StaticArrowLeft,
@@ -71,6 +73,8 @@ import {
   PanelsTopLeft as StaticPanelsTopLeft,
   ScanSearch as StaticScanSearch,
   CircleX as StaticCircleX,
+  UserRound as StaticUserRound,
+  Ellipsis as StaticEllipsis,
 } from '@lucide/vue'
 
 export const icons = {
@@ -109,6 +113,8 @@ export const icons = {
   panels: PanelsTopLeft,
   'scan-search': ScanSearch,
   'circle-x': CircleX,
+  'user-round': UserRound,
+  'more-horizontal': Ellipsis,
 }
 export type IconName = keyof typeof icons
 export const staticIcons = {
@@ -147,4 +153,6 @@ export const staticIcons = {
   panels: StaticPanelsTopLeft,
   'scan-search': StaticScanSearch,
   'circle-x': StaticCircleX,
+  'user-round': StaticUserRound,
+  'more-horizontal': StaticEllipsis,
 } satisfies Record<IconName, unknown>

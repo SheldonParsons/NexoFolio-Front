@@ -4,6 +4,8 @@ import { pinia } from './pinia'
 import { useAuthStore } from '@/stores/auth'
 import { authErrorMessage } from '@/api/auth'
 import { useNavigationTransition } from '@/stores/navigationTransition'
+import { workspaceEnabled } from './deployment'
+import { sameDocumentProject } from '@/features/documents/documentRoutes'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,29 +28,32 @@ export const router = createRouter({
       component: () => import('@/pages/ProjectDocumentPage.vue'),
       meta: { title: '接口文档', requiresAuth: true, layout: 'projects' },
     },
+    ...(['folder', 'endpoint'] as const).map((kind) => ({
+      path: `/projects/:projectId/interfaces/${kind}s/:${kind}Id`,
+      name: `document-${kind}`,
+      component: () => import('@/pages/ProjectDocumentPage.vue'),
+      meta: { title: '接口文档', requiresAuth: true, layout: 'projects' },
+    })),
+    {
+      path: '/projects/:projectId/interfaces/curation/:candidateId?',
+      name: 'curation-review',
+      component: () => import('@/pages/CurationReviewPage.vue'),
+      meta: { title: '整理结果', requiresAuth: true, layout: 'projects' },
+    },
     {
       path: '/projects/:projectId/catalog',
-      name: 'official-catalog',
-      component: () => import('@/pages/OfficialCatalogPage.vue'),
-      meta: { title: '接口目录', requiresAuth: true, layout: 'projects' },
-    },
-    {
-      path: '/projects/:projectId/maintenance',
-      name: 'knowledge-maintenance',
-      component: () => import('@/pages/KnowledgeMaintenancePage.vue'),
-      meta: { title: '知识维护', requiresAuth: true, layout: 'projects' },
-    },
-    {
-      path: '/projects/:projectId/catalog-preview',
-      name: 'catalog-preview',
-      component: () => import('@/pages/CatalogPreviewPage.vue'),
-      meta: { title: '候选目录', requiresAuth: true, layout: 'projects' },
+      name: 'knowledge-catalog',
+      redirect: (to) => ({
+        name: 'project-interfaces',
+        params: to.params,
+        query: to.query,
+        hash: to.hash,
+      }),
     },
     {
       path: '/interfaces',
       name: 'interfaces',
-      component: () => import('@/pages/InterfacesPage.vue'),
-      meta: { title: '接口目录', requiresAuth: true },
+      redirect: '/projects',
     },
     {
       path: '/docs/:docSlug?',
@@ -61,6 +66,12 @@ export const router = createRouter({
       name: 'product-changelog',
       component: () => import('@/pages/ProductChangelogPage.vue'),
       meta: { title: '更新日志', layout: 'docs' },
+    },
+    {
+      path: '/settings/mcp',
+      name: 'mcp-credentials',
+      component: () => import('@/pages/McpCredentialsPage.vue'),
+      meta: { title: 'MCP 凭证', requiresAuth: true, layout: 'projects' },
     },
     {
       path: '/settings',
@@ -76,6 +87,7 @@ export const router = createRouter({
     },
   ],
   scrollBehavior: async (to, from): Promise<false> => {
+    if (sameDocumentProject(to, from)) return false
     await nextTick()
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
     const container = document.querySelector<HTMLElement>('[data-scroll-container]')
@@ -85,15 +97,16 @@ export const router = createRouter({
       if (target && container.contains(target)) {
         container.scrollTo({
           // A container anchor (such as #top) refers to its scroll origin.
-          top: target === container
-            ? 0
-            : Math.max(
-                0,
-                container.scrollTop +
-                  target.getBoundingClientRect().top -
-                  container.getBoundingClientRect().top -
-                  24,
-              ),
+          top:
+            target === container
+              ? 0
+              : Math.max(
+                  0,
+                  container.scrollTop +
+                    target.getBoundingClientRect().top -
+                    container.getBoundingClientRect().top -
+                    24,
+                ),
           behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
             ? 'instant'
             : 'smooth',
@@ -109,8 +122,17 @@ let routeTransitionId: number | null = null
 router.beforeEach(async (to, from) => {
   if (!to.meta.requiresAuth) return true
   const auth = useAuthStore(pinia)
+  if (!workspaceEnabled) {
+    auth.requestLogin(to.fullPath)
+    return from.matched.length ? false : { name: 'home' }
+  }
   const transition = useNavigationTransition(pinia)
-  if (to.path !== from.path && !auth.arrival && !transition.current) {
+  if (
+    !sameDocumentProject(to, from) &&
+    to.path !== from.path &&
+    !auth.arrival &&
+    !transition.current
+  ) {
     routeTransitionId = transition.start('正在进入 NexoFolio')
   }
   // The login API has just authenticated this user. Mount the destination under
@@ -133,8 +155,9 @@ router.afterEach(async (to, from, failure) => {
     else transition.settle(routeTransitionId)
     routeTransitionId = null
   }
+  if (failure) return
   document.title = `${String(to.meta.title ?? '工作空间')} · NexoFolio`
-  if (to.path === from.path) return
+  if (to.path === from.path || sameDocumentProject(to, from)) return
   await nextTick()
   if (useAuthStore(pinia).arrival || useNavigationTransition(pinia).current) return
   document.querySelector<HTMLElement>('#main-content')?.focus({ preventScroll: true })

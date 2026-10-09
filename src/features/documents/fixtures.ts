@@ -3,7 +3,7 @@ import type {
   Record as CaptureRecord,
   HttpExchange,
 } from '@/contracts/ingestion/2.2.0/types.generated'
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import { contractResponse } from './contract'
 import {
   DOCUMENT_PAGE_SIZE,

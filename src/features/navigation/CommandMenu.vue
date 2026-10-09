@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { navigation } from '@/app/navigation'
 import AppDialog from '@/components/ui/AppDialog.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
+const route = useRoute()
 const open = ref(false)
 const query = ref('')
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -30,6 +31,8 @@ function onShortcut(event: KeyboardEvent) {
 }
 function navigate(to: string) {
   open.value = false
+  if (to === '/interfaces' && typeof route.params.projectId === 'string')
+    to = `/projects/${encodeURIComponent(route.params.projectId)}/interfaces`
   void router.push(to)
 }
 function onSearchKey(event: KeyboardEvent) {
@@ -72,7 +75,7 @@ onUnmounted(() => window.removeEventListener('keydown', onShortcut))
         ref="searchInput"
         v-model="query"
         aria-label="搜索页面"
-        placeholder="搜索项目、目录或设置…"
+        placeholder="搜索项目、文档或设置…"
         autocomplete="off"
         @keydown="onSearchKey"
       />

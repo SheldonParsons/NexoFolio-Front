@@ -2,6 +2,39 @@ import { describe, expect, it, vi } from 'vitest'
 import { createApiClient } from '../src/api/client'
 
 describe('API transport contract', () => {
+  it('shows the server error message while preserving HTTP failure status', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json(
+          { error: { code: 'CURATION_FAILED', message: '模型服务连接失败' } },
+          { status: 500 },
+        ),
+      )
+    await expect(
+      createApiClient({ baseUrl: '/api', fetcher }).request('curate'),
+    ).rejects.toMatchObject({
+      kind: 'http',
+      status: 500,
+      message: '模型服务连接失败',
+    })
+  })
+
+  it('keeps the HTTP fallback if the error response contains malformed JSON', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response('{broken', {
+        status: 502,
+        headers: { 'content-type': 'application/json' },
+      }),
+    )
+    await expect(
+      createApiClient({ baseUrl: '/api', fetcher }).request('curate'),
+    ).rejects.toMatchObject({
+      kind: 'http',
+      status: 502,
+      message: '请求失败（502）',
+    })
+  })
   it('joins base paths and sends JSON without automatic retries', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ id: 'a' }))
     const client = createApiClient({ baseUrl: '/api/', fetcher })

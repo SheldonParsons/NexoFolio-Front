@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_PROJECTS_SOURCE?: 'mock' | 'live'
   readonly VITE_PROJECTS_QUERY_API?: string
   readonly VITE_DOCUMENTS_SOURCE?: 'mock' | 'live'
+  readonly VITE_WORKSPACE_ENABLED?: string
 }
 
 interface ImportMeta {

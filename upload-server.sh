@@ -55,7 +55,8 @@ echo 'Installing locked dependencies and building production frontend...'
 pnpm install --frozen-lockfile
 # Explicit public values prevent local dev overrides leaking into deployment.
 VITE_API_BASE_URL=/api VITE_PROJECTS_SOURCE=live VITE_DOCUMENTS_SOURCE=live \
-  VITE_PROJECTS_QUERY_API="${VITE_PROJECTS_QUERY_API:-false}" pnpm build
+  VITE_PROJECTS_QUERY_API="${VITE_PROJECTS_QUERY_API:-false}" \
+  VITE_WORKSPACE_ENABLED="${VITE_WORKSPACE_ENABLED:-true}" pnpm build
 test -s dist/index.html
 zip -qr "$WORK_DIR/dist.zip" dist -x '*.DS_Store'
 CHECKSUM="$(shasum -a 256 "$WORK_DIR/dist.zip" | awk '{print $1}')"

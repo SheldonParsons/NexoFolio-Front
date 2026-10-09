@@ -3,7 +3,7 @@ import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import AppDialog from '@/components/ui/AppDialog.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
-import { productArticles, productUpdates } from './content'
+import { productArticles, productUpdates, productLabels, updateStatusLabels } from './content'
 const open = ref(false)
 const query = ref('')
 const route = useRoute()
@@ -20,7 +20,7 @@ const records = [
     description: update.description,
     group: '更新日志',
     path: `/changelog/${update.slug}`,
-    text: `${update.title} ${update.description} ${update.body}`,
+    text: `${productLabels[update.product]} ${update.version} ${update.date} ${updateStatusLabels[update.status]} ${update.title} ${update.description} ${update.body}`,
   })),
 ]
 const results = computed(() => {

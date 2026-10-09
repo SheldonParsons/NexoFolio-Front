@@ -1,0 +1,124 @@
+.curation-answer {
+  background: var(--surface);
+  color: var(--text);
+}
+.curation-answer-author {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.curation-answer-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.curation-answer-avatar .brand-logo-icon {
+  width: 16px;
+}
+.curation-answer-author > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.curation-answer-author strong {
+  font-size: 10px;
+  font-weight: 600;
+}
+.curation-answer-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  color: var(--muted);
+}
+.curation-answer-label .processing-mark,
+.curation-answer-label .processing-check {
+  width: 14px;
+  height: 14px;
+}
+.curation-answer-label .processing-mark .app-icon {
+  width: 14px;
+  height: 14px;
+}
+.curation-answer-author time {
+  flex: none;
+  font-size: 9px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.curation-answer-body {
+  padding-left: 35px;
+  font-size: 11px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.curation-answer-body h3 {
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.6;
+  margin: 10px 0 0;
+}
+.curation-answer-body p {
+  margin: 7px 0 0;
+}
+.curation-answer-facts {
+  display: grid;
+  gap: 9px;
+  margin: 14px 0 0;
+}
+.curation-answer-facts > div {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.curation-answer-facts dt {
+  min-width: 50px;
+  flex: none;
+  font-size: 10px;
+  color: var(--muted);
+}
+.curation-answer-facts dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.curation-answer-facts b {
+  font-weight: 600;
+}
+.curation-answer-facts dd > span {
+  color: var(--muted);
+  margin-left: 3px;
+}
+.curation-answer-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 12px;
+  padding-left: 35px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.7;
+}
+.curation-reply + .curation-reply {
+  margin-top: 17px;
+  padding-top: 17px;
+  border-top: 1px solid var(--border);
+}
+@media (max-width: 420px) {
+  .curation-answer-author > div {
+    gap: 5px;
+  }
+  .curation-answer-body,
+  .curation-answer-details {
+    padding-left: 0;
+  }
+}

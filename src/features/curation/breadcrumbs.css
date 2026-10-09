@@ -1,0 +1,49 @@
+.curation-breadcrumbs {
+  min-width: 0;
+}
+.curation-breadcrumbs ol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.curation-breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.curation-breadcrumbs li > .app-icon {
+  color: var(--muted);
+  opacity: 0.65;
+}
+.curation-breadcrumbs a {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 24px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: color 150ms ease;
+}
+.curation-breadcrumbs a[data-kind='project'] {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.curation-breadcrumbs a[aria-current='page'] {
+  color: var(--text);
+  font-weight: 550;
+}
+.curation-breadcrumbs a:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .curation-breadcrumbs a {
+    transition: none;
+  }
+}

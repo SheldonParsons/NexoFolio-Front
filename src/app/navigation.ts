@@ -17,8 +17,8 @@ export const navigation: NavigationItem[] = [
     keywords: 'project workspace xiangmu',
   },
   {
-    label: '接口目录',
-    description: '浏览接口与关联的业务知识',
+    label: '接口文档',
+    description: '浏览和整理项目中的接口知识',
     to: '/interfaces',
     icon: 'network',
     keywords: 'api interface mulu',

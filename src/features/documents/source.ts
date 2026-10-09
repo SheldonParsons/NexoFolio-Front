@@ -1,107 +1,73 @@
 import { api } from '@/api'
-import { projectsAreMock } from '@/features/projects/source'
-import { contractResponse, requireBinding } from './contract'
-import { DOCUMENT_PAGE_SIZE, ENVIRONMENT_PAGE_SIZE, type DocumentSource } from './types'
+import * as knowledge from '@/contracts/knowledge/source'
+import type { Catalog, EndpointCard, EndpointSummary } from '@/contracts/knowledge/types'
+import { contractResponse } from './contract'
+import type { ProjectEnvironment } from './types'
 
-export const documentsAreMock =
-  import.meta.env.VITE_DOCUMENTS_SOURCE === 'mock' ||
-  (import.meta.env.VITE_DOCUMENTS_SOURCE !== 'live' && projectsAreMock)
-const projectPath = (id: string) => `v1/projects/${encodeURIComponent(id)}`
-const documentPath = (projectId: string, interfaceId: string) =>
-  `${projectPath(projectId)}/interfaces/${encodeURIComponent(interfaceId)}`
-const environmentQuery = (id: string) => new URLSearchParams({ environment_id: id })
-export const liveDocumentSource: DocumentSource = {
-  async environments(projectId, page, signal) {
-    const query = new URLSearchParams({ page: String(page), limit: String(ENVIRONMENT_PAGE_SIZE) })
-    const result = contractResponse(
-      'EnvironmentPage',
-      await api.request(`${projectPath(projectId)}/environments?${query}`, {
-        signal,
-        cache: 'no-store',
-      }),
-    )
-    requireBinding(
-      result.page === page &&
-        result.limit === ENVIRONMENT_PAGE_SIZE &&
-        result.items.length <= result.limit,
-    )
-    return result
-  },
-  async interfaces(projectId, environmentId, page, search, signal) {
-    const query = environmentQuery(environmentId)
-    query.set('page', String(page))
-    query.set('limit', String(DOCUMENT_PAGE_SIZE))
-    if (search) query.set('query', search)
-    const result = contractResponse(
-      'InterfacePage',
-      await api.request(`${projectPath(projectId)}/interfaces?${query}`, {
-        signal,
-        cache: 'no-store',
-      }),
-    )
-    requireBinding(
-      result.environment_id === environmentId &&
-        result.page === page &&
-        result.limit === DOCUMENT_PAGE_SIZE &&
-        result.items.length <= result.limit &&
-        result.items.every((item) => item.environment_id === environmentId),
-    )
-    return result
-  },
-  async definition(projectId, environmentId, interfaceId, signal) {
-    const result = contractResponse(
-      'InterfaceDetail',
-      await api.request(
-        `${documentPath(projectId, interfaceId)}?${environmentQuery(environmentId)}`,
-        { signal, cache: 'no-store' },
-      ),
-    )
-    requireBinding(
-      result.project_id === projectId &&
-        result.environment.id === environmentId &&
-        result.interface_id === interfaceId &&
-        result.method === result.definition.method &&
-        result.path === result.definition.path,
-    )
-    return result
-  },
-  async observations(projectId, environmentId, interfaceId, page, signal) {
-    const query = environmentQuery(environmentId)
-    query.set('page', String(page))
-    query.set('limit', String(DOCUMENT_PAGE_SIZE))
-    const result = contractResponse(
-      'ObservationPage',
-      await api.request(`${documentPath(projectId, interfaceId)}/observations?${query}`, {
-        signal,
-        cache: 'no-store',
-      }),
-    )
-    requireBinding(
-      result.page === page &&
-        result.limit === DOCUMENT_PAGE_SIZE &&
-        result.items.length <= result.limit,
-    )
-    return result
-  },
-  async observation(projectId, environmentId, interfaceId, ingestionId, signal) {
-    const result = contractResponse(
-      'ObservationDetail',
-      await api.request(
-        `${projectPath(projectId)}/observations/${encodeURIComponent(ingestionId)}`,
-        { signal, cache: 'no-store' },
-      ),
-    )
-    requireBinding(
-      result.project_id === projectId &&
-        result.environment_id === environmentId &&
-        result.ingestion_id === ingestionId &&
-        (result.interface_id === null || result.interface_id === interfaceId),
-    )
-    return result
-  },
+const path = (id: string) => 'v1/projects/' + encodeURIComponent(id)
+export interface DocumentEntry extends EndpointCard {
+  folderId: string | null
+  summary: EndpointSummary
+}
+export interface DocumentIndex {
+  catalog: Catalog
+  entries: DocumentEntry[]
 }
 
-// Explicit fixture mode is isolated; live failures never become sample data.
-export async function getDocumentSource(): Promise<DocumentSource> {
-  return documentsAreMock ? (await import('./fixtures')).fixtureSource : liveDocumentSource
+export async function environments(
+  pid: string,
+  signal: AbortSignal,
+): Promise<ProjectEnvironment[]> {
+  const items = new Map<string, ProjectEnvironment>()
+  for (let page = 1; ; page++) {
+    const result = contractResponse(
+      'EnvironmentPage',
+      await api.request(path(pid) + '/environments?page=' + page + '&limit=100', {
+        signal,
+        cache: 'no-store',
+      }),
+    )
+    for (const item of result.items) items.set(item.id, item)
+    if (page * result.limit >= result.total) return [...items.values()]
+    if (!result.items.length) throw new Error('环境列表不完整，请重新读取。')
+  }
+}
+
+/** Read the shared project document; environments filter observations, not storage. */
+export async function documentIndex(pid: string, signal: AbortSignal): Promise<DocumentIndex> {
+  const [catalog, result] = await Promise.all([
+    knowledge.catalog(pid, signal),
+    api.request<{ endpoints: EndpointSummary[] }>(path(pid) + '/endpoints', { signal }),
+  ])
+  const summaries = new Map(result.endpoints.map((item) => [item.id, item]))
+  const folders: Array<string | null> = catalog.folders.map((folder) => folder.id)
+  if (catalog.unplaced) folders.push(null)
+  const pages = await Promise.all(
+    folders.map(async (folderId) => {
+      const entries: DocumentEntry[] = []
+      for (let page = 1; ; page++) {
+        const result = folderId
+          ? await knowledge.interfaces(pid, folderId, page, 100, signal)
+          : await knowledge.unclassified(pid, page, 100, signal)
+        for (const card of result.items) {
+          const summary = summaries.get(card.interface_id)
+          if (summary) entries.push({ ...card, folderId, summary })
+        }
+        if (page * result.limit >= result.total) return entries
+        if (!result.items.length) throw new Error('接口列表不完整，请重新读取。')
+      }
+    }),
+  )
+  return { catalog, entries: pages.flat() }
+}
+
+export function example(pid: string, endpoint: string, id: string, signal: AbortSignal) {
+  return api.request<{ observation: unknown }>(
+    path(pid) +
+      '/endpoints/' +
+      encodeURIComponent(endpoint) +
+      '/examples/' +
+      encodeURIComponent(id),
+    { signal, cache: 'no-store' },
+  )
 }

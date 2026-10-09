@@ -11,7 +11,7 @@ const watermarkUrl = `url("${import.meta.env.BASE_URL}brand/nexofolio-icon.svg")
     <WorkspaceHeader />
     <main id="main-content" class="projects-main" tabindex="-1">
       <div
-        v-if="route.name !== 'projects'"
+        v-if="route.name !== 'projects' && route.name !== 'mcp-credentials'"
         class="projects-watermark"
         :style="{ maskImage: watermarkUrl, WebkitMaskImage: watermarkUrl }"
         aria-hidden="true"

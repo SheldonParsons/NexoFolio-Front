@@ -1,0 +1,57 @@
+.curation-progress-entry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  gap: 7px;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  text-decoration: none;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 1px 2px #00000008;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.curation-progress-entry > .app-icon:first-child {
+  color: var(--muted);
+}
+.curation-progress-entry > .app-icon:last-child {
+  margin-left: 2px;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.curation-progress-entry:hover {
+  border-color: var(--text);
+  background: var(--surface-muted);
+  box-shadow: 0 3px 8px #0000000a;
+  transform: translateY(-1px);
+}
+.curation-progress-entry[aria-pressed='true'] {
+  border-color: var(--text);
+  background: var(--surface-muted);
+}
+.curation-progress-entry:hover > .app-icon:last-child {
+  transform: translateX(2px);
+}
+.curation-progress-entry:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .curation-progress-entry,
+  .curation-progress-entry > .app-icon {
+    transition: none !important;
+    transform: none !important;
+  }
+}

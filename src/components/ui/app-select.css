@@ -22,6 +22,15 @@
     background-color 160ms,
     box-shadow 160ms;
 }
+.nf-select-trigger[data-size='compact'] {
+  width: 144px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 10px;
+  gap: 12px;
+  border-radius: 6px;
+  font-size: 11px;
+}
 .nf-select-trigger:hover {
   background: var(--surface-muted, #f5f5f5);
 }
@@ -62,6 +71,15 @@
   font-size: 14px;
   line-height: 1.5;
   transform-origin: var(--reka-select-content-transform-origin);
+}
+.nf-select-content[data-size='compact'] {
+  width: max(160px, var(--reka-select-trigger-width, 144px));
+  font-size: 11px;
+}
+.nf-select-content[data-size='compact'] .nf-select-item {
+  min-height: 30px;
+  padding: 6px 8px;
+  font-size: 11px;
 }
 .nf-select-content[data-state='open'] {
   animation: nf-select-enter 180ms cubic-bezier(0.22, 1, 0.36, 1);

@@ -8,7 +8,11 @@
 - OSS：`oss://asynctest/linux_files/nexofolio/front/`，深圳地域。
 - 服务器目录：`/home/nexofolio/front`。
 - Nginx root：`/home/nexofolio/front/current/dist`。
-- 当前仅部署静态前端；登录、项目等依赖后端的功能暂不可用，`/api` 返回明确的 503 JSON。
+- 仓库中的 Nginx 示例保留 `/api` 的 503 占位；后端部署时应替换为实际代理，登录与项目请求才能到达后端。
+
+线上发布脚本现在默认使用 `VITE_WORKSPACE_ENABLED=true`：点击登录或工作空间入口会走真实登录和会话验证流程，不再默认显示「敬请期待」。本地开发同样默认开放登录；发布脚本显式传入该值，不修改本地环境文件。
+
+直接运行 `./upload-server.sh` 即可构建并上传开放登录的版本，再按下文更新服务器静态产物。该值属于构建时配置，已经部署的旧产物仍需替换才会生效。仅在刻意发布预览版时使用 `VITE_WORKSPACE_ENABLED=false ./upload-server.sh` 关闭入口；普通 `pnpm build` 默认保留登录能力。
 
 ## 1. 本地配置与上传
 
@@ -150,11 +154,29 @@ chmod 644 /etc/cron.d/nexofolio-certbot
 curl -I http://nexofolio.net/
 curl -I https://nexofolio.net/
 curl -I https://nexofolio.net/settings
+curl -I https://nexofolio.net/docs
+curl -I https://nexofolio.net/docs/
+curl -I https://nexofolio.net/docs/fetcher
+curl -I https://nexofolio.net/docs/fetcher/welcome.png
 curl -i https://nexofolio.net/api/v1/auth/me
 curl -I https://nexofolio.net/assets/does-not-exist.js
 ```
 
-预期依次为：301 跳转、200、SPA 路由 200、后端未接入的 503 JSON、不存在静态资源的 404。浏览器还需确认页面和实际 JS/CSS 均可加载。
+预期 HTTP 首页返回 301；HTTPS 首页、页面路由和现有文档图片均返回 200；后端未接入的 API 返回 503 JSON；不存在的 assets 返回 404。浏览器还需确认页面和实际 JS/CSS 均可加载。
+
+### 文档直接访问或刷新返回 403
+
+发布产物包含 `dist/docs/fetcher/` 图片目录。如果 `location /` 使用 `try_files $uri $uri/ /index.html;`，直接访问 `/docs` 或 `/docs/fetcher` 会匹配真实目录，跳转到带尾斜杠的地址后，因为目录没有 `index.html` 而返回 403。站内点击由 Vue Router 处理，因此仍能正常显示。
+
+本项目的正式配置使用 `try_files $uri /index.html;`，只匹配真实文件；页面路由（包括末尾带 `/` 的地址）回退到前端入口，现有图片仍正常提供。已经部署的服务器需要将生效的 `/etc/nginx/conf.d/nexofolio.net.conf` 中对应规则改为：
+
+```nginx
+location / {
+    try_files $uri /index.html;
+}
+```
+
+编辑前备份当前站点配置，编辑后执行 `nginx -t && systemctl reload nginx`。该修复必须更新生效的 Nginx 配置；只运行 `upload-server.sh` 和 `update-front.sh` 更新静态产物不能应用这条规则。完成后用上面的 `/docs`、`/docs/`、`/docs/fetcher` 和图片地址验证，再在浏览器中直接打开并刷新文档页。
 
 ## 6. 日常更新与回退
 

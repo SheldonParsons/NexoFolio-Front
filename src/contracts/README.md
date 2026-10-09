@@ -14,3 +14,5 @@ Earlier pinned bundles are retained for history; active feature imports use the 
 Every file named in each manifest and `types.generated.ts` was checked against its SHA-256 before and after copying. The source manifests were compared again after implementation. `src/contracts` is excluded from Prettier to preserve these bytes.
 
 Do not edit generated types or schemas. Review a new backend bundle explicitly, copy its manifest and files together, and update the imports. Runtime validation uses Ajv 2020-12 plus UUID/date-time formats; catalog preview additionally validates Schemars numeric formats. Initial document integration was not tested because the user prohibited testing at that time. The separately authorized catalog-preview change passed its focused frontend tests, typecheck and production build on 2026-09-15.
+
+- `collect/1.1.0`: synced from backend collect v1; adds partial body summaries while retaining v1 queue compatibility. Current workbench and downloadable bundle use 1.1.0.

@@ -7,6 +7,7 @@ import AppIcon from '@/components/icons/AppIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 import { authErrorMessage, login } from '@/api/auth'
 import { saveCredential } from '@/api/session'
+import { workspaceEnabled } from '@/app/deployment'
 import {
   readRememberedCredentials,
   setRememberPreference,
@@ -24,6 +25,7 @@ const preferenceError = ref('')
 const submitting = ref(false)
 const errorMessage = ref('')
 const accountInput = ref<HTMLInputElement | null>(null)
+const docsButton = ref<HTMLButtonElement | null>(null)
 let controller: AbortController | undefined
 let generation = 0
 let returnFocus: HTMLElement | null = null
@@ -44,6 +46,7 @@ watch(
       returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
       errorMessage.value = auth.entryError
       preferenceError.value = ''
+      if (!workspaceEnabled) return
       try {
         const saved = readRememberedCredentials()
         remember.value = saved.enabled
@@ -60,7 +63,15 @@ watch(
 onBeforeUnmount(cancel)
 function focusDialog(event: Event) {
   event.preventDefault()
+  if (!workspaceEnabled) {
+    docsButton.value?.focus({ preventScroll: true })
+    return
+  }
   accountInput.value?.closest<HTMLElement>('[role="dialog"]')?.focus({ preventScroll: true })
+}
+function viewDocs() {
+  auth.loginOpen = false
+  void router.push('/docs')
 }
 function restoreFocus(event: Event) {
   event.preventDefault()
@@ -86,6 +97,7 @@ function changeRemember(event: Event) {
 }
 
 async function submit() {
+  if (!workspaceEnabled) return
   if (submitting.value) return
   errorMessage.value = ''
   const name = account.value.trim()
@@ -135,14 +147,26 @@ async function submit() {
 <template>
   <AppDialog
     v-model:open="auth.loginOpen"
-    title="登录 NexoFolio"
-    description="使用你的禅道账号，进入知识工作空间。"
+    :title="workspaceEnabled ? '登录 NexoFolio' : '敬请期待'"
+    :description="
+      workspaceEnabled
+        ? '使用你的禅道账号，进入知识工作空间。'
+        : 'NexoFolio 工作空间正在准备中。欢迎先查看文档，了解产品和使用方式。'
+    "
     tone="dark"
     @open-auto-focus="focusDialog"
     @close-auto-focus="restoreFocus"
   >
     <div class="login-brand"><BrandLogo tone="light" /></div>
-    <form class="login-form" @submit.prevent="submit">
+    <div v-if="!workspaceEnabled" class="preview-actions">
+      <button ref="docsButton" class="login-submit" type="button" @click="viewDocs">
+        先看文档<AppIcon name="arrow-right" :size="17" />
+      </button>
+      <button class="preview-dismiss" type="button" @click="auth.loginOpen = false">
+        继续浏览
+      </button>
+    </div>
+    <form v-else class="login-form" @submit.prevent="submit">
       <div class="login-field">
         <label for="nexo-account">账号</label
         ><input
@@ -212,6 +236,23 @@ async function submit() {
 <style scoped>
 .login-brand {
   padding: 2px 0 27px;
+}
+.preview-actions {
+  display: grid;
+  gap: 10px;
+}
+.preview-dismiss {
+  min-height: 44px;
+  border: 1px solid #303030;
+  border-radius: 7px;
+  background: transparent;
+  color: #b8b8b8;
+  font: inherit;
+  font-size: 12px;
+}
+.preview-dismiss:hover {
+  background: #1b1b1b;
+  color: #efefef;
 }
 .login-form {
   display: grid;

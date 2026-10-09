@@ -1,4 +1,4 @@
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import type { Project, ProjectSource } from './types'
 export interface RecentVisit {
   id: string

@@ -1,9 +1,10 @@
 import { onScopeDispose, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import { clearCredential } from '@/api/session'
 import { useAuthStore } from '@/stores/auth'
 import { useNavigationTransition } from '@/stores/navigationTransition'
+import { useActiveProject } from './useActiveProject'
 import { recordVisit, removeVisit } from './recent'
 import type { Project, ProjectSource } from './types'
 
@@ -15,6 +16,7 @@ export function useProjectEntry(
   const router = useRouter()
   const auth = useAuthStore()
   const transition = useNavigationTransition()
+  const activeProject = useActiveProject()
   const openingId = ref<string | null>(null)
   const explanation = ref('')
   const projectName = ref('')
@@ -25,12 +27,13 @@ export function useProjectEntry(
   let navigating = false
   async function open(project: Project) {
     if (openingId.value) return
+    const ownerId = auth.user?.id
     const request = new AbortController()
     controller = request
     openingId.value = project.project_id
     try {
       const current = await source.get(project.project_id, request.signal)
-      if (disposed || request.signal.aborted) return
+      if (disposed || request.signal.aborted || auth.user?.id !== ownerId) return
       if (!current.can_access || current.access_state !== 'allowed')
         throw new ApiError(
           '暂时无法确认项目权限。',
@@ -40,11 +43,14 @@ export function useProjectEntry(
       run = transition.start(`正在进入${current.name}`, 2000)
       navigating = true
       const failure = await router.push(
-        `/projects/${encodeURIComponent(current.project_id)}/catalog`,
+        `/projects/${encodeURIComponent(current.project_id)}/interfaces`,
       )
       if (failure) transition.finish(run)
       else {
-        recordVisit(scope, current.project_id)
+        if (auth.user?.id === ownerId) {
+          activeProject.remember(current)
+          recordVisit(scope, current.project_id)
+        }
         transition.settle(run)
       }
     } catch (cause) {

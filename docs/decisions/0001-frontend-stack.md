@@ -101,7 +101,7 @@ Vite preview 用于本地查看构建结果，不作为生产服务。
 
 Nginx 配置要求：
 
-- 静态根目录指向发布目录；History 路由使用 `try_files $uri $uri/ /index.html` 回退。
+- 静态根目录指向发布目录；History 路由使用 `try_files $uri /index.html` 回退，只匹配文件，避免 `docs/` 等静态目录遮蔽同名页面路由。
 - assets 下不存在的资源返回 404，不能返回 HTML；带内容哈希的资源可长期缓存。
 - index.html 和运行时公开配置采用重新验证或短缓存策略，避免发布后继续引用旧资源。
 - 后端 HTTP API 使用独立代理 location，不进入 SPA 回退；建议同源 `/api/`，实际前缀由后端契约确定。

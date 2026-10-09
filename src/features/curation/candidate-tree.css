@@ -1,0 +1,108 @@
+/* Candidate navigation shares the formal document's tree, density and fold motion. */
+.candidate-document > .candidate-tree-navigation {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.candidate-tree-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 11px;
+  flex: none;
+}
+.candidate-tree-heading strong {
+  font-weight: 550;
+}
+.candidate-tree-heading span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.candidate-tree-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 8px 16px;
+}
+/* Paint selection inside the row; shared document pseudo-elements cannot escape into the page. */
+.candidate-tree-scroll :is(.document-folder-heading, .candidate-endpoint-select).is-current {
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text);
+  background-color: var(--surface-muted);
+  background-image: linear-gradient(var(--text), var(--text));
+  background-size: 2px calc(100% - 12px);
+  background-position: left center;
+  background-repeat: no-repeat;
+}
+.candidate-folder-select {
+  font-family: inherit;
+  flex: 1;
+  min-width: 0;
+}
+.candidate-folder-select > span {
+  flex: 1;
+}
+.candidate-folder-select small {
+  margin-left: 0;
+  flex: none;
+  font-size: 9px;
+}
+.candidate-tree-mark {
+  font-size: 9px;
+  line-height: 16px;
+  color: var(--muted);
+  font-weight: 400;
+  flex: none;
+}
+.document-folder-items > .candidate-endpoint-select {
+  width: calc(100% - 10px);
+  margin-left: 10px;
+}
+.candidate-folder-overview-heading {
+  margin-bottom: 22px;
+}
+.candidate-folder-overview-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.candidate-folder-overview-heading > p:not(.document-breadcrumbs) {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.candidate-folder-overview-heading > .document-overview-meta {
+  font-size: 11px;
+}
+.candidate-endpoint .document-overview-card {
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+.candidate-endpoint .document-overview-card:hover {
+  background: var(--surface-muted);
+}
+.candidate-endpoint .candidate-overview-entry .interface-item-content strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.candidate-folder-change {
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.candidate-folder-change > summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.curation-section-filter small {
+  font-size: inherit;
+  opacity: 0.75;
+  margin-left: 3px;
+}

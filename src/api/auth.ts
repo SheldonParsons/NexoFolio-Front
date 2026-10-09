@@ -7,6 +7,7 @@ export interface UserProfile {
   account: string
   display_name: string
   enabled: boolean
+  avatar_url?: string | null
 }
 export interface LoginResponse {
   user: UserProfile

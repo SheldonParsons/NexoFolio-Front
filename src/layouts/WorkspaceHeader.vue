@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import UserMenu from '@/features/profile/UserMenu.vue'
 import WorkspaceNavigation from '@/features/navigation/WorkspaceNavigation.vue'
 import BrandLogo from '@/components/brand/BrandLogo.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -12,7 +13,6 @@ const preferences = usePreferencesStore()
 const router = useRouter()
 const route = useRoute()
 const themeMotion = useIconInteraction()
-const exitMotion = useIconInteraction()
 function logout() {
   auth.signOut()
   void router.push('/')
@@ -46,27 +46,7 @@ function logout() {
           />
         </button>
         <span v-if="auth.user" class="workspace-utilities-divider" aria-hidden="true"></span>
-        <div v-if="auth.user" class="workspace-identity" :title="auth.displayName">
-          <span class="workspace-avatar">{{ auth.displayName.slice(0, 1) || 'N' }}</span>
-          <span class="workspace-user-name">{{ auth.displayName }}</span>
-        </div>
-        <button
-          v-if="auth.user"
-          type="button"
-          class="workspace-tool workspace-exit"
-          aria-label="退出登录"
-          title="退出登录"
-          v-on="exitMotion.events"
-          @click="logout"
-        >
-          <AppIcon
-            name="log-out"
-            active-name="door-open"
-            :active="exitMotion.active.value"
-            :size="19"
-          />
-          <span>退出</span>
-        </button>
+        <UserMenu v-if="auth.user" @logout="logout" />
         <RouterLink v-else to="/projects" class="workspace-tool workspace-enter"
           >进入 NexoFolio</RouterLink
         >

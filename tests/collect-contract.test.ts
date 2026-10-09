@@ -11,11 +11,11 @@ import {
   unlabeledExamples,
   validExamples,
 } from '../src/features/collect-docs/contract'
-import manifest from '../src/contracts/collect/1.0.0/manifest.json'
-import receiptSchema from '../src/contracts/collect/1.0.0/receipt.schema.json'
-import errorSchema from '../src/contracts/collect/1.0.0/error.schema.json'
+import manifest from '../src/contracts/collect/1.1.0/manifest.json'
+import receiptSchema from '../src/contracts/collect/1.1.0/receipt.schema.json'
+import errorSchema from '../src/contracts/collect/1.1.0/error.schema.json'
 
-const contractDir = fileURLToPath(new URL('../src/contracts/collect/1.0.0/', import.meta.url))
+const contractDir = fileURLToPath(new URL('../src/contracts/collect/1.1.0/', import.meta.url))
 const example = (name: string) =>
   [...validExamples, ...invalidExamples].find((item) => item.name === name)!
 
@@ -30,7 +30,7 @@ describe('collect contract bundle', () => {
   })
 
   it('offers every fixture as a labelled example', () => {
-    expect(validExamples).toHaveLength(4)
+    expect(validExamples).toHaveLength(5)
     expect(invalidExamples).toHaveLength(25)
     expect(unlabeledExamples).toEqual([])
   })

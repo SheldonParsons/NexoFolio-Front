@@ -1,4 +1,4 @@
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import type { Project, ProjectSource } from './types'
 
 // Fictional projects with the same wire shape as GET /v1/projects.

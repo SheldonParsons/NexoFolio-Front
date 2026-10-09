@@ -8,9 +8,12 @@ export interface LogoFilm {
   setLoop(loop: boolean): void
   destroy(): void
 }
-export function createLogoScene(host: HTMLElement, callbacks: {
-  onFrame(time: number): void
-  onPlay(playing: boolean): void
-  onReady(reducedMotion: boolean): void
-  onError(): void
-}): LogoFilm
+export function createLogoScene(
+  host: HTMLElement,
+  callbacks: {
+    onFrame(time: number): void
+    onPlay(playing: boolean): void
+    onReady(reducedMotion: boolean): void
+    onError(): void
+  },
+): LogoFilm

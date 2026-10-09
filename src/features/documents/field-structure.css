@@ -1,0 +1,196 @@
+.field-structure {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 660px;
+  font-size: 12px;
+}
+.field-column {
+  width: 29%;
+}
+.type-column {
+  width: 12%;
+}
+.meaning-column {
+  width: 39%;
+}
+.value-column {
+  width: 20%;
+}
+th {
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+th span {
+  font-size: 10px;
+  font-weight: 400;
+  margin-left: 5px;
+  opacity: 0.75;
+}
+td {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 19px;
+}
+.field-container .field-identity code {
+  font-weight: 600;
+}
+.field-identity > div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: calc(var(--field-depth) * 15px);
+  min-width: 0;
+}
+.field-identity code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.field-display-name {
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.field-fold {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 19px;
+  border: 0;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.field-fold:hover {
+  color: var(--text);
+}
+.field-fold :deep(svg),
+.field-meaning :deep(svg) {
+  transition: transform 160ms ease;
+}
+.closed {
+  transform: rotate(-90deg);
+}
+.field-leaf {
+  width: 16px;
+  flex: none;
+  position: relative;
+}
+.field-leaf::after {
+  content: '';
+  position: absolute;
+  width: 7px;
+  border-top: 1px solid var(--border);
+  left: 5px;
+  top: 0;
+}
+.field-status {
+  color: var(--text);
+  cursor: help;
+}
+.field-type,
+.field-unwritten {
+  color: var(--muted);
+  font-size: 11px;
+}
+.field-meaning {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  text-align: left;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.field-meaning > span {
+  flex: 1;
+}
+.field-meaning small {
+  flex: none;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 15px;
+}
+.field-meaning:hover > span {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+.field-values {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.field-values code {
+  min-width: 0;
+}
+.field-more-values {
+  flex: none;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+.field-more-values:hover {
+  color: var(--text);
+}
+.field-values code {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+.field-has-evidence td {
+  background: var(--surface-muted);
+}
+.field-evidence-row > td {
+  padding: 12px 20px 14px;
+  background: var(--surface-muted);
+}
+.field-element-meaning {
+  margin: 12px 0 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-fold :deep(svg),
+  .field-meaning :deep(svg) {
+    transition: none;
+  }
+}

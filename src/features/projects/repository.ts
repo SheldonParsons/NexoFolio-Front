@@ -1,4 +1,4 @@
-import { ApiError } from '@/api/client'
+import { ApiError } from '@/api'
 import type { Project, ProjectPage, ProjectSource } from './types'
 
 type Request = <T>(path: string, options: { signal: AbortSignal }) => Promise<T>

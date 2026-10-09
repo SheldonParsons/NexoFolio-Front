@@ -6,8 +6,12 @@ import { productArticles } from '@/features/product-docs/content'
 import { renderArticle } from '@/features/product-docs/markdown'
 import MarkdownContent from '@/features/product-docs/MarkdownContent.vue'
 import PhilosophyArticle from '@/features/product-docs/PhilosophyArticle.vue'
+import FetcherGuide from '@/features/product-docs/FetcherGuide.vue'
 import DocsSearch from '@/features/product-docs/DocsSearch.vue'
 import CollectApiArticle from '@/features/collect-docs/CollectApiArticle.vue'
+import { collectDocHeadings } from '@/features/collect-docs/guide'
+import McpGuide from '@/features/mcp-docs/McpGuide.vue'
+import { mcpDocHeadings } from '@/features/mcp-docs/content'
 const route = useRoute()
 const article = computed(() =>
   productArticles.find((item) => item.slug === (route.params.docSlug || 'philosophy')),
@@ -27,10 +31,16 @@ watch(
 )
 
 // Long reference pages get an in-page outline on wide screens.
-const tocSlugs = new Set(['api'])
+const tocSlugs = new Set(['api', 'mcp'])
 const toc = computed(() =>
   article.value && tocSlugs.has(article.value.slug)
-    ? renderArticle(article.value.body, article.value.slug).headings.filter((h) => h.level === 2)
+    ? article.value.slug === 'api'
+      ? collectDocHeadings
+      : article.value.slug === 'mcp'
+        ? mcpDocHeadings
+        : renderArticle(article.value.body, article.value.slug).headings.filter(
+            (h) => h.level === 2,
+          )
     : [],
 )
 const scroller = ref<HTMLElement>()
@@ -113,11 +123,13 @@ onBeforeUnmount(() => cancelAnimationFrame(frame))
             :body="article.body"
             :prefix="article.slug"
           />
+          <FetcherGuide v-else-if="article.slug === 'fetcher'" />
           <CollectApiArticle
             v-else-if="article.slug === 'api'"
             :body="article.body"
             :prefix="article.slug"
           />
+          <McpGuide v-else-if="article.slug === 'mcp'" />
           <MarkdownContent v-else :body="article.body" :prefix="article.slug" />
           <footer class="pd-article-footer">
             <RouterLink v-if="previous" :to="previous.path"

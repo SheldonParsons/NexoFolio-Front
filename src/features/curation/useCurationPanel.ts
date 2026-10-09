@@ -1,0 +1,176 @@
+import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { ApiError } from '@/api'
+import type { CurateProgress } from '@/contracts/knowledge/types'
+import type { CandidateSummary } from './types'
+import * as source from './source'
+import { panelOptions, panelProgress, panelRank, preferredPanelRow } from './panelSelection'
+
+/** Display selection is local to this page and never starts, resumes or cancels a worker. */
+export function useCurationPanel(
+  projectId: () => string,
+  pageKey: () => string,
+  live: () => CurateProgress | null,
+  liveBusy: () => boolean,
+  unauthorized: () => void,
+  requestedRunKey: () => string = () => '',
+) {
+  const preferred = shallowRef<CandidateSummary | null>(null)
+  const manual = shallowRef<CandidateSummary | null>(null)
+  const rows = shallowRef<CandidateSummary[]>([])
+  const error = ref(''),
+    listError = ref(''),
+    listLoading = ref(false)
+  const accessDenied = ref(false)
+  let read: AbortController | undefined, listRead: AbortController | undefined
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let disposed = false
+  const selected = computed(() => manual.value ?? preferred.value)
+  const options = computed(() => panelOptions(rows.value, preferred.value, selected.value))
+  const progress = computed(() => {
+    const job = live(),
+      chosen = selected.value
+    if (liveBusy() && !manual.value) return job
+    if (!chosen) return null
+    if (chosen.id === job?.candidate_id && chosen.state === 'running') return job
+    return panelProgress(chosen)
+  })
+  const busy = computed(() => (!manual.value && liveBusy()) || progress.value?.status === 'running')
+  const historicalOnly = computed(
+    () => !liveBusy() && (!preferred.value || panelRank(preferred.value.state) >= 2),
+  )
+  const projectRunning = computed(
+    () =>
+      liveBusy() ||
+      (preferred.value?.state === 'running' &&
+        !(live()?.candidate_id === preferred.value.id && live()?.status !== 'running')),
+  )
+  function report(cause: unknown, target: typeof error) {
+    if (cause instanceof ApiError && [401, 403].includes(cause.status ?? 0))
+      accessDenied.value = true
+    if (cause instanceof ApiError && cause.status === 401) unauthorized()
+    else
+      target.value =
+        cause instanceof ApiError && cause.status === 403
+          ? '没有权限查看当前项目的整理记录。'
+          : '暂时无法读取整理记录，请重试。'
+  }
+  function schedule() {
+    clearTimeout(timer)
+    if (!disposed && !accessDenied.value) timer = setTimeout(() => void refresh(), 5000)
+  }
+  async function refresh() {
+    clearTimeout(timer)
+    read?.abort()
+    const pid = projectId(),
+      page = pageKey(),
+      pinned = manual.value?.id ?? ''
+    if (!pid) return
+    const current = new AbortController()
+    read = current
+    const owns = () =>
+      !disposed &&
+      read === current &&
+      !current.signal.aborted &&
+      projectId() === pid &&
+      pageKey() === page &&
+      (manual.value?.id ?? '') === pinned
+    try {
+      const values = await source.panelCandidates(pid, current.signal, pinned)
+      if (!owns()) return
+      // The first row is the authoritative default; the second may be a pinned lower-priority row.
+      preferred.value = preferredPanelRow(values, pid)
+      if (pinned)
+        manual.value = values.find((row) => row.project_id === pid && row.id === pinned) ?? null
+      error.value = ''
+    } catch (cause) {
+      if (owns()) report(cause, error)
+    } finally {
+      if (read === current && !disposed && !current.signal.aborted) schedule()
+    }
+  }
+  async function loadOptions() {
+    listRead?.abort()
+    const current = new AbortController(),
+      pid = projectId(),
+      page = pageKey()
+    listRead = current
+    listLoading.value = true
+    listError.value = ''
+    const owns = () =>
+      !disposed &&
+      listRead === current &&
+      !current.signal.aborted &&
+      projectId() === pid &&
+      pageKey() === page
+    try {
+      const values = await source.candidates(pid, current.signal)
+      if (owns()) rows.value = values.filter((row) => row.project_id === pid)
+    } catch (cause) {
+      if (owns()) report(cause, listError)
+    } finally {
+      if (listRead === current) listLoading.value = false
+    }
+  }
+  function select(id: string) {
+    const row = options.value.find((item) => item.id === id && item.project_id === projectId())
+    if (!row) return
+    manual.value = row
+    void refresh()
+  }
+  function pin(row: CandidateSummary) {
+    if (row.project_id !== projectId()) return
+    manual.value = row
+    void refresh()
+  }
+  function reset() {
+    read?.abort()
+    listRead?.abort()
+    clearTimeout(timer)
+    preferred.value = null
+    manual.value = null
+    rows.value = []
+    error.value = ''
+    listError.value = ''
+    listLoading.value = false
+    accessDenied.value = false
+    void refresh()
+  }
+  watch([projectId, pageKey], reset, { immediate: true })
+  watch(liveBusy, () => {
+    void refresh()
+  })
+  watch(requestedRunKey, () => {
+    manual.value = null
+    void refresh()
+  })
+  watch(
+    () => live()?.candidate_id,
+    () => {
+      if (liveBusy()) void refresh()
+    },
+  )
+  onScopeDispose(() => {
+    disposed = true
+    read?.abort()
+    listRead?.abort()
+    clearTimeout(timer)
+  })
+  return {
+    preferred,
+    selected,
+    progress,
+    busy,
+    historicalOnly,
+    projectRunning,
+    accessDenied,
+    options,
+    error,
+    listError,
+    listLoading,
+    manual,
+    refresh,
+    loadOptions,
+    select,
+    pin,
+  }
+}

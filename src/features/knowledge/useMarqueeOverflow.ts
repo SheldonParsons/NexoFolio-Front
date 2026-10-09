@@ -9,19 +9,34 @@ import type { Ref } from 'vue'
  */
 const SPEED_PX_PER_SECOND = 44
 const MIN_DURATION_MS = 420
+const LOOP_GAP_PX = 32
 
-export function useMarqueeOverflow(element: Ref<HTMLElement | undefined>, text: Ref<string>) {
+export function useMarqueeOverflow(
+  element: Ref<HTMLElement | undefined>,
+  text: Ref<string>,
+  endInset = 0,
+) {
   const overflowing = ref(false)
   const distance = ref(0)
+  const textWidth = ref(0)
   let observer: ResizeObserver | undefined
+
+  const contentFor = (node: HTMLElement) =>
+    node.querySelector<HTMLElement>('[data-marquee-text]') ??
+    (node.firstElementChild as HTMLElement | null)
 
   function measure() {
     const node = element.value
     if (!node) {
       overflowing.value = false
+      distance.value = 0
+      textWidth.value = 0
       return
     }
-    const slack = node.scrollWidth - node.clientWidth
+    // Measure the text itself so a running transform does not change its width.
+    const content = contentFor(node)
+    textWidth.value = content?.getBoundingClientRect().width ?? node.scrollWidth
+    const slack = textWidth.value - node.clientWidth
     overflowing.value = slack > 1
     distance.value = Math.max(0, slack)
   }
@@ -29,15 +44,42 @@ export function useMarqueeOverflow(element: Ref<HTMLElement | undefined>, text: 
   onMounted(() => {
     measure()
     observer = new ResizeObserver(measure)
-    if (element.value) observer.observe(element.value)
+    if (element.value) observe(element.value)
   })
-  watch(text, () => requestAnimationFrame(measure))
+  function observe(node: HTMLElement) {
+    observer?.observe(node)
+    const content = contentFor(node)
+    if (content) observer?.observe(content)
+  }
+  function unobserve(node: HTMLElement) {
+    observer?.unobserve(node)
+    const content = contentFor(node)
+    if (content) observer?.unobserve(content)
+  }
+  watch(text, measure, { flush: 'post' })
+  watch(
+    element,
+    (node, previous) => {
+      if (previous) unobserve(previous)
+      if (node) observe(node)
+      measure()
+    },
+    { flush: 'post' },
+  )
   onBeforeUnmount(() => observer?.disconnect())
 
-  const style = () => ({
-    '--marquee-shift': `${-distance.value}px`,
-    '--marquee-duration': `${Math.max(MIN_DURATION_MS, (distance.value / SPEED_PX_PER_SECOND) * 1000).toFixed(0)}ms`,
-  })
+  const style = () => {
+    // Leave the final characters clear of the faded edge when scrolling ends.
+    const travel = distance.value + (overflowing.value ? endInset : 0)
+    const loopTravel = textWidth.value + LOOP_GAP_PX
+    return {
+      '--marquee-shift': `${-travel}px`,
+      '--marquee-duration': `${Math.max(MIN_DURATION_MS, (travel / SPEED_PX_PER_SECOND) * 1000).toFixed(0)}ms`,
+      '--marquee-loop-gap': `${LOOP_GAP_PX}px`,
+      '--marquee-loop-shift': `${-loopTravel}px`,
+      '--marquee-loop-duration': `${Math.max(MIN_DURATION_MS, (loopTravel / SPEED_PX_PER_SECOND) * 1000).toFixed(0)}ms`,
+    }
+  }
 
   return { overflowing, distance, style, measure }
 }

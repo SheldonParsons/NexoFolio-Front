@@ -48,7 +48,9 @@ function handleClick() {
 </template>
 
 <style scoped>
-.fetcher-cta { margin: 24px 0 28px; }
+.fetcher-cta {
+  margin: 24px 0 28px;
+}
 .fetcher-cta-button {
   position: relative;
   isolation: isolate;
@@ -68,8 +70,13 @@ function handleClick() {
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 #ffffff0d, 0 4px 10px #0000000c;
-  transition: border-color 220ms, box-shadow 220ms, transform 220ms;
+  box-shadow:
+    inset 0 1px 0 #ffffff0d,
+    0 4px 10px #0000000c;
+  transition:
+    border-color 220ms,
+    box-shadow 220ms,
+    transform 220ms;
 }
 .fetcher-cta-button::after {
   content: '';
@@ -77,7 +84,14 @@ function handleClick() {
   z-index: -1;
   inset: -70% auto -70% -80%;
   width: 55%;
-  background: linear-gradient(90deg, transparent, #ffffff05 20%, #ffffff29 52%, #ffffff05 75%, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #ffffff05 20%,
+    #ffffff29 52%,
+    #ffffff05 75%,
+    transparent
+  );
   transform: skewX(-25deg);
   pointer-events: none;
 }
@@ -86,38 +100,101 @@ function handleClick() {
   z-index: -2;
   inset: -60%;
   opacity: 0;
-  background: radial-gradient(ellipse at 35% 60%, #7c8ba64d, transparent 40%), radial-gradient(ellipse at 70% 65%, #b3a9c333, transparent 35%);
+  background:
+    radial-gradient(ellipse at 35% 60%, #7c8ba64d, transparent 40%),
+    radial-gradient(ellipse at 70% 65%, #b3a9c333, transparent 35%);
   transition: opacity 250ms;
   pointer-events: none;
 }
 .fetcher-cta-button:is(:hover, :focus-visible):not(:disabled) {
   transform: translateY(-1px);
   border-color: #686868;
-  box-shadow: inset 0 1px 0 #ffffff17, 0 8px 22px #0000001a;
+  box-shadow:
+    inset 0 1px 0 #ffffff17,
+    0 8px 22px #0000001a;
 }
 .fetcher-cta-button:is(:hover, :focus-visible):not(:disabled)::after {
-  animation: fetcher-sheen 2.8s cubic-bezier(.22, 1, .36, 1) infinite;
+  animation: fetcher-sheen 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 .fetcher-cta-button:is(:hover, :focus-visible):not(:disabled) .fetcher-cta-light {
   opacity: 1;
   animation: fetcher-light 3s ease-in-out infinite alternate;
 }
-.fetcher-cta-button:focus-visible { outline: 2px solid var(--text); outline-offset: 4px; }
-.fetcher-cta-button:active:not(:disabled) { transform: translateY(0); }
-.fetcher-cta-button:disabled { cursor: wait; }
-.fetcher-cta-logo { flex: none; object-fit: contain; filter: invert(1); }
-.fetcher-cta-copy { display: grid; gap: 4px; min-width: 0; }
-.fetcher-cta-copy strong { font-size: 15px; line-height: 1.3; font-weight: 550; letter-spacing: -.2px; }
-.fetcher-cta-copy > span { font-size: 11px; line-height: 1.5; color: #b7b7bd; }
-.fetcher-cta-arrow { margin-left: auto; display: flex; transform: rotate(90deg); transition: transform 220ms; }
-.fetcher-cta-button:is(:hover, :focus-visible) .fetcher-cta-arrow { transform: translateY(2px) rotate(90deg); }
-.fetcher-cta > p { margin: 10px 0 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
-@keyframes fetcher-sheen { 0% { left: -80%; } 65%, 100% { left: 150%; } }
-@keyframes fetcher-light { to { transform: translate(5%, -5%) rotate(12deg); } }
+.fetcher-cta-button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+.fetcher-cta-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+.fetcher-cta-button:disabled {
+  cursor: wait;
+}
+.fetcher-cta-logo {
+  flex: none;
+  object-fit: contain;
+  filter: invert(1);
+}
+.fetcher-cta-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.fetcher-cta-copy strong {
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 550;
+  letter-spacing: -0.2px;
+}
+.fetcher-cta-copy > span {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #b7b7bd;
+}
+.fetcher-cta-arrow {
+  margin-left: auto;
+  display: flex;
+  transform: rotate(90deg);
+  transition: transform 220ms;
+}
+.fetcher-cta-button:is(:hover, :focus-visible) .fetcher-cta-arrow {
+  transform: translateY(2px) rotate(90deg);
+}
+.fetcher-cta > p {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+@keyframes fetcher-sheen {
+  0% {
+    left: -80%;
+  }
+  65%,
+  100% {
+    left: 150%;
+  }
+}
+@keyframes fetcher-light {
+  to {
+    transform: translate(5%, -5%) rotate(12deg);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .fetcher-cta-button, .fetcher-cta-arrow, .fetcher-cta-light { transition: none; }
-  .fetcher-cta-button:is(:hover, :focus-visible) { transform: none; }
-  .fetcher-cta-button:is(:hover, :focus-visible) .fetcher-cta-arrow { transform: rotate(90deg); }
-  .fetcher-cta-button::after, .fetcher-cta-button .fetcher-cta-light { animation: none !important; }
+  .fetcher-cta-button,
+  .fetcher-cta-arrow,
+  .fetcher-cta-light {
+    transition: none;
+  }
+  .fetcher-cta-button:is(:hover, :focus-visible) {
+    transform: none;
+  }
+  .fetcher-cta-button:is(:hover, :focus-visible) .fetcher-cta-arrow {
+    transform: rotate(90deg);
+  }
+  .fetcher-cta-button::after,
+  .fetcher-cta-button .fetcher-cta-light {
+    animation: none !important;
+  }
 }
 </style>

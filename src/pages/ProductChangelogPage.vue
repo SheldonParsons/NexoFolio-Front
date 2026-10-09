@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import MarkdownContent from '@/features/product-docs/MarkdownContent.vue'
 import DocsSearch from '@/features/product-docs/DocsSearch.vue'
-import { productUpdates, productLabels } from '@/features/product-docs/content'
+import { productUpdates, productLabels, updateStatusLabels } from '@/features/product-docs/content'
 import { useCopyLink } from '@/features/product-docs/useCopyLink'
 const route = useRoute()
 const router = useRouter()
@@ -36,7 +36,7 @@ function date(value: string) {
           <h1>更新日志</h1>
           <DocsSearch />
         </div>
-        <p>记录 NexoFolio 的每一步。</p>
+        <p>记录 NexoFolio 与 Fetcher 的功能更新和使用改进。</p>
         <nav v-if="!route.params.entry" class="pd-product-filters" aria-label="按产品筛选更新">
           <button
             v-for="option in [
@@ -64,7 +64,7 @@ function date(value: string) {
           {{
             route.params.entry
               ? '可以返回更新日志继续浏览。'
-              : 'Fetcher 的版本记录将在这里更新，当前安装包可从顶部下载入口获取。'
+              : '当前筛选下暂无记录，可以切换产品或查看全部更新。'
           }}
         </p>
         <RouterLink to="/changelog"
@@ -80,7 +80,9 @@ function date(value: string) {
           </aside>
           <div class="pd-release-content">
             <header>
-              <span v-if="entry.preview" class="pd-preview-label">预览记录</span>
+              <span class="pd-release-state" :data-status="entry.status">{{
+                updateStatusLabels[entry.status]
+              }}</span>
               <h2>
                 <RouterLink :to="`/changelog/${entry.slug}`">{{ entry.title }}</RouterLink>
               </h2>
@@ -95,7 +97,7 @@ function date(value: string) {
                 />{{
                   copied === `/changelog/${entry.slug}` ? '已复制链接' : '复制此条链接'
                 }}</button
-              ><RouterLink to="/docs"
+              ><RouterLink :to="entry.documentation || '/docs'"
                 >阅读文档 <AppIcon name="arrow-right" :size="14"
               /></RouterLink>
             </footer>

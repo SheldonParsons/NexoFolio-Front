@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   NavigationMenuContent,
   NavigationMenuIndicator,
@@ -15,10 +15,17 @@ import AppIcon from '@/components/icons/AppIcon.vue'
 import LoginMark from '@/features/auth/LoginMark.vue'
 import WorkspaceDownloads from '@/features/downloads/WorkspaceDownloads.vue'
 import type { IconName } from '@/components/icons/registry'
+import { documentLocation } from '@/features/documents/documentRoutes'
+import { useCurationReviewEntry } from '@/features/curation/useCurationReviewEntry'
+import CurationEntryNotice from '@/features/curation/CurationEntryNotice.vue'
+import { useActiveProject } from '@/features/projects/useActiveProject'
+import { navigationProject } from './navigationProject'
 import './workspace-navigation.css'
 
 const route = useRoute()
+const router = useRouter()
 const openMenu = ref('')
+const activeProject = useActiveProject()
 const resources: { id: string; label: string; description: string; icon: IconName; to: string }[] =
   [
     {
@@ -43,36 +50,27 @@ const resources: { id: string; label: string; description: string; icon: IconNam
       to: '/changelog',
     },
   ]
-const projectId = computed(() =>
-  typeof route.params.projectId === 'string' ? route.params.projectId : '',
+const selectedProject = computed(() => navigationProject(route, activeProject.current.value))
+const projectId = computed(() => selectedProject.value?.projectId || '')
+const projectName = computed(() => selectedProject.value?.name || '')
+const environmentId = computed(() => selectedProject.value?.environmentId || '')
+const formalTo = computed(() =>
+  projectId.value ? documentLocation(projectId.value, null, environmentId.value) : '/projects',
 )
-const sections: { label: string; description: string; path: string; icon: IconName }[] = [
-  {
-    label: '接口文档',
-    description: '查看各环境的接口定义与原始样例',
-    path: 'interfaces',
-    icon: 'code',
-  },
-  {
-    label: '接口目录',
-    description: '沿业务目录查找项目中的接口',
-    path: 'catalog',
-    icon: 'folder-open',
-  },
-  {
-    label: '候选目录',
-    description: '审阅新的分类方案与目录变化',
-    path: 'catalog-preview',
-    icon: 'layers',
-  },
-  {
-    label: '知识维护',
-    description: '查看重构任务，审阅与发布知识',
-    path: 'maintenance',
-    icon: 'network',
-  },
-]
-const projectPath = (path: string) => `/projects/${encodeURIComponent(projectId.value)}/${path}`
+const documentActive = computed(() =>
+  ['project-interfaces', 'document-folder', 'document-endpoint'].includes(String(route.name)),
+)
+const review = useCurationReviewEntry(
+  () => projectId.value,
+  () => environmentId.value,
+  (to) => router.push(to),
+  () => route.fullPath,
+)
+function openReview(event: Event) {
+  event.preventDefault()
+  openMenu.value = ''
+  void review.open()
+}
 watch(
   () => route.fullPath,
   () => {
@@ -127,20 +125,6 @@ watch(
                   />
                 </RouterLink>
               </NavigationMenuLink>
-              <NavigationMenuLink v-if="projectId" as-child>
-                <RouterLink :to="projectPath('catalog')" class="navigation-destination">
-                  <span class="navigation-item-icon"
-                    ><AppIcon name="folder-open" mode="static" :size="20"
-                  /></span>
-                  <span><strong>当前项目知识</strong><small>回到当前项目的接口目录</small></span>
-                  <AppIcon
-                    class="navigation-item-arrow"
-                    name="arrow-up-right"
-                    mode="static"
-                    :size="16"
-                  />
-                </RouterLink>
-              </NavigationMenuLink>
               <p class="navigation-project-note">以项目组织接口，让采集、文档与知识保持关联。</p>
             </div>
           </div>
@@ -150,55 +134,57 @@ watch(
       <NavigationMenuItem value="interfaces">
         <NavigationMenuTrigger
           class="workspace-navigation-trigger"
-          :class="{ 'is-current': !!projectId }"
+          :class="{ 'is-current': documentActive || route.name === 'curation-review' }"
         >
           接口文档
           <AppIcon class="navigation-chevron" name="chevron-down" mode="static" :size="14" />
         </NavigationMenuTrigger>
         <NavigationMenuContent class="workspace-navigation-content">
-          <div class="navigation-knowledge-panel">
-            <div class="navigation-panel-heading">
-              <p class="navigation-eyebrow">
-                {{ projectId ? '当前项目 · 接口知识' : '项目中的接口知识' }}
-              </p>
-              <span v-if="projectId" class="navigation-context-dot">已选择项目</span>
+          <div class="navigation-resources-panel">
+            <div v-if="projectId" class="navigation-selected-project">
+              <AppIcon name="folder" mode="static" :size="18" />
+              <div>
+                <p class="navigation-eyebrow">当前项目</p>
+                <strong>{{ projectName || '正在读取项目…' }}</strong>
+              </div>
             </div>
-            <div class="navigation-knowledge-grid">
-              <template v-for="section in sections" :key="section.path">
-                <NavigationMenuLink
-                  v-if="projectId"
-                  as-child
-                  :active="route.path === projectPath(section.path)"
+            <p v-else class="navigation-eyebrow">从项目进入接口知识</p>
+            <NavigationMenuLink as-child :active="documentActive">
+              <RouterLink :to="formalTo" class="navigation-destination navigation-resource">
+                <span class="navigation-item-icon"
+                  ><AppIcon name="book" mode="static" :size="20"
+                /></span>
+                <span
+                  ><strong>正式文档</strong><small>查看已应用的目录、接口与字段知识</small></span
                 >
-                  <RouterLink :to="projectPath(section.path)" class="navigation-destination">
-                    <span class="navigation-item-icon"
-                      ><AppIcon :name="section.icon" mode="static" :size="20"
-                    /></span>
-                    <span
-                      ><strong>{{ section.label }}</strong
-                      ><small>{{ section.description }}</small></span
-                    >
-                  </RouterLink>
-                </NavigationMenuLink>
-                <div v-else class="navigation-destination navigation-destination--preview">
-                  <span class="navigation-item-icon"
-                    ><AppIcon :name="section.icon" mode="static" :size="20"
-                  /></span>
-                  <span
-                    ><strong>{{ section.label }}</strong
-                    ><small>{{ section.description }}</small></span
-                  >
-                </div>
-              </template>
-            </div>
-            <div v-if="!projectId" class="navigation-select-project">
-              <span>先选择一个项目，再查看它的接口知识。</span>
-              <NavigationMenuLink as-child>
-                <RouterLink to="/projects"
-                  >选择项目 <AppIcon name="arrow-right" mode="static" :size="15"
-                /></RouterLink>
-              </NavigationMenuLink>
-            </div>
+              </RouterLink>
+            </NavigationMenuLink>
+            <NavigationMenuLink as-child @select="openReview">
+              <button
+                type="button"
+                class="navigation-destination navigation-resource"
+                :disabled="review.loading.value"
+                :aria-busy="review.loading.value"
+              >
+                <span class="navigation-item-icon"
+                  ><AppIcon name="layers" mode="static" :size="20"
+                /></span>
+                <span
+                  ><strong>{{ review.loading.value ? '读取整理结果…' : '整理结果' }}</strong
+                  ><small>审阅候选内容，决定是否应用到正式文档</small></span
+                >
+              </button>
+            </NavigationMenuLink>
+            <NavigationMenuLink as-child :active="route.name === 'mcp-credentials'">
+              <RouterLink to="/settings/mcp" class="navigation-destination navigation-resource">
+                <span class="navigation-item-icon"
+                  ><AppIcon name="lock" mode="static" :size="20"
+                /></span>
+                <span
+                  ><strong>MCP 凭证</strong><small>管理当前账号所有可访问项目的凭证</small></span
+                >
+              </RouterLink>
+            </NavigationMenuLink>
           </div>
         </NavigationMenuContent>
       </NavigationMenuItem>
@@ -235,4 +221,9 @@ watch(
     </NavigationMenuList>
     <NavigationMenuViewport class="workspace-navigation-viewport" />
   </NavigationMenuRoot>
+  <CurationEntryNotice
+    v-model:message="review.message.value"
+    :retryable="review.retryable.value"
+    @retry="review.open"
+  />
 </template>

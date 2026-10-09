@@ -2,34 +2,33 @@
 import { computed } from 'vue'
 import MarkdownContent from './MarkdownContent.vue'
 import KnowledgeFlow from './KnowledgeFlow.vue'
+import BrandFilm from './BrandFilm.vue'
 import FetcherDownloadButton from './FetcherDownloadButton.vue'
 const props = defineProps<{ body: string; prefix: string }>()
 const sections = computed(() =>
-  props.body.split(/(?=^## )/m).filter((section) => section.trim()).map((section) => {
-    const [before = '', insert, after] = section.split(/<!-- (fetcher-download|human-agent-illustration) -->/)
-    return { before, insert, after }
-  }),
+  props.body
+    .split(/(?=^## )/m)
+    .filter((section) => section.trim())
+    .map((section) => {
+      const [before = '', insert, after] = section.split(
+        /<!-- (fetcher-download|human-agent-illustration) -->/,
+      )
+      return { before, insert, after }
+    }),
 )
-const illustration = `${import.meta.env.BASE_URL}illustrations/philosophy-interweaving.webp`
 const humanAgentIllustration = `${import.meta.env.BASE_URL}illustrations/philosophy-human-agent.webp`
 </script>
 <template>
   <div class="pd-philosophy">
-    <figure class="pd-editorial-illustration">
-      <img
-        :src="illustration"
-        width="1672"
-        height="941"
-        alt="灰蓝底色上，墨黑笔触与暖白色块交织，呈现片段之间的联系。"
-        fetchpriority="high"
-        decoding="async"
-      />
-    </figure>
+    <BrandFilm />
     <template v-for="(section, index) in sections" :key="index">
       <MarkdownContent :body="section.before" :prefix="prefix" />
       <template v-if="section.after !== undefined">
         <FetcherDownloadButton v-if="section.insert === 'fetcher-download'" />
-        <figure v-else-if="section.insert === 'human-agent-illustration'" class="pd-editorial-illustration">
+        <figure
+          v-else-if="section.insert === 'human-agent-illustration'"
+          class="pd-editorial-illustration"
+        >
           <img
             :src="humanAgentIllustration"
             width="1672"
@@ -70,7 +69,14 @@ const humanAgentIllustration = `${import.meta.env.BASE_URL}illustrations/philoso
   vertical-align: baseline;
   border: 1px solid var(--border);
   border-radius: 7px;
-  background: linear-gradient(115deg, transparent 25%, color-mix(in srgb, var(--text) 9%, transparent) 48%, transparent 70%), color-mix(in srgb, var(--text) 3%, var(--bg));
+  background:
+    linear-gradient(
+      115deg,
+      transparent 25%,
+      color-mix(in srgb, var(--text) 9%, transparent) 48%,
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--text) 3%, var(--bg));
   background-size: 260% 100%;
   background-position: 100% 0;
   color: var(--text);
@@ -79,7 +85,10 @@ const humanAgentIllustration = `${import.meta.env.BASE_URL}illustrations/philoso
   line-height: 1.8;
   white-space: nowrap;
   text-decoration: none;
-  transition: background-position 600ms cubic-bezier(.22, 1, .36, 1), border-color 180ms, box-shadow 180ms;
+  transition:
+    background-position 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms,
+    box-shadow 180ms;
 }
 .pd-philosophy :deep(.pd-markdown a[href$='/docs/api']::before) {
   content: '{ }';
@@ -90,13 +99,19 @@ const humanAgentIllustration = `${import.meta.env.BASE_URL}illustrations/philoso
   border-radius: 4px;
   background: var(--text);
   color: var(--bg);
-  font: 11px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+  font:
+    11px/1 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
 }
 .pd-philosophy :deep(.pd-markdown a[href$='/docs/api']::after) {
   content: '↗';
   margin-left: 2px;
   color: var(--muted);
-  transition: transform 180ms, color 180ms;
+  transition:
+    transform 180ms,
+    color 180ms;
 }
 .pd-philosophy :deep(.pd-markdown a[href$='/docs/api']:is(:hover, :focus-visible)) {
   border-color: var(--text);

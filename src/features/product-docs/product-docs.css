@@ -598,12 +598,24 @@
   min-width: 0;
   padding-bottom: 30px;
 }
-.pd-preview-label {
+.pd-release-state {
   display: inline-block;
   margin-bottom: 12px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
   font-size: 10px;
   color: var(--muted);
   letter-spacing: 0.6px;
+}
+.pd-release-state[data-status='released'] {
+  color: var(--bg);
+  background: var(--text);
+  border-color: var(--text);
+}
+.pd-release-state[data-status='preview'] {
+  padding-left: 0;
+  border-color: transparent;
 }
 .pd-release-content h2 {
   font-size: 26px;

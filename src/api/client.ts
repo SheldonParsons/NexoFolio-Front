@@ -79,12 +79,33 @@ export function createApiClient({
         signal: controller.signal,
       })
       if (response.status === 401) onUnauthorized?.()
-      if (!response.ok)
-        throw new ApiError(
-          response.status === 401 ? '登录已过期，请重新登录。' : `请求失败（${response.status}）`,
-          'http',
-          response.status,
-        )
+      if (!response.ok) {
+        let message =
+          response.status === 401
+            ? '登录已过期，请重新登录。'
+            : response.status === 408
+              ? '处理超时，请稍后重试。'
+              : `请求失败（${response.status}）`
+        if (response.status !== 401 && /json/i.test(response.headers.get('content-type') ?? '')) {
+          try {
+            const body: unknown = await response.json()
+            if (
+              body &&
+              typeof body === 'object' &&
+              'error' in body &&
+              body.error &&
+              typeof body.error === 'object' &&
+              'message' in body.error &&
+              typeof body.error.message === 'string' &&
+              body.error.message.trim()
+            )
+              message = body.error.message.trim()
+          } catch (error) {
+            if (controller.signal.aborted) throw error
+          }
+        }
+        throw new ApiError(message, 'http', response.status)
+      }
       if (response.status === 204) return undefined as T
       if (
         !/^application\/(?:[\w.-]+\+)?json(?:\s*;|$)/i.test(

@@ -1,0 +1,41 @@
+.curation-review-summary {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 10px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+  line-height: 16px;
+  white-space: nowrap;
+}
+.curation-review-summary-label {
+  color: var(--muted);
+  font-size: 10px;
+}
+.curation-review-summary dl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.curation-review-summary dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.curation-review-summary dt {
+  color: var(--muted);
+  font-size: 10px;
+}
+.curation-review-summary dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.curation-review-summary [data-empty='true'] dd {
+  color: var(--muted);
+  font-weight: 450;
+}
