@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLifecycle } from '@/features/documents/lifecycle/context'
+const lifecycle = useLifecycle()
 import { computed } from 'vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import type { DocumentFolder } from '@/features/documents/documentTree'
@@ -38,7 +40,9 @@ const mark = computed(() => props.changes.get('folders:' + props.folder.id))
         @click="emit('select', { kind: 'folder', id: folder.id })"
       >
         <AppIcon :name="expanded ? 'folder-open' : 'folder'" :size="15" />
-        <span>{{ folder.name }}</span
+        <span
+          :class="{ 'lifecycle-retired-name': !!lifecycle?.get({ kind: 'folder', id: folder.id }) }"
+          >{{ folder.name }}</span
         ><small v-if="mark" class="candidate-tree-mark">{{
           mark === 'added' ? '新增' : '调整'
         }}</small
@@ -81,7 +85,15 @@ const mark = computed(() => props.changes.get('folders:' + props.folder.id))
             entry.method
           }}</span>
           <span class="interface-item-content"
-            ><strong>{{ entry.name || entry.path }}</strong></span
+            ><strong
+              :class="{
+                'lifecycle-retired-name': !!lifecycle?.get({
+                  kind: 'endpoint',
+                  id: entry.interface_id,
+                }),
+              }"
+              >{{ entry.name || entry.path }}</strong
+            ></span
           >
           <small
             v-if="changes.has('placements:' + entry.interface_id)"

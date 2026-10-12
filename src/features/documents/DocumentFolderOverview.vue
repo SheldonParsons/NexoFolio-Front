@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+import LifecycleMenu from './lifecycle/LifecycleMenu.vue'
+import LifecycleNotice from './lifecycle/LifecycleNotice.vue'
+const lifecycle = useLifecycle()
 import { RouterLink } from 'vue-router'
 import type { DocumentFolder } from './documentTree'
 import type { Folder } from '@/contracts/knowledge/types'
@@ -22,11 +26,17 @@ defineProps<{
     >
     <DocumentBreadcrumbs :path="path" :project-id="projectId" :environment-id="environmentId" />
     <div class="document-overview-title">
-      <h2>{{ folder.name }}</h2>
+      <h2
+        :class="{ 'lifecycle-retired-name': !!lifecycle?.get({ kind: 'folder', id: folder.id }) }"
+      >
+        {{ folder.name }}
+      </h2>
+      <LifecycleMenu :target="{ kind: 'folder', id: folder.id }" :name="folder.name" />
       <DocumentShare
         :to="documentLocation(projectId, { kind: 'folder', id: folder.id }, environmentId)"
       />
     </div>
+    <LifecycleNotice :target="{ kind: 'folder', id: folder.id }" />
     <p class="document-purpose">
       {{ folder.summary || '目录介绍尚未补充。以下用途来自已保存的接口知识。' }}
     </p>
@@ -55,7 +65,13 @@ defineProps<{
             :aria-describedby="preview.previewOpen ? preview.previewId : undefined"
             aria-keyshortcuts="Escape"
             ><strong
-              >{{ child.name }} <small>{{ child.count }}</small></strong
+              ><span
+                :class="{
+                  'lifecycle-retired-name': !!lifecycle?.get({ kind: 'folder', id: child.id }),
+                }"
+                >{{ child.name }}</span
+              >
+              <small>{{ child.count }}</small></strong
             >
             <p>{{ child.summary || '暂无目录介绍' }}</p></RouterLink
           ></DocumentPreview
@@ -83,12 +99,5 @@ defineProps<{
     <p v-if="!folder.count" class="document-small-state">
       此目录在当前环境尚无接口观测。目录与链接仍保留。
     </p>
-    <section class="document-overview-gaps">
-      <h3>场景、关系与待确认事项</h3>
-      <p>
-        目录索引尚未提供独立场景、输入来源或前置关系摘要。可打开成员接口，查看已保存的字段来源与关联线索。
-      </p>
-      <p>目录成员顺序仅用于浏览；关联线索不代表已确认的调用顺序。</p>
-    </section>
   </div>
 </template>

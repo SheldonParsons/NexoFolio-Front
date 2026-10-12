@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+const lifecycle = useLifecycle()
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import EnvironmentSelect from './EnvironmentSelect.vue'
@@ -58,6 +60,14 @@ const review = useCurationReviewEntry(
         {{ review.loading.value ? '读取中…' : '整理结果' }}
       </button>
       <button
+        v-if="lifecycle"
+        type="button"
+        class="document-review-entry"
+        @click="lifecycle.panelOpen.value = true"
+      >
+        废弃内容（{{ lifecycle.count.value }}）
+      </button>
+      <button
         type="button"
         class="document-organize"
         :disabled="busy || loading || !endpointCount"
@@ -69,6 +79,9 @@ const review = useCurationReviewEntry(
       </button>
     </div>
   </header>
+  <p v-if="lifecycle?.pending.value" class="lifecycle-project-notice" role="status">
+    存在废弃变更，当前整理尚未重新核对
+  </p>
   <CurationEntryNotice
     v-model:message="review.message.value"
     :retryable="review.retryable.value"

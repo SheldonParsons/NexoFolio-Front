@@ -82,6 +82,7 @@ const label = computed(() => props.error || processingHeadline(props.progress, p
 const percent = computed(() => phaseProgress(props.progress))
 const health = computed(() => (props.busy ? liveness(props.progress, now.value) : null))
 const title = computed(() => {
+  if (props.progress?.lifecycle_stale) return '本轮基于旧废弃状态'
   if (!props.progress && props.error) return '整理暂时无法继续'
   if (props.progress?.candidate_state === 'applied') return '本轮已应用'
   if (props.progress?.candidate_state === 'discarded') return '本轮已废弃'
@@ -171,6 +172,14 @@ const duration = computed(() =>
         </button>
       </header>
       <div class="curation-dock-body" :aria-hidden="size === 'mini'" :inert="size === 'mini'">
+        <p
+          v-if="visible && progress?.lifecycle_stale && size !== 'mini'"
+          class="lifecycle-project-notice"
+          role="status"
+        >
+          废弃状态已变化。本轮成果保留，不能直接应用或续跑；是否停止本轮由你决定，之后开始新一轮整理。
+        </p>
+
         <div
           class="curation-summary"
           :class="{ 'is-hidden': size === 'mini' }"

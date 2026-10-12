@@ -90,6 +90,12 @@ watch(
   },
   { immediate: true },
 )
+const lifecycleStale = computed(
+  () =>
+    !!candidate.value &&
+    !!index.value?.lifecycle &&
+    (candidate.value.base.lifecycle?.version ?? 0) !== index.value.lifecycle.version,
+)
 const tab = ref<'changes' | 'document' | 'issues'>('document')
 type ReviewSection = Exclude<ChangeSection, 'placements' | 'folders'>
 const section = ref<ReviewSection>('notes')
@@ -112,10 +118,16 @@ const decisionValid = computed(
     candidate.value?.id === decision.value.candidate.id &&
     candidate.value.project_id === decision.value.candidate.project_id &&
     candidate.value.project_id === pid() &&
-    canReviewDecision(candidate.value.state, decision.value.action),
+    canReviewDecision(candidate.value.state, decision.value.action) &&
+    (decision.value.action !== 'apply' || !lifecycleStale.value),
 )
 function askDecision(action: ReviewDecision) {
-  if (!candidate.value || deciding.value || !canReviewDecision(candidate.value.state, action))
+  if (
+    !candidate.value ||
+    deciding.value ||
+    (action === 'apply' && lifecycleStale.value) ||
+    !canReviewDecision(candidate.value.state, action)
+  )
     return
   const value = candidate.value
   decision.value = {
@@ -208,7 +220,11 @@ const summary = computed(() =>
       <span v-if="candidate" class="curation-state-tag" :data-state="candidate.state">{{
         candidateStateLabels[candidate.state]
       }}</span>
+      <p v-if="lifecycleStale" class="lifecycle-project-notice" role="status">
+        废弃状态已变化：本轮基于旧版本，成果保留，不能应用或续跑。请开始新一轮整理。
+      </p>
       <CurationReviewMenu
+        :lifecycle-stale="lifecycleStale"
         v-if="candidate"
         :candidate="candidate"
         :official-to="documentTo"

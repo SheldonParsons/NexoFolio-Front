@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+import { sourceRetired } from './lifecycle/model'
+const lifecycle = useLifecycle()
 import { computed, ref } from 'vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import type { FieldNote, FieldEvidence, FieldFacts } from '@/contracts/knowledge/types'
@@ -33,6 +36,16 @@ function sourceName(e: FieldEvidence) {
 }
 </script>
 <template>
+  <p
+    v-if="
+      evidence.some((e) =>
+        sourceRetired(lifecycle?.state.value, e.endpoint, e.field, e.source?.location),
+      )
+    "
+    class="lifecycle-source-notice"
+  >
+    关联来源已废弃；当前字段仍按自身状态判断。
+  </p>
   <article class="field-knowledge-panel">
     <header class="field-knowledge-heading">
       <div>
@@ -67,7 +80,7 @@ function sourceName(e: FieldEvidence) {
           <li v-for="detail in details.business" :key="detail">{{ detail }}</li>
         </ul>
         <div v-if="unknowns.length" class="field-unknowns">
-          <h5><AppIcon name="circle-help" :size="13" />待确认</h5>
+          <h5><AppIcon name="circle-help" :size="13" />尚未验证的事项</h5>
           <ul>
             <li v-for="unknown in unknowns" :key="unknown">{{ unknown }}</li>
           </ul>

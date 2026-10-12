@@ -3,6 +3,7 @@ export interface Project {
   project_id: string
   name: string
   status: string
+  origin?: 'local' | 'zentao'
   can_access: boolean
   access_state: ProjectAccess
   reason_code: string | null
@@ -30,7 +31,7 @@ export const statusLabels: Record<string, string> = {
   closed: '已关闭',
 }
 export const accessLabels: Record<ProjectAccess, string> = {
-  allowed: '可访问',
-  denied: '无访问权限',
-  unknown: '待确认权限',
+  allowed: '可操作',
+  denied: '只读查看',
+  unknown: '操作权限待确认',
 }

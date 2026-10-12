@@ -70,20 +70,17 @@ describe('project admission and navigation lifecycle', () => {
     expect(transition.current).toMatchObject({ durationMs: 2000, pending: false })
     expect(readVisits('api:mock:user')[0]?.id).toBe('one')
   })
-  it.each([403, 404, 503])(
-    'shows a local explanation for %i without a success overlay',
-    async (status) => {
-      const { entry, transition } = setup(
-        vi.fn().mockRejectedValue(new ApiError('unavailable', 'http', status)),
-      )
-      await entry.open(item)
-      expect(entry.dialogOpen.value).toBe(true)
-      expect(entry.openingId.value).toBeNull()
-      expect(transition.current).toBeNull()
-      expect(push).not.toHaveBeenCalled()
-      expect(readVisits('api:mock:user')).toEqual([])
-    },
-  )
+  it.each([404])('shows a local explanation for %i without a success overlay', async (status) => {
+    const { entry, transition } = setup(
+      vi.fn().mockRejectedValue(new ApiError('unavailable', 'http', status)),
+    )
+    await entry.open(item)
+    expect(entry.dialogOpen.value).toBe(true)
+    expect(entry.openingId.value).toBeNull()
+    expect(transition.current).toBeNull()
+    expect(push).not.toHaveBeenCalled()
+    expect(readVisits('api:mock:user')).toEqual([])
+  })
   it('aborts pending admission on unmount, ignoring even a late successful response', async () => {
     let accept!: (project: Project) => void
     const get = vi.fn(
@@ -127,17 +124,30 @@ describe('project admission and navigation lifecycle', () => {
     transition.finish(next)
     expect(transition.current).toBeNull()
   })
-  it('returns expired sessions to login instead of claiming a permissions error', async () => {
+  it('lets expired sessions open public documents without a forced login', async () => {
     const { entry, transition } = setup(
       vi.fn().mockRejectedValue(new ApiError('expired', 'http', 401)),
     )
     await entry.open(item)
     expect(clearCredential).toHaveBeenCalled()
-    expect(auth.requestLogin).toHaveBeenCalledWith('/projects', expect.any(String))
-    expect(push).toHaveBeenCalledWith('/')
+    expect(auth.requestLogin).not.toHaveBeenCalled()
+    expect(push).toHaveBeenCalledWith('/projects/one/interfaces')
     expect(entry.dialogOpen.value).toBe(false)
-    expect(transition.current).toBeNull()
+    expect(transition.current).toMatchObject({ pending: false })
   })
+  it.each([403, 503])(
+    'opens readonly documents on %i without remembering member context',
+    async (status) => {
+      const { entry, transition } = setup(
+        vi.fn().mockRejectedValue(new ApiError('denied', 'http', status)),
+      )
+      await entry.open(item)
+      expect(push).toHaveBeenCalledWith('/projects/one/interfaces')
+      expect(entry.dialogOpen.value).toBe(false)
+      expect(transition.current).toMatchObject({ pending: false })
+      expect(readVisits('api:mock:user')).toEqual([])
+    },
+  )
   it('evicts an existing recent visit immediately when fresh admission returns 403', async () => {
     recordVisit('api:mock:user', item.project_id)
     const { entry } = setup(vi.fn().mockRejectedValue(new ApiError('revoked', 'http', 403)))

@@ -1,3 +1,4 @@
+import { hiddenRetirement } from './lifecycle/model'
 import type { Folder } from '@/contracts/knowledge/types'
 import type { DocumentEntry, DocumentIndex } from './source'
 import type { DocumentTarget } from './documentRoutes'
@@ -27,8 +28,22 @@ export function documentTree(
   env: string | null,
   query = '',
   target: DocumentTarget = null,
+  showRetired = false,
 ): DocumentFolder[] {
   if (!index) return []
+  if (!showRetired)
+    index = {
+      ...index,
+      catalog: {
+        ...index.catalog,
+        folders: index.catalog.folders.filter(
+          (f) => !hiddenRetirement(index?.lifecycle, { kind: 'folder', id: f.id }),
+        ),
+      },
+      entries: index.entries.filter(
+        (e) => !hiddenRetirement(index?.lifecycle, { kind: 'endpoint', id: e.interface_id }),
+      ),
+    }
   const inScope = (entry: DocumentEntry) => env === null || inEnvironment(entry, env)
   const needle = query.trim().toLowerCase()
   const selectedFolder =

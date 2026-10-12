@@ -1,0 +1,116 @@
+.management-user-search {
+  position: relative;
+  width: min(360px, 55%);
+}
+.management-user-search > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+.management-user-search input {
+  padding-left: 36px;
+}
+.management-users-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+.management-users-table th {
+  padding: 18px 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--border);
+}
+.management-users-table td {
+  padding: 22px 12px;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.management-users-table :is(th, td):first-child {
+  padding-left: 0;
+  width: 32%;
+}
+.management-users-table :is(th, td):nth-child(2) {
+  width: 20%;
+}
+.management-users-table :is(th, td):last-child {
+  padding-right: 0;
+}
+.management-user-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.management-user-identity > div {
+  min-width: 0;
+}
+.management-user-identity strong {
+  font-weight: 500;
+}
+.management-user-identity small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.management-users-table time {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.management-user-account {
+  font-size: 12px;
+}
+.management-users-empty > svg {
+  margin: 0 auto;
+}
+.management-users-empty p {
+  color: var(--text);
+  margin: 14px 0 6px;
+}
+.management-users-empty small {
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .management-users-table thead {
+    display: none;
+  }
+  .management-users-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .management-users-table td,
+  .management-users-table td:first-child,
+  .management-users-table td:nth-child(2) {
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+  .management-users-table td:first-child {
+    grid-column: 1 / -1;
+  }
+  .management-users-table td:nth-child(2) {
+    grid-column: 1 / -1;
+  }
+  .management-users-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .management-users-table .management-user-account::before {
+    display: inline;
+    margin-right: 8px;
+  }
+}

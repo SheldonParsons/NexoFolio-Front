@@ -15,7 +15,7 @@ const route = useRoute()
 const themeMotion = useIconInteraction()
 function logout() {
   auth.signOut()
-  void router.push('/')
+  if (!route.meta.publicDocument) void router.push('/')
 }
 </script>
 
@@ -47,6 +47,14 @@ function logout() {
         </button>
         <span v-if="auth.user" class="workspace-utilities-divider" aria-hidden="true"></span>
         <UserMenu v-if="auth.user" @logout="logout" />
+        <button
+          v-else-if="route.meta.publicDocument"
+          type="button"
+          class="workspace-tool workspace-enter"
+          @click="auth.requestLogin(route.fullPath)"
+        >
+          登录
+        </button>
         <RouterLink v-else to="/projects" class="workspace-tool workspace-enter"
           >进入 NexoFolio</RouterLink
         >

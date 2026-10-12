@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+import LifecycleMenu from './lifecycle/LifecycleMenu.vue'
+const lifecycle = useLifecycle()
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -40,31 +43,46 @@ const usage = computed(() =>
     :meta="usage ? '当前环境调用 ' + usage.calls + ' 次' : '当前环境尚无观测'"
     v-slot="preview"
   >
-    <RouterLink
-      :to="to"
-      class="interface-list-item"
-      :class="{ 'is-selected': selected }"
-      :aria-current="selected ? 'page' : undefined"
-      :aria-label="entry.method + ' ' + label"
-      :aria-describedby="preview.previewOpen ? preview.previewId : undefined"
-      aria-keyshortcuts="ArrowRight"
-      :data-endpoint-id="entry.interface_id"
+    <div
+      class="lifecycle-endpoint-row"
+      :class="{ 'is-tree-row': previewPlacement !== 'overview', 'is-selected': selected }"
     >
-      <span class="http-method" :data-method="entry.method" aria-hidden="true">{{
-        entry.method
-      }}</span>
-      <span class="interface-item-content"
-        ><strong
-          ref="labelElement"
-          :class="{ 'is-overflowing': marquee.overflowing.value }"
-          :style="marquee.style()"
-          ><b class="document-tree-marquee-track"
-            ><span data-marquee-text>{{ label }}</span
-            ><span v-if="marquee.overflowing.value" aria-hidden="true">{{ label }}</span></b
-          ></strong
-        ></span
+      <RouterLink
+        :to="to"
+        class="interface-list-item"
+        :class="{ 'is-selected': selected }"
+        :aria-current="selected ? 'page' : undefined"
+        :aria-label="entry.method + ' ' + label"
+        :aria-describedby="preview.previewOpen ? preview.previewId : undefined"
+        aria-keyshortcuts="ArrowRight"
+        :data-endpoint-id="entry.interface_id"
       >
-      <AppIcon name="arrow-up-right" :size="13" />
-    </RouterLink>
+        <span class="http-method" :data-method="entry.method" aria-hidden="true">{{
+          entry.method
+        }}</span>
+        <span class="interface-item-content"
+          ><strong
+            ref="labelElement"
+            :class="{
+              'is-overflowing': marquee.overflowing.value,
+              'lifecycle-retired-name': !!lifecycle?.get({
+                kind: 'endpoint',
+                id: entry.interface_id,
+              }),
+            }"
+            :style="marquee.style()"
+            ><b class="document-tree-marquee-track"
+              ><span data-marquee-text>{{ label }}</span
+              ><span v-if="marquee.overflowing.value" aria-hidden="true">{{ label }}</span></b
+            ></strong
+          ></span
+        >
+        <AppIcon name="arrow-up-right" :size="13" /> </RouterLink
+      ><LifecycleMenu
+        :variant="previewPlacement === 'overview' ? 'default' : 'tree'"
+        :target="{ kind: 'endpoint', id: entry.interface_id }"
+        :name="label"
+      />
+    </div>
   </DocumentPreview>
 </template>

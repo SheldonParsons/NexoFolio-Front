@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+const lifecycle = useLifecycle()
 import AppIcon from '@/components/icons/AppIcon.vue'
+import AppCheckbox from '@/components/ui/AppCheckbox.vue'
 import { nextTick, ref, watch } from 'vue'
 import DocumentFolderBranch from './DocumentFolderBranch.vue'
 import type { DocumentFolder } from './documentTree'
@@ -40,6 +43,10 @@ watch(
 </script>
 <template>
   <aside class="interface-sidebar" aria-label="当前环境的接口目录">
+    <div v-if="lifecycle" class="lifecycle-tree-toggle">
+      <span>目录</span>
+      <AppCheckbox v-model="lifecycle.showRetired.value" label="显示已废弃" size="compact" />
+    </div>
     <div class="interface-search">
       <AppIcon name="search" :size="16" /><input
         type="search"

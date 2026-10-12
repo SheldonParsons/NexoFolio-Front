@@ -38,6 +38,7 @@ export interface KnowledgeLink {
   }
 }
 export interface KnowledgeSnapshot {
+  lifecycle?: import('@/features/documents/lifecycle/model').DocumentLifecycle
   endpoints: string[]
   folders: Folder[]
   placements: Array<{

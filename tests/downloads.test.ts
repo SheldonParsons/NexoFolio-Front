@@ -122,9 +122,9 @@ describe('same-origin backend download requests', () => {
       true,
     )
     await catalog.selectChannel('internal')
-    expect(fetcher).toHaveBeenCalledTimes(3)
+    expect(fetcher).toHaveBeenCalledTimes(2)
     await catalog.refresh()
-    expect(fetcher).toHaveBeenCalledTimes(4)
+    expect(fetcher).toHaveBeenCalledTimes(3)
     expect(
       fetcher.mock.calls.every(([url]) =>
         /^\/api\/v1\/downloads\?desktop_channel=(internal|public)$/.test(String(url)),

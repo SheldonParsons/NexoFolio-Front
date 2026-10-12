@@ -8,12 +8,38 @@
   align-items: center;
   border-radius: 5px;
 }
+:is(.document-folder-heading, .lifecycle-endpoint-row.is-tree-row) {
+  position: relative;
+}
 .document-folder-heading > .document-preview-host {
   flex: 1;
 }
 .document-folder-heading.is-selected {
   background: var(--surface-muted);
   box-shadow: none;
+}
+:is(.document-folder-heading, .lifecycle-endpoint-row.is-tree-row):is(
+  :hover,
+  :focus-within,
+  .is-selected
+),
+:is(.document-folder-heading, .lifecycle-endpoint-row.is-tree-row):has(
+  > .lifecycle-tree-trigger[data-state='open']
+) {
+  --document-tree-action-opacity: 1;
+  --document-tree-action-pointer-events: auto;
+  background: var(--surface-muted);
+  border-radius: 5px;
+}
+@media (hover: hover) and (pointer: fine) {
+  /* Share the existing count/arrow slot; hidden actions never reserve a column. */
+  .document-folder-heading:has(> .lifecycle-tree-trigger) .document-folder-toggle > small,
+  .lifecycle-endpoint-row.is-tree-row:has(> .lifecycle-tree-trigger) > .interface-list-item > svg {
+    opacity: calc(1 - var(--document-tree-action-opacity, 0));
+  }
+}
+.lifecycle-endpoint-row.is-tree-row > .interface-list-item:is(:hover, .is-selected) {
+  background: transparent;
 }
 .document-folder-arrow {
   display: grid;
@@ -173,13 +199,6 @@
   line-height: 1.7;
   color: var(--muted);
   overflow-wrap: anywhere;
-}
-.document-overview-gaps {
-  color: var(--muted);
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-  font-size: 12px;
-  line-height: 1.8;
 }
 .document-share {
   display: inline-flex;

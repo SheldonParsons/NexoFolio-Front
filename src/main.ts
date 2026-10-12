@@ -1,6 +1,7 @@
 import { createApp, nextTick } from 'vue'
 import { pinia } from './app/pinia'
 import App from './app/App.vue'
+import { installTelemetry } from './features/audit/telemetry'
 import { router } from './app/router'
 import { projectIdForDocumentLoad, projectRefreshLoading } from './app/projectRefreshLoading'
 import { useNavigationTransition } from './stores/navigationTransition'
@@ -29,6 +30,7 @@ if (refreshProjectId) {
     removeError()
   }
 }
+installTelemetry(app, router)
 app.use(router)
 if (refreshProjectId) {
   // Show the overlay while authentication and lazy route imports are still pending.

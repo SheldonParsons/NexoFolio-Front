@@ -11,6 +11,7 @@ export function useDocumentSelection(
   environmentId: () => string,
   requests: DocumentRequests,
   report: DocumentErrorReporter,
+  onForbidden?: () => void,
 ) {
   const selectedId = ref('')
   const detail = shallowRef<EndpointDetail | null>(null)
@@ -46,9 +47,10 @@ export function useDocumentSelection(
       if (request.current()) {
         if (cause instanceof ApiError && cause.status === 404)
           detailError.value = '此接口已失效或不存在；不会替换为其他同名接口。'
-        else if (cause instanceof ApiError && cause.status === 403)
+        else if (cause instanceof ApiError && cause.status === 403) {
           detailError.value = '暂无此接口的访问权限。'
-        else if (cause instanceof ApiError && cause.status === 400)
+          onForbidden?.()
+        } else if (cause instanceof ApiError && cause.status === 400)
           detailError.value = '链接中的接口 ID 无效。'
         else report(cause, detailError)
       }

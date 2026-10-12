@@ -1,0 +1,184 @@
+.project-management-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+.project-management-form > label {
+  font-size: 13px;
+  font-weight: 500;
+}
+.project-management-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+.project-management-input:focus-visible {
+  outline: 2px solid var(--focus, var(--text));
+  outline-offset: 2px;
+}
+.project-management-form .nf-select-trigger {
+  width: 100%;
+  min-height: 42px;
+}
+.project-management-help,
+.project-management-scope {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.project-management-error {
+  margin: 0;
+  color: var(--danger, #b42318);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.project-management-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.project-management-counts strong {
+  font-size: 20px;
+  font-weight: 550;
+  color: var(--text);
+  margin-right: 4px;
+}
+.project-management-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.project-admin-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 30px;
+  margin-right: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.project-admin-action:hover,
+.project-admin-action:focus-visible {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+.project-management-menu {
+  z-index: 150;
+  min-width: 150px;
+  padding: 5px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #00000014;
+}
+.project-management-menu-item {
+  padding: 9px 12px;
+  font-size: 13px;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+}
+.project-management-menu-item[data-highlighted] {
+  background: var(--surface-muted);
+}
+.project-management-notice {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+.project-browser--managed .project-tools > .button {
+  flex: none;
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .project-browser--managed .project-row {
+    grid-template-columns: minmax(0, 1fr) 84px;
+  }
+}
+
+.project-source-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.project-source-fieldset legend {
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.project-source-fieldset legend span {
+  float: right;
+  font-weight: 400;
+  color: var(--muted);
+}
+.project-source-fieldset > input {
+  margin-bottom: 8px;
+}
+.project-source-list {
+  max-height: 224px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.project-source-list > p {
+  padding: 8px;
+}
+.project-source-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.project-source-option:hover,
+.project-source-option.is-selected {
+  background: var(--surface-muted);
+}
+.project-source-option input {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin: 0;
+  accent-color: var(--text);
+}
+.project-source-option span {
+  overflow-wrap: anywhere;
+}
+.project-source-option:has(input:focus-visible) {
+  outline: 2px solid var(--text);
+  outline-offset: -2px;
+}
+.project-source-fieldset:disabled {
+  opacity: 0.6;
+}
+
+.project-source-option .nf-checkbox-field {
+  width: 100%;
+}

@@ -194,3 +194,16 @@ button:focus-visible {
     transition: none;
   }
 }
+
+.has-lifecycle-actions .meaning-column {
+  width: calc(39% - 36px);
+}
+.lifecycle-field-action {
+  position: sticky;
+  right: 0;
+  padding: 8px 4px;
+  background: var(--surface);
+}
+th.lifecycle-field-action {
+  background: var(--surface-muted);
+}

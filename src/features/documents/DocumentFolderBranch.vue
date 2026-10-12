@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+import LifecycleMenu from './lifecycle/LifecycleMenu.vue'
+const lifecycle = useLifecycle()
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -58,7 +61,10 @@ const to = computed(() =>
           ><AppIcon :name="expanded ? 'folder-open' : 'folder'" :size="15" /><span
             ref="labelElement"
             class="document-folder-name"
-            :class="{ 'is-overflowing': marquee.overflowing.value }"
+            :class="{
+              'is-overflowing': marquee.overflowing.value,
+              'lifecycle-retired-name': !!lifecycle?.get({ kind: 'folder', id: folder.id }),
+            }"
             :style="marquee.style()"
             ><b class="document-tree-marquee-track"
               ><span data-marquee-text>{{ folder.name }}</span
@@ -67,6 +73,11 @@ const to = computed(() =>
           ><small>{{ folder.count }}</small></RouterLink
         >
       </DocumentPreview>
+      <LifecycleMenu
+        variant="tree"
+        :target="{ kind: 'folder', id: folder.id }"
+        :name="folder.name"
+      />
     </div>
     <div
       :id="'document-folder-' + folder.id"

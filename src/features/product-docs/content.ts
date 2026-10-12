@@ -1,3 +1,5 @@
+import retirement from '@/content/docs/retirement.md?raw'
+import retirementUpdate from '@/content/changelog/2026-10-11-document-retirement.md?raw'
 import philosophy from '@/content/docs/philosophy.md?raw'
 import fetcher from '@/content/docs/fetcher.md?raw'
 import { fetcherGuideSearchText } from './fetcherGuide'
@@ -6,6 +8,8 @@ import mcp from '@/content/docs/mcp.md?raw'
 import { mcpSearchText } from '@/features/mcp-docs/content'
 import docsPreview from '@/content/changelog/product-docs-preview.md?raw'
 import agentDocsUpdate from '@/content/changelog/2026-10-09-mcp-agent-docs.md?raw'
+import mcpRetrievalUpdate from '@/content/changelog/2026-10-10-mcp-progressive-retrieval.md?raw'
+import publicDocumentUpdate from '@/content/changelog/2026-10-10-public-document-reading.md?raw'
 import fetcher013Update from '@/content/changelog/2026-10-09-fetcher-0-1-3.md?raw'
 import curationUpdate from '@/content/changelog/2026-10-09-curation-experience.md?raw'
 
@@ -43,11 +47,19 @@ export const productArticles: ProductArticle[] = [
     body: api,
   },
   {
+    slug: 'retirement',
+    path: '/docs/retirement',
+    title: '废弃与撤销废弃',
+    section: '使用文档',
+    description: '管理目录、接口和字段的生命周期，保留历史并在下一轮整理核对。',
+    body: retirement,
+  },
+  {
     slug: 'mcp',
     path: '/docs/mcp',
     title: 'MCP 与 NexoFolio',
     section: 'MCP',
-    description: '让 Agent 读取有上下文、有依据的项目接口知识。',
+    description: '让 Agent 自选目录、搜索或字段线索，按需读取完整说明、原始依据和资料缺口。',
     body: mcp + mcpSearchText,
   },
 ]
@@ -65,6 +77,39 @@ export interface ProductUpdate {
 }
 // Feature updates, versioned releases, and preview records share one timeline.
 export const productUpdates: ProductUpdate[] = [
+  {
+    slug: '2026-10-11-document-retirement',
+    product: 'nexofolio',
+    date: '2026-10-11',
+    version: '功能更新',
+    status: 'update',
+    title: '目录、接口和字段可废弃与恢复',
+    description: '支持废弃与撤销，保留历史；修复整理与历史读取问题，优化文档浏览，减少重复查询。',
+    documentation: '/docs/retirement',
+    body: retirementUpdate,
+  },
+  {
+    slug: '2026-10-10-public-document-reading',
+    product: 'nexofolio',
+    date: '2026-10-10',
+    version: '功能更新',
+    status: 'update',
+    title: '分享接口文档，无需先登录',
+    description:
+      '打开原链接即可只读查看目录、接口和字段说明；修改操作、真实样本及 MCP 继续保留权限限制。',
+    body: publicDocumentUpdate,
+  },
+  {
+    slug: '2026-10-10-mcp-progressive-retrieval',
+    product: 'nexofolio',
+    date: '2026-10-10',
+    version: '功能更新',
+    status: 'update',
+    title: 'MCP 渐进式检索与使用文档更新',
+    description: '你提出业务问题，Agent 自己选路查资料；完整说明、原始依据和资料缺口都可按需查看。',
+    documentation: '/docs/mcp',
+    body: mcpRetrievalUpdate,
+  },
   {
     slug: '2026-10-09-mcp-agent-docs',
     product: 'nexofolio',

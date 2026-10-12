@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { getCurrentUser, type UserProfile } from '@/api/auth'
-import { clearCredential } from '@/api/session'
+import { getCurrentUser, authenticatedUser, type UserProfile } from '@/api/auth'
+import { clearCredential, readCredential } from '@/api/session'
 import { clearBrowserViews } from '@/features/projects/browserState'
 import { useProjectContextStore } from './projectContext'
 
@@ -21,20 +21,56 @@ export const useAuthStore = defineStore('auth', () => {
     if (arrival.value?.runId === runId) arrival.value = null
   }
   const displayName = computed(() => user.value?.display_name || user.value?.account || '')
-  let pending: Promise<boolean> | null = null
+  const canManageProjects = computed(
+    () =>
+      user.value?.enabled === true &&
+      user.value.account.toLowerCase() === 'a80646' &&
+      user.value.can_manage_projects === true,
+  )
+  function updateProfile(profile: UserProfile) {
+    const sameIdentity =
+      user.value?.id === profile.id &&
+      user.value.account.toLowerCase() === profile.account.toLowerCase()
+    user.value = authenticatedUser(profile, {
+      manage_projects: sameIdentity && user.value?.can_manage_projects === true,
+    })
+  }
+  let pending: { token: string | undefined; task: Promise<boolean> } | null = null
+  let generation = 0
+  function revokeManagement() {
+    if (user.value) user.value = { ...user.value, can_manage_projects: false }
+  }
+  function forgetSession() {
+    generation++
+    pending = null
+    user.value = null
+    arrival.value = null
+    useProjectContextStore().clear()
+    clearBrowserViews()
+  }
   function checkSession() {
-    if (pending) return pending
+    const token = readCredential()?.token
+    if (pending?.token === token && pending) return pending.task
+    const run = generation
     checking.value = true
-    pending = getCurrentUser()
+    const task = getCurrentUser()
       .then((result) => {
+        if (run !== generation || readCredential()?.token !== token) return false
         user.value = result
         return result !== null
       })
-      .finally(() => {
-        checking.value = false
-        pending = null
+      .catch((error) => {
+        if (run === generation && readCredential()?.token === token) revokeManagement()
+        throw error
       })
-    return pending
+      .finally(() => {
+        if (pending?.task === task) {
+          checking.value = false
+          pending = null
+        }
+      })
+    pending = { token, task }
+    return task
   }
   function requestLogin(target = '/projects', error = '') {
     destination.value = target
@@ -42,6 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
     loginOpen.value = true
   }
   function signOut() {
+    forgetSession()
     useProjectContextStore().clear()
     clearBrowserViews()
     arrival.value = null
@@ -60,6 +97,10 @@ export const useAuthStore = defineStore('auth', () => {
     beginArrival,
     finishArrival,
     displayName,
+    canManageProjects,
+    revokeManagement,
+    forgetSession,
+    updateProfile,
     checkSession,
     requestLogin,
     signOut,

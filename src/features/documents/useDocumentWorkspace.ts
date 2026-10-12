@@ -7,10 +7,15 @@ import { useDocumentSelection } from './useDocumentSelection'
 import { useDocumentCuration } from './useDocumentCuration'
 
 /** Page facade: composes controllers and coordinates project/environment changes. */
-export function useDocumentWorkspace(projectId: () => string, onUnauthorized: () => void) {
+export function useDocumentWorkspace(
+  projectId: () => string,
+  onUnauthorized: () => void,
+  onForbidden?: () => void,
+) {
   const requests = documentRequests(projectId)
   function report(cause: unknown, target: { value: string }) {
     if (cause instanceof ApiError && cause.status === 401) return onUnauthorized()
+    if (cause instanceof ApiError && cause.status === 403 && onForbidden) return onForbidden()
     target.value = cause instanceof Error ? cause.message : '暂时无法读取，请重试。'
   }
   const project = useDocumentProject(projectId, requests, report)
@@ -19,6 +24,7 @@ export function useDocumentWorkspace(projectId: () => string, onUnauthorized: ()
     () => project.environmentId.value,
     requests,
     report,
+    onForbidden,
   )
   const curation = useDocumentCuration(projectId, requests, report, {
     canStart: () =>

@@ -1,3 +1,5 @@
+import { clientProblem } from '@/features/audit/telemetry'
+
 export type ApiErrorKind = 'http' | 'network' | 'timeout' | 'invalid-response'
 
 export class ApiError extends Error {
@@ -5,6 +7,7 @@ export class ApiError extends Error {
     message: string,
     public readonly kind: ApiErrorKind,
     public readonly status?: number,
+    public readonly requestId?: string,
   ) {
     super(message)
     this.name = 'ApiError'
@@ -68,6 +71,7 @@ export function createApiClient({
       timedOut = true
       controller.abort()
     }, requestTimeoutMs ?? timeoutMs)
+    let requestId: string | undefined
     let releaseRequest: (() => void) | undefined
     try {
       releaseRequest = onRequestStart?.(path)
@@ -78,7 +82,9 @@ export function createApiClient({
         body: json === undefined ? undefined : JSON.stringify(json),
         signal: controller.signal,
       })
-      if (response.status === 401) onUnauthorized?.()
+      requestId = response.headers.get('x-request-id') ?? undefined
+      if (response.status === 401 && (!getAccessToken || getAccessToken() === token))
+        onUnauthorized?.()
       if (!response.ok) {
         let message =
           response.status === 401
@@ -104,7 +110,7 @@ export function createApiClient({
             if (controller.signal.aborted) throw error
           }
         }
-        throw new ApiError(message, 'http', response.status)
+        throw new ApiError(message, 'http', response.status, requestId)
       }
       if (response.status === 204) return undefined as T
       if (
@@ -126,8 +132,15 @@ export function createApiClient({
       }
     } catch (error) {
       if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError')
-      if (timedOut) throw new ApiError('请求超时，请稍后重试。', 'timeout')
-      if (error instanceof ApiError) throw error
+      if (timedOut) {
+        clientProblem('CLIENT_TIMEOUT', requestId)
+        throw new ApiError('请求超时，请稍后重试。', 'timeout', undefined, requestId)
+      }
+      if (error instanceof ApiError) {
+        if (error.kind === 'invalid-response') clientProblem('INVALID_RESPONSE', requestId)
+        throw error
+      }
+      clientProblem('NETWORK_ERROR', requestId)
       throw new ApiError('暂时无法连接服务，请检查网络。', 'network')
     } finally {
       clearTimeout(timer)

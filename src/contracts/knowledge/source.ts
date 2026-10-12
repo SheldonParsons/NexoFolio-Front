@@ -1,4 +1,5 @@
 import { api } from '@/api'
+import { changeCuration, readCuration } from '@/contracts/knowledge/curationReads'
 import type { Catalog, CurateProgress, EndpointPage, EndpointDetail } from './types'
 
 export function path(projectId: string): string {
@@ -59,10 +60,10 @@ export async function describeEndpoint(
   endpointId: string,
   signal?: AbortSignal,
 ): Promise<CurateProgress> {
-  return api.request<CurateProgress>(
+  return changeCuration(projectId, () => api.request<CurateProgress>(
     `${curatePath(projectId)}/describe/${encodeURIComponent(endpointId)}`,
     { method: 'POST', signal, timeoutMs: 15_000 },
-  )
+  ))
 }
 
 /** Starts or joins the background describe -> organize workflow. */
@@ -70,21 +71,21 @@ export async function startCurate(
   projectId: string,
   signal?: AbortSignal,
 ): Promise<CurateProgress> {
-  return api.request<CurateProgress>(curatePath(projectId), {
+  return changeCuration(projectId, () => api.request<CurateProgress>(curatePath(projectId), {
     method: 'POST',
     signal,
     timeoutMs: 15_000,
-  })
+  }))
 }
 
-export function curateProgress(projectId: string, signal?: AbortSignal): Promise<CurateProgress> {
-  return api.request<CurateProgress>(curatePath(projectId), { signal, cache: 'no-store' })
+export function curateProgress(projectId: string, signal?: AbortSignal, runKey = ''): Promise<CurateProgress> {
+  return readCuration<CurateProgress>(projectId, curatePath(projectId), signal, runKey)
 }
 
 /** Resume this exact candidate. This never opens a new generation. */
 export function resumeCandidate(projectId: string, candidateId: string, signal?: AbortSignal): Promise<CurateProgress> {
-  return api.request<CurateProgress>(`${curatePath(projectId)}/candidates/${encodeURIComponent(candidateId)}/resume`, { method: 'POST', signal, timeoutMs: 120_000 })
+  return changeCuration(projectId, () => api.request<CurateProgress>(`${curatePath(projectId)}/candidates/${encodeURIComponent(candidateId)}/resume`, { method: 'POST', signal, timeoutMs: 120_000 }))
 }
 export function cancelCandidate(projectId: string, candidateId: string, signal?: AbortSignal): Promise<void> {
-  return api.request<void>(`${curatePath(projectId)}/candidates/${encodeURIComponent(candidateId)}/cancel`, { method: 'POST', signal })
+  return changeCuration(projectId, () => api.request<void>(`${curatePath(projectId)}/candidates/${encodeURIComponent(candidateId)}/cancel`, { method: 'POST', signal }))
 }

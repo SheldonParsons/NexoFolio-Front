@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useLifecycle } from '@/features/documents/lifecycle/context'
+const lifecycle = useLifecycle()
 import AppIcon from '@/components/icons/AppIcon.vue'
 import type { Folder } from '@/contracts/knowledge/types'
 import type { DocumentFolder } from '@/features/documents/documentTree'
@@ -17,7 +19,9 @@ defineEmits<{ select: [target: DocumentTarget] }>()
 <template>
   <header class="candidate-folder-overview-heading">
     <p class="document-breadcrumbs">{{ path.map((f) => f.name).join(' / ') || folder.name }}</p>
-    <h2><AppIcon name="folder-open" :size="21" />{{ folder.name }}</h2>
+    <h2 :class="{ 'lifecycle-retired-name': !!lifecycle?.get({ kind: 'folder', id: folder.id }) }">
+      <AppIcon name="folder-open" :size="21" />{{ folder.name }}
+    </h2>
     <p>{{ folder.summary || '目录介绍尚未补充。' }}</p>
     <p class="document-overview-meta">
       {{ folder.children.length }} 个子目录 · {{ folder.count }} 个接口
@@ -35,7 +39,13 @@ defineEmits<{ select: [target: DocumentTarget] }>()
           @click="$emit('select', { kind: 'folder', id: child.id })"
         >
           <strong
-            >{{ child.name }} <small>{{ child.count }} 个接口</small></strong
+            ><span
+              :class="{
+                'lifecycle-retired-name': !!lifecycle?.get({ kind: 'folder', id: child.id }),
+              }"
+              >{{ child.name }}</span
+            >
+            <small>{{ child.count }} 个接口</small></strong
           >
           <p>{{ child.summary || '暂无目录介绍' }}</p>
         </button>
@@ -55,7 +65,15 @@ defineEmits<{ select: [target: DocumentTarget] }>()
         >
           <span class="http-method" :data-method="entry.method">{{ entry.method }}</span
           ><span class="interface-item-content"
-            ><strong>{{ entry.name || entry.path }}</strong></span
+            ><strong
+              :class="{
+                'lifecycle-retired-name': !!lifecycle?.get({
+                  kind: 'endpoint',
+                  id: entry.interface_id,
+                }),
+              }"
+              >{{ entry.name || entry.path }}</strong
+            ></span
           ><AppIcon name="arrow-right" :size="13" />
         </button>
         <p>{{ entry.purpose || '用途尚未补充' }}</p>

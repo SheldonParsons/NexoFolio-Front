@@ -6,8 +6,14 @@ import { useIconInteraction } from '@/components/motion/useIconInteraction'
 import type { IconName } from '@/components/icons/registry'
 import { accessLabels, statusLabels, type Project } from './types'
 import { createHoverCells, HOVER_CELL_SIZE, HOVER_CELL_GAP, HOVER_FILL_RATIO } from './hoverCells'
-const props = defineProps<{ project: Project; blocked: boolean; opening: boolean }>()
-const emit = defineEmits<{ open: [project: Project] }>()
+const props = defineProps<{
+  project: Project
+  blocked: boolean
+  opening: boolean
+}>()
+const emit = defineEmits<{
+  open: [project: Project]
+}>()
 const rowMotion = useIconInteraction()
 const interacting = computed(() => rowMotion.active.value && (!props.blocked || props.opening))
 const hoverRun = ref(0)
@@ -148,11 +154,11 @@ function clickRow(event: MouseEvent) {
         class="project-enter"
         :aria-disabled="blocked"
         :aria-busy="opening"
-        :aria-label="`${project.can_access ? '进入' : '查看访问说明：'}${project.name}`"
+        :aria-label="`${project.can_access ? '进入' : '只读查看：'}${project.name}`"
         @click.stop="open"
       >
         <span class="project-enter-label sr-only">{{
-          opening ? '确认中' : project.can_access ? '进入项目' : '查看原因'
+          opening ? '确认中' : project.can_access ? '进入项目' : '只读查看'
         }}</span
         ><AppIcon
           v-if="!opening"

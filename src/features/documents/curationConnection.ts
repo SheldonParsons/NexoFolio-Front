@@ -1,3 +1,4 @@
+import { pageVisible, waitForObservation } from '@/features/curation/observation'
 import { ApiError } from '@/api/client'
 import * as knowledge from '@/contracts/knowledge/source'
 import type { CurateProgress } from '@/contracts/knowledge/types'
@@ -18,10 +19,12 @@ export async function reconnectCuration(
   signal: AbortSignal,
   pause: () => Promise<void>,
   recovering: () => void,
+  runKey = '',
 ): Promise<CurateProgress> {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      return await knowledge.curateProgress(projectId, signal)
+      if (!pageVisible()) await waitForObservation(signal)
+      return await knowledge.curateProgress(projectId, signal, runKey)
     } catch (cause) {
       if (signal.aborted || !temporaryCurationReadFailure(cause)) throw cause
       recovering()

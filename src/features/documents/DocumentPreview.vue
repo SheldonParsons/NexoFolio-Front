@@ -24,7 +24,15 @@ const id = useId(),
 // A whole-width row has no usable lateral space. Anchor the card beside the
 // mouse column instead; downward browsing never passes through the panel.
 const reference = computed(() => {
-  if (props.placement !== 'overview' || !host.value) return undefined
+  if (!host.value) return undefined
+  if (props.placement !== 'overview') {
+    // Directory labels exclude the trailing action slot. Anchor outside the
+    // whole row so a preview cannot cover its more-actions control.
+    const row = host.value.closest<HTMLElement>('.document-folder-heading')
+    return row
+      ? { contextElement: row, getBoundingClientRect: () => row.getBoundingClientRect() }
+      : undefined
+  }
   const element = host.value
   const x = pointerX.value
   return {

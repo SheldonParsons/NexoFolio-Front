@@ -7,6 +7,7 @@ export function useDocumentNavigation(
   workspace: ReturnType<typeof useDocumentWorkspace>,
   route: RouteLocationNormalizedLoaded,
   router: Router,
+  showRetired: () => boolean = () => false,
 ) {
   const target = computed(() => documentTarget(route))
   const environmentError = computed(() => {
@@ -23,10 +24,11 @@ export function useDocumentNavigation(
       workspace.environmentId.value,
       workspace.query.value,
       target.value,
+      showRetired(),
     ),
   )
   const overviewTree = computed(() =>
-    documentTree(workspace.documentIndex.value, workspace.environmentId.value),
+    documentTree(workspace.documentIndex.value, workspace.environmentId.value, '', null, true),
   )
   const folder = computed(() =>
     target.value?.kind === 'folder' ? findFolder(overviewTree.value, target.value.id) : undefined,

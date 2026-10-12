@@ -10,7 +10,7 @@ import { mcpDocumentationLinks } from '../src/features/mcp-docs/environment'
 import { mcpInstallPrompt } from '../src/features/mcp-docs/onboarding'
 
 describe('MCP documentation examples', () => {
-  it('starts the seven-tool workflow with project and environment discovery', () => {
+  it('starts the progressive retrieval workflow with project and environment discovery', () => {
     expect(mcpTools.map((tool) => tool.name)).toEqual([
       'list_projects',
       'list_project_environments',
@@ -19,6 +19,10 @@ describe('MCP documentation examples', () => {
       'read_request_material',
       'trace_dependencies',
       'read_field_values',
+      'browse_directory',
+      'read_response_material',
+      'read_source_evidence',
+      'inspect_knowledge_coverage',
     ])
   })
   it('keeps project scope and continuation parameters in request material examples', () => {
@@ -41,6 +45,21 @@ describe('MCP documentation examples', () => {
     expect(mcpToolArguments(5)).toMatchObject({ authenticated: false })
   })
 
+  it('uses grouped coverage and exposes complete meaning/source expansion', () => {
+    const index = mcpTools.findIndex((tool) => tool.name === 'inspect_knowledge_coverage')
+    expect(mcpToolArguments(index)).toMatchObject({ section: 'summary' })
+    expect(
+      mcpTools
+        .find((tool) => tool.name === 'read_interface')
+        ?.parameters.find((p) => p.name === 'section')?.detail,
+    ).toContain('field_summary')
+    expect(
+      mcpTools
+        .find((tool) => tool.name === 'read_source_evidence')
+        ?.returns.map((r) => r.detail)
+        .join(' '),
+    ).toContain('source_reads')
+  })
   it('generates valid client JSON with a placeholder instead of collecting a secret', () => {
     const result = makeMcpConfig(' https://example.com:8443/nexofolio/ ')
     expect(result.error).toBe('')

@@ -4,6 +4,9 @@ import { RouterView, useRoute } from 'vue-router'
 import WorkspaceLayout from '@/layouts/WorkspaceLayout.vue'
 import ProjectsLayout from '@/layouts/ProjectsLayout.vue'
 import ProductDocsLayout from '@/layouts/ProductDocsLayout.vue'
+import ManagementLayout from '@/layouts/ManagementLayout.vue'
+import ManagementEntry from '@/features/management/ManagementEntry.vue'
+import { useSessionLifecycle } from '@/features/auth/useSessionLifecycle'
 import { usePreferencesStore } from '@/stores/preferences'
 import LoginDialog from '@/features/auth/LoginDialog.vue'
 import LoginSuccessTransition from '@/features/auth/LoginSuccessTransition.vue'
@@ -13,6 +16,7 @@ import BrandTransition from '@/components/brand/BrandTransition.vue'
 import { useNavigationTransition } from '@/stores/navigationTransition'
 const route = useRoute()
 const auth = useAuthStore()
+useSessionLifecycle()
 const navigationTransition = useNavigationTransition()
 async function finishNavigation(runId: number) {
   if (navigationTransition.current?.runId !== runId) return
@@ -58,7 +62,9 @@ watch(
     <RouterView v-if="route.meta.layout === 'landing'" />
     <ProjectsLayout v-else-if="route.meta.layout === 'projects'" />
     <ProductDocsLayout v-else-if="route.meta.layout === 'docs'" />
+    <ManagementLayout v-else-if="route.meta.layout === 'management'" />
     <WorkspaceLayout v-else />
+    <ManagementEntry />
     <LoginDialog />
   </div>
   <LoginSuccessTransition

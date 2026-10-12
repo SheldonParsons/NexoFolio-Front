@@ -1,5 +1,8 @@
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
-import { ApiError } from '@/api'
+import { pageVisible, useVisiblePolling, waitForObservation } from './observation'
+import { onCurationChanged } from '@/contracts/knowledge/curationReads'
+import { api, ApiError } from '@/api'
+import type { DocumentLifecycle } from '@/features/documents/lifecycle/model'
 import { projectSource } from '@/features/projects/source'
 import type { Project } from '@/features/projects/types'
 import type { DocumentIndex } from '@/features/documents/source'
@@ -24,23 +27,36 @@ export function useCurationReview(
     indexLoading = ref(false),
     indexError = ref('')
   let request: AbortController | undefined
-  let poll: ReturnType<typeof setTimeout> | undefined
+  let disposed = false
+  let accessDenied = false
+  let refreshVersion = 0
   const paths = computed(() => new Map(index.value?.entries.map((e) => [e.interface_id, e.path])))
   const changes = computed(() =>
     candidate.value ? candidateChanges(candidate.value, paths.value) : [],
   )
   function report(cause: unknown) {
+    if (cause instanceof ApiError && [401, 403].includes(cause.status ?? 0)) accessDenied = true
     if (cause instanceof ApiError && cause.status === 401) return onUnauthorized()
     error.value = cause instanceof Error ? cause.message : '暂时无法读取整理结果，请重试'
   }
-  async function refresh(signal?: AbortSignal) {
-    if (signal?.aborted) return
+  async function refresh(signal?: AbortSignal, explicit = false) {
+    if (signal?.aborted || disposed || (!explicit && !pageVisible())) return
+    const version = ++refreshVersion
     const pid = projectId(),
       id = candidateId()
-    const current = () => !signal?.aborted && projectId() === pid && candidateId() === id
-    const rows = await source.candidates(pid, signal)
+    const current = () =>
+      !disposed && version === refreshVersion && !signal?.aborted &&
+      projectId() === pid && candidateId() === id
+    const [rows, lifecycle] = await Promise.all([
+      source.candidates(pid, signal),
+      api.request<DocumentLifecycle>(`v1/projects/${encodeURIComponent(pid)}/document-lifecycle`, {
+        signal,
+        cache: 'no-store',
+      }),
+    ])
     if (!current()) return
     list.value = rows
+    if (index.value) index.value = { ...index.value, lifecycle }
     if (id) {
       const latest = rows.find((c) => c.id === id)
       if (
@@ -52,27 +68,36 @@ export function useCurationReview(
         if (current()) candidate.value = value
       }
     }
+    if (current()) error.value = ''
   }
-  function schedule(signal: AbortSignal) {
-    clearTimeout(poll)
-    if (signal.aborted || loading.value || (candidateId() && !candidate.value)) return
-    if (candidate.value?.state !== 'running' && !list.value.some((c) => c.state === 'running'))
-      return
-    const pid = projectId(),
-      id = candidateId()
-    poll = setTimeout(async () => {
-      if (signal.aborted || projectId() !== pid || candidateId() !== id) return
-      try {
-        await refresh(signal)
-      } catch (cause) {
-        if (!signal.aborted) report(cause)
-      }
-      if (!signal.aborted) schedule(signal)
-    }, 2500)
+  const polling = useVisiblePolling(
+    () => void poll(),
+    () => candidate.value?.state === 'running' || list.value.some(c => c.state === 'running')
+      ? 2500 : 30_000,
+    () => !disposed && !accessDenied && !loading.value,
+  )
+  async function poll() {
+    const signal = request?.signal
+    if (!signal || signal.aborted) return
+    try {
+      await refresh(signal)
+    } catch (cause) {
+      if (!signal.aborted) report(cause)
+    } finally {
+      if (!signal.aborted) polling.schedule()
+    }
   }
+  const unlisten = onCurationChanged(pid => {
+    if (pid === projectId() && !deciding.value) {
+      polling.clear()
+      void poll()
+    }
+  })
   async function load() {
     request?.abort()
-    clearTimeout(poll)
+    refreshVersion++
+    accessDenied = false
+    polling.clear()
     const current = new AbortController()
     request = current
     const pid = projectId(),
@@ -88,6 +113,14 @@ export function useCurationReview(
     index.value = null
     indexLoading.value = !!id
     if (project.value?.project_id !== pid) project.value = null
+    if (!pageVisible()) {
+      try {
+        await waitForObservation(current.signal)
+      } catch {
+        return
+      }
+      if (!owns()) return
+    }
     // Supplemental reads publish independently and never gate the result list/detail.
     void projectSource
       .get(pid, current.signal)
@@ -118,7 +151,7 @@ export function useCurationReview(
         .then((rows) => {
           if (owns()) {
             list.value = rows
-            schedule(current.signal)
+            polling.schedule()
           }
         })
         .catch((cause) => {
@@ -138,7 +171,7 @@ export function useCurationReview(
     } finally {
       if (owns()) {
         loading.value = false
-        schedule(current.signal)
+        polling.schedule()
       }
     }
   }
@@ -156,7 +189,8 @@ export function useCurationReview(
     try {
       await (action === 'apply' ? source.applyCandidate : source.discardCandidate)(pid, id, signal)
       if (!current()) return false
-      await refresh(signal)
+      await refresh(signal, true)
+      polling.schedule()
       return current() && candidate.value?.state === accepted
     } catch (cause) {
       if (current()) {
@@ -168,7 +202,7 @@ export function useCurationReview(
           if (saved.state === accepted) {
             // The decision is proven saved even if its history refresh is unavailable.
             try {
-              await refresh(signal)
+              await refresh(signal, true)
             } catch {
               /* Retain the verified decision. */
             }
@@ -186,8 +220,10 @@ export function useCurationReview(
   }
   watch([projectId, candidateId], () => void load(), { immediate: true })
   onScopeDispose(() => {
+    disposed = true
+    unlisten()
     request?.abort()
-    clearTimeout(poll)
+    polling.clear()
   })
   return {
     project,

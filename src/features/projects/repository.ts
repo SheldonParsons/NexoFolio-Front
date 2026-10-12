@@ -9,6 +9,7 @@ export function parseProject(value: unknown): Project {
     typeof p.project_id !== 'string' ||
     typeof p.name !== 'string' ||
     typeof p.status !== 'string' ||
+    (p.origin !== undefined && !['local', 'zentao'].includes(p.origin)) ||
     typeof p.can_access !== 'boolean' ||
     !['allowed', 'denied', 'unknown'].includes(p.access_state ?? '') ||
     !(p.reason_code === null || typeof p.reason_code === 'string')

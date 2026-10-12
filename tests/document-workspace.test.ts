@@ -225,6 +225,8 @@ it('does not let a stale project request replace the newly opened project', asyn
 
 it('uses current endpoints and catalog routes instead of the retired interface route', async () => {
   const request = vi.spyOn(api, 'request').mockImplementation(async (path) => {
+    if (path.endsWith('/document-lifecycle'))
+      return { version: 0, reconciled_version: 0, decisions: [] }
     if (path.endsWith('/catalog')) return { project_id: pid, folders: [], unplaced: 2 }
     if (path.endsWith('/endpoints')) return { endpoints: index.entries.map((e) => e.summary) }
     if (path.includes('/catalog/unclassified?'))

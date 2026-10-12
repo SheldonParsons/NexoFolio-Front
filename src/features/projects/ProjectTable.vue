@@ -78,7 +78,7 @@ function scrollKeys(event: KeyboardEvent) {
       >
         <table class="project-list">
           <caption class="sr-only">
-            项目名称、状态和访问权限。最近访问独立于全部项目分页。
+            项目名称、状态和操作权限。最近访问独立于全部项目分页。
           </caption>
           <colgroup>
             <col />
@@ -90,7 +90,7 @@ function scrollKeys(event: KeyboardEvent) {
             <tr>
               <th scope="col" class="project-name-header">项目名称</th>
               <th scope="col" class="project-status-cell">状态</th>
-              <th scope="col" class="project-access-cell">访问权限</th>
+              <th scope="col" class="project-access-cell">操作权限</th>
               <th scope="col" class="project-action-cell"><span class="sr-only">操作</span></th>
             </tr>
           </thead>

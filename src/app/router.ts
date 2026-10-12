@@ -11,6 +11,41 @@ export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/settings/audit',
+      name: 'audit',
+      redirect: (to) => ({ name: 'management-audit', query: to.query, hash: to.hash }),
+    },
+    {
+      path: '/management',
+      meta: {
+        title: '管理中心',
+        requiresAuth: true,
+        requiresManagement: true,
+        layout: 'management',
+      },
+      children: [
+        { path: '', redirect: { name: 'management-projects' } },
+        {
+          path: 'projects',
+          name: 'management-projects',
+          component: () => import('@/pages/ManagementProjectsPage.vue'),
+          meta: { title: '项目管理' },
+        },
+        {
+          path: 'users',
+          name: 'management-users',
+          component: () => import('@/pages/ManagementUsersPage.vue'),
+          meta: { title: '用户管理' },
+        },
+        {
+          path: 'audit',
+          name: 'management-audit',
+          component: () => import('@/pages/AuditPage.vue'),
+          meta: { title: '内容审计' },
+        },
+      ],
+    },
+    {
       path: '/',
       name: 'home',
       component: () => import('@/pages/HomePage.vue'),
@@ -25,14 +60,14 @@ export const router = createRouter({
     {
       path: '/projects/:projectId/interfaces',
       name: 'project-interfaces',
-      component: () => import('@/pages/ProjectDocumentPage.vue'),
-      meta: { title: '接口文档', requiresAuth: true, layout: 'projects' },
+      component: () => import('@/pages/ProjectDocumentRoute.vue'),
+      meta: { title: '接口文档', publicDocument: true, layout: 'projects' },
     },
     ...(['folder', 'endpoint'] as const).map((kind) => ({
       path: `/projects/:projectId/interfaces/${kind}s/:${kind}Id`,
       name: `document-${kind}`,
-      component: () => import('@/pages/ProjectDocumentPage.vue'),
-      meta: { title: '接口文档', requiresAuth: true, layout: 'projects' },
+      component: () => import('@/pages/ProjectDocumentRoute.vue'),
+      meta: { title: '接口文档', publicDocument: true, layout: 'projects' },
     })),
     {
       path: '/projects/:projectId/interfaces/curation/:candidateId?',
@@ -120,6 +155,15 @@ export const router = createRouter({
 
 let routeTransitionId: number | null = null
 router.beforeEach(async (to, from) => {
+  if (to.meta.publicDocument) {
+    const auth = useAuthStore(pinia)
+    try {
+      await auth.checkSession()
+    } catch {
+      auth.user = null
+    }
+    return true
+  }
   if (!to.meta.requiresAuth) return true
   const auth = useAuthStore(pinia)
   if (!workspaceEnabled) {
@@ -137,9 +181,11 @@ router.beforeEach(async (to, from) => {
   }
   // The login API has just authenticated this user. Mount the destination under
   // the fixed transition instead of blocking it on a redundant /me round trip.
-  if (auth.arrival && auth.user?.id === auth.arrival.userId) return true
+  const managementAllowed = () => !to.meta.requiresManagement || auth.canManageProjects
+  if (auth.arrival && auth.user?.id === auth.arrival.userId)
+    return managementAllowed() ? true : { name: 'projects' }
   try {
-    if (await auth.checkSession()) return true
+    if (await auth.checkSession()) return managementAllowed() ? true : { name: 'projects' }
   } catch (error) {
     auth.requestLogin(to.fullPath, authErrorMessage(error))
     return { name: 'home' }

@@ -121,21 +121,26 @@ it('rejects late detail and metadata from a previous route scope', async () => {
   expect(f.value.index.value?.catalog.project_id).toBe('q')
 })
 it('builds preview facts with one summary request instead of the approved directory pages', async () => {
-  const request = vi.spyOn(api, 'request').mockResolvedValue({
-    endpoints: [
-      {
-        id: 'e',
-        project_id: 'p',
-        method: 'GET',
-        path_template: '/items',
-        environments: [],
-        declared: false,
-        external: false,
-      },
-    ],
-  })
+  const request = vi
+    .spyOn(api, 'request')
+    .mockResolvedValueOnce({
+      endpoints: [
+        {
+          id: 'e',
+          project_id: 'p',
+          method: 'GET',
+          path_template: '/items',
+          environments: [],
+          declared: false,
+          external: false,
+        },
+      ],
+    })
+    .mockResolvedValueOnce({ version: 7, reconciled_version: 6, decisions: [] })
   const result = await source.factsIndex('p')
-  expect(request).toHaveBeenCalledTimes(1)
+  expect(result.lifecycle?.version).toBe(7)
+  expect(request).toHaveBeenCalledTimes(2)
+  expect(request.mock.calls[1]?.[0]).toBe('v1/projects/p/document-lifecycle')
   expect(request.mock.calls[0]?.[0]).toBe('v1/projects/p/endpoints')
   expect(result.entries[0]).toMatchObject({
     interface_id: 'e',

@@ -1,4 +1,5 @@
-import { computed, onScopeDispose, ref, shallowRef } from 'vue'
+import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { pageVisible, waitForObservation } from './observation'
 import { ApiError } from '@/api'
 import type { CurateProgress } from '@/contracts/knowledge/types'
 import * as knowledge from '@/contracts/knowledge/source'
@@ -19,23 +20,6 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
     blocked.value = true
     if (cause instanceof ApiError && cause.status === 401) unauthorized()
     else error.value = cause instanceof Error ? cause.message : '暂时无法读取本轮进度'
-  }
-  function delay(signal: AbortSignal) {
-    return new Promise<void>((resolve, reject) => {
-      if (signal.aborted) {
-        reject(signal.reason)
-        return
-      }
-      const cancel = () => {
-        clearTimeout(timer)
-        reject(signal.reason)
-      }
-      const timer = setTimeout(() => {
-        signal.removeEventListener('abort', cancel)
-        resolve()
-      }, 2000)
-      signal.addEventListener('abort', cancel, { once: true })
-    })
   }
   async function observe(initial: CurateProgress) {
     const previous = progress.value
@@ -60,7 +44,13 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
     try {
       while (owns()) {
         try {
-          const job = await knowledge.curateProgress(pid, current.signal)
+          if (!pageVisible()) await waitForObservation(current.signal)
+          if (!owns()) return
+          const job = await knowledge.curateProgress(
+            pid,
+            current.signal,
+            progress.value?.run_id ?? progress.value?.candidate_id ?? '',
+          )
           if (!owns()) return
           progress.value = job
           noticeCandidateId.value = job.candidate_id ?? ''
@@ -71,7 +61,7 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
           if (!temporaryCurationReadFailure(cause)) throw cause
           error.value = '暂时无法读取最新进度，正在重新连接后台任务'
         }
-        await delay(current.signal)
+        await waitForObservation(current.signal, 2000)
       }
     } catch (cause) {
       if (owns()) report(cause)
@@ -106,9 +96,20 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
     } catch (cause) {
       if (!disposed && request === current && !current.signal.aborted) report(cause)
     } finally {
-      pending.value = false
+      if (request === current) pending.value = false
     }
   }
+  watch(projectId, () => {
+    request?.abort()
+    request = undefined
+    watching.value = false
+    pending.value = false
+    progress.value = null
+    error.value = ''
+    blocked.value = false
+    noticeCandidateId.value = ''
+    requestedRunKey.value = ''
+  })
   onScopeDispose(() => {
     disposed = true
     request?.abort()

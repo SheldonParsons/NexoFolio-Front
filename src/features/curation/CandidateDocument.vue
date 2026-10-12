@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { provideLifecycle } from '@/features/documents/lifecycle/context'
+import LifecycleNotice from '@/features/documents/lifecycle/LifecycleNotice.vue'
 import { computed, onScopeDispose, shallowRef, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { documentLocation } from '@/features/documents/documentRoutes'
@@ -22,6 +24,18 @@ const props = defineProps<{
   indexLoading?: boolean
   indexError?: string
 }>()
+const lifecycle = provideLifecycle(
+  () => props.candidate.project_id,
+  () => props.index,
+  false,
+)
+watch(
+  () => props.candidate.project_id,
+  () => {
+    lifecycle.showRetired.value = true
+  },
+  { immediate: true },
+)
 const router = useRouter()
 function showExample(example: string) {
   const location = documentLocation(
@@ -161,7 +175,14 @@ const environment = computed(
             <span class="curation-unapplied-label">{{
               candidate.state === 'applied' ? '本轮保存结果' : '候选知识 · 尚未应用'
             }}</span>
-            <h2>{{ note?.name || entries.find((e) => e.interface_id === selected)?.path }}</h2>
+            <LifecycleNotice :target="{ kind: 'endpoint', id: selected }" />
+            <h2
+              :class="{
+                'lifecycle-retired-name': !!lifecycle.get({ kind: 'endpoint', id: selected }),
+              }"
+            >
+              {{ note?.name || entries.find((e) => e.interface_id === selected)?.path }}
+            </h2>
             <code
               >{{ detail?.facts.summary.method }} {{ detail?.facts.summary.path_template }}</code
             >

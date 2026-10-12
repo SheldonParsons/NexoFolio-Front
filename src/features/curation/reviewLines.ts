@@ -78,7 +78,7 @@ export function reviewLines(
         add('真实父级', note.context.structure.parent || '报文根节点', true)
         add('同级字段', note.context.structure.siblings, true)
       }
-      add('待确认', note.context?.meaning?.unknowns ?? [], false, true)
+      add('尚未验证的事项', note.context?.meaning?.unknowns ?? [], false, true)
       add('观测值（非完整枚举）', note.values, true)
       add(
         '依据',

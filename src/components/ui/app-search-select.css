@@ -1,0 +1,107 @@
+/* One composite focus surface. Inner controls never draw a second ring. */
+.nf-search-select-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 12px;
+  gap: 8px;
+  cursor: text;
+}
+.nf-search-select-trigger[data-state='open'] {
+  border-color: var(--input-focus-border);
+  box-shadow: none;
+}
+.nf-search-select-trigger[data-keyboard-focus='true']:focus-within {
+  outline: 2px solid var(--input-focus-border);
+  outline-offset: -2px;
+}
+.nf-search-select-trigger .nf-search-select-input,
+.nf-search-select-trigger .nf-search-select-input:focus-visible {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+.nf-search-select-trigger .nf-search-select-input::placeholder {
+  color: var(--muted);
+}
+.nf-search-select-trigger .nf-search-select-arrow,
+.nf-search-select-trigger .nf-search-select-arrow:focus-visible {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--muted);
+}
+.nf-search-select-content {
+  z-index: 160;
+  width: var(--reka-combobox-trigger-width);
+  min-width: 220px;
+  max-width: calc(100vw - 24px);
+  max-height: min(340px, var(--reka-combobox-content-available-height));
+  transform-origin: var(--reka-combobox-content-transform-origin);
+}
+.nf-search-select-content .nf-select-viewport {
+  max-height: min(328px, var(--reka-combobox-content-available-height));
+}
+.nf-search-select-item[data-state='checked'] {
+  font-weight: 400;
+}
+.nf-search-select-feedback {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 10px;
+  min-height: 48px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.nf-search-select-error {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.nf-search-select-hint {
+  margin: 5px 4px 0;
+  padding: 10px 6px 5px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.nf-search-select-spinner {
+  width: 13px;
+  height: 13px;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--muted);
+  border-radius: 50%;
+  animation: nf-search-spin 800ms linear infinite;
+}
+@keyframes nf-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nf-search-select-spinner {
+    animation: none;
+  }
+}

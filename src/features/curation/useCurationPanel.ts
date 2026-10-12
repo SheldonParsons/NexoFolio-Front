@@ -1,4 +1,6 @@
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
+import { pageVisible, useVisiblePolling } from './observation'
+import { onCurationChanged } from '@/contracts/knowledge/curationReads'
 import { ApiError } from '@/api'
 import type { CurateProgress } from '@/contracts/knowledge/types'
 import type { CandidateSummary } from './types'
@@ -22,7 +24,6 @@ export function useCurationPanel(
     listLoading = ref(false)
   const accessDenied = ref(false)
   let read: AbortController | undefined, listRead: AbortController | undefined
-  let timer: ReturnType<typeof setTimeout> | undefined
   let disposed = false
   const selected = computed(() => manual.value ?? preferred.value)
   const options = computed(() => panelOptions(rows.value, preferred.value, selected.value))
@@ -54,12 +55,17 @@ export function useCurationPanel(
           ? '没有权限查看当前项目的整理记录。'
           : '暂时无法读取整理记录，请重试。'
   }
-  function schedule() {
-    clearTimeout(timer)
-    if (!disposed && !accessDenied.value) timer = setTimeout(() => void refresh(), 5000)
-  }
+  const polling = useVisiblePolling(
+    () => void refresh(),
+    () => (projectRunning.value ? 5000 : 30_000),
+    () => !disposed && !accessDenied.value,
+  )
+  const unlisten = onCurationChanged((pid) => {
+    if (pid === projectId()) void refresh()
+  })
   async function refresh() {
-    clearTimeout(timer)
+    polling.clear()
+    if (!pageVisible() || disposed) return
     read?.abort()
     const pid = projectId(),
       page = pageKey(),
@@ -82,10 +88,11 @@ export function useCurationPanel(
       if (pinned)
         manual.value = values.find((row) => row.project_id === pid && row.id === pinned) ?? null
       error.value = ''
+      accessDenied.value = false
     } catch (cause) {
       if (owns()) report(cause, error)
     } finally {
-      if (read === current && !disposed && !current.signal.aborted) schedule()
+      if (read === current && !disposed && !current.signal.aborted) polling.schedule()
     }
   }
   async function loadOptions() {
@@ -125,7 +132,7 @@ export function useCurationPanel(
   function reset() {
     read?.abort()
     listRead?.abort()
-    clearTimeout(timer)
+    polling.clear()
     preferred.value = null
     manual.value = null
     rows.value = []
@@ -136,24 +143,19 @@ export function useCurationPanel(
     void refresh()
   }
   watch([projectId, pageKey], reset, { immediate: true })
-  watch(liveBusy, () => {
-    void refresh()
-  })
-  watch(requestedRunKey, () => {
-    manual.value = null
-    void refresh()
-  })
   watch(
-    () => live()?.candidate_id,
-    () => {
-      if (liveBusy()) void refresh()
+    [liveBusy, requestedRunKey, () => live()?.candidate_id],
+    ([active, key, id], [wasActive, oldKey, oldId]) => {
+      if (key !== oldKey) manual.value = null
+      if (active !== wasActive || key !== oldKey || (active && id !== oldId)) void refresh()
     },
   )
   onScopeDispose(() => {
     disposed = true
+    unlisten()
     read?.abort()
     listRead?.abort()
-    clearTimeout(timer)
+    polling.clear()
   })
   return {
     preferred,

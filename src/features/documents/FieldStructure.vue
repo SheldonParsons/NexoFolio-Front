@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useLifecycle } from './lifecycle/context'
+import { hiddenRetirement } from './lifecycle/model'
+import LifecycleMenu from './lifecycle/LifecycleMenu.vue'
+import LifecycleNotice from './lifecycle/LifecycleNotice.vue'
+const lifecycle = useLifecycle()
 import { computed, ref, watch } from 'vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import type { FieldFacts, FieldNote, FieldEvidence } from '@/contracts/knowledge/types'
@@ -31,7 +36,21 @@ const rows = computed(() => {
       if (!collapsed.value.has(node.key)) visit(node.children, depth + 1)
     }
   }
-  visit(compactFieldTree(props.fields, props.notes), 0)
+  const fields =
+    lifecycle &&
+    !lifecycle.showRetired.value &&
+    !lifecycle.get({ kind: 'endpoint', id: props.endpointId })
+      ? props.fields.filter(
+          (f) =>
+            !hiddenRetirement(lifecycle.state.value, {
+              kind: 'field',
+              endpoint: props.endpointId,
+              location: f.location,
+              path: f.path,
+            }),
+        )
+      : props.fields
+  visit(compactFieldTree(fields, props.notes), 0)
   return result
 })
 function toggle(set: Set<string>, key: string) {
@@ -75,13 +94,14 @@ function status(node: FieldNode): string {
 </script>
 
 <template>
-  <div class="field-structure">
+  <div class="field-structure" :class="{ 'has-lifecycle-actions': lifecycle?.writable }">
     <table>
       <colgroup>
         <col class="field-column" />
         <col class="type-column" />
         <col class="meaning-column" />
         <col class="value-column" />
+        <col v-if="lifecycle?.writable" style="width: 36px" />
       </colgroup>
       <thead>
         <tr>
@@ -89,6 +109,7 @@ function status(node: FieldNode): string {
           <th>类型</th>
           <th>说明 <span>基础含义为推断</span></th>
           <th>观测值 <span>非完整枚举</span></th>
+          <th v-if="lifecycle?.writable" class="lifecycle-field-action" aria-label="字段操作"></th>
         </tr>
       </thead>
       <tbody>
@@ -116,10 +137,31 @@ function status(node: FieldNode): string {
                   />
                 </button>
                 <span v-else class="field-leaf" aria-hidden="true"></span>
-                <code :title="node.path">{{ node.name }}</code>
-                <span v-if="node.note?.context?.display_name" class="field-display-name">{{
-                  node.note.context.display_name
-                }}</span>
+                <code
+                  :class="{
+                    'lifecycle-retired-name': !!lifecycle?.get({
+                      kind: 'field',
+                      endpoint: endpointId,
+                      location: node.field.location,
+                      path: node.field.path,
+                    }),
+                  }"
+                  :title="node.path"
+                  >{{ node.name }}</code
+                >
+                <span
+                  v-if="node.note?.context?.display_name"
+                  class="field-display-name"
+                  :class="{
+                    'lifecycle-retired-name': !!lifecycle?.get({
+                      kind: 'field',
+                      endpoint: endpointId,
+                      location: node.field.location,
+                      path: node.field.path,
+                    }),
+                  }"
+                  >{{ node.note.context.display_name }}</span
+                >
                 <span
                   v-else-if="node.note?.context?.completion?.name.state === 'uncertain'"
                   class="field-unwritten"
@@ -184,12 +226,31 @@ function status(node: FieldNode): string {
                 <span v-if="!values(node).length" class="field-unwritten">—</span>
               </div>
             </td>
+            <td v-if="lifecycle?.writable" class="lifecycle-field-action">
+              <LifecycleMenu
+                :target="{
+                  kind: 'field',
+                  endpoint: endpointId,
+                  location: node.field.location,
+                  path: node.field.path,
+                }"
+                :name="node.path || node.name"
+              />
+            </td>
           </tr>
           <tr
             v-if="expanded.has(node.key) && (node.note || node.item?.note)"
             class="field-evidence-row"
           >
-            <td colspan="4">
+            <td :colspan="lifecycle?.writable ? 5 : 4">
+              <LifecycleNotice
+                :target="{
+                  kind: 'field',
+                  endpoint: endpointId,
+                  location: node.field.location,
+                  path: node.field.path,
+                }"
+              />
               <FieldEvidencePanel
                 v-if="node.note"
                 :path="node.path"

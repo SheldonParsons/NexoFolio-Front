@@ -15,7 +15,7 @@ export const usePersonalProfile = defineStore('personal-profile', () => {
   function accept(value: source.PersonalProfile, id: string) {
     if (owner() !== id || value.user.id !== id) return
     profile.value = value
-    auth.user = { ...value.user }
+    auth.updateProfile(value.user)
   }
   function report(cause: unknown) {
     if (cause instanceof ApiError && cause.status === 401) {

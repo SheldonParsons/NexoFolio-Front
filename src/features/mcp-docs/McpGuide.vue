@@ -10,6 +10,9 @@ import {
   exampleProjectName,
   mcpFaqs,
   mcpRelease,
+  mcpPurpose,
+  mcpRetrievalPaths,
+  mcpReadingRules,
   mcpScenarios,
   mcpToolArguments,
   mcpTools,
@@ -17,7 +20,7 @@ import {
 import './mcp-guide.css'
 import {
   mcpConversation,
-  mcpAuditCapabilities,
+  mcpCoverageCapabilities,
   mcpInstallPrompt,
   mcpInstallSteps,
 } from './onboarding'
@@ -58,10 +61,10 @@ const copied = ref('')
 const copyError = ref('')
 const checklist = ref<string[]>([])
 const checkItems = [
-  `initialize 成功，客户端能列出 ${mcpTools.length} 个 NexoFolio 工具`,
-  '通过 list_projects 和 list_project_environments 取得 ID，search_interfaces 授权读取成功',
-  '取得真实接口 ID，分别读完字段、关系及请求资料引用',
-  '验证同一环境的请求资料续读，或明确缺少样本而尚未验证',
+  `initialize 成功，列出 ${mcpTools.length} 个工具并确认 field_summary、coverage summary/issues 定义`,
+  '按项目和环境名称取得真实 ID，完成目录浏览或搜索',
+  '按问题读完整字段语义，并核对相关引用和确认状态',
+  '按需核对原文、上下文及续读；缺少样本时明确哪些尚未验证',
 ]
 let timer: ReturnType<typeof setTimeout> | undefined
 watch([activeStep, activeTool, unplaced, address], () => {
@@ -138,7 +141,8 @@ onScopeDispose(() => clearTimeout(timer))
         <span class="mg-badge">MODEL CONTEXT PROTOCOL</span>
         <h2 id="mg-hero-title">让 Agent 读懂，<br />项目里的接口。</h2>
         <p>
-          搜索已保存的接口，核对请求资料与参数来源。<br />用真实证据准备请求草案，并说明仍缺什么。
+          浏览目录、搜索接口或顺着字段查来源。<br />由 Agent
+          决定读取路线，逐步核对完整说明与真实依据。
         </p>
         <div class="mg-hero-actions">
           <RouterLink
@@ -159,8 +163,8 @@ onScopeDispose(() => clearTimeout(timer))
           /></a>
         </div>
       </div>
-      <div class="mg-hero-route" aria-label="Agent 的阅读路径">
-        <span>READ WITH CONTEXT</span
+      <div class="mg-hero-route" aria-label="资料读取入口，按任务选择">
+        <span>CHOOSE WHAT TO READ</span
         ><button type="button" @click="showTool('list_projects')">
           <span class="mg-route-index">01</span>
           <div><strong>发现可访问项目</strong><code>list_projects</code></div>
@@ -169,9 +173,9 @@ onScopeDispose(() => clearTimeout(timer))
           <span class="mg-route-index">02</span>
           <div><strong>选择项目环境</strong><code>list_project_environments</code></div>
           <AppIcon name="arrow-up-right" :size="14" mode="static" /></button
-        ><button type="button" @click="showTool('search_interfaces')">
+        ><button type="button" @click="showTool('browse_directory')">
           <span class="mg-route-index">03</span>
-          <div><strong>搜索目标接口</strong><code>search_interfaces</code></div>
+          <div><strong>按业务目录探索</strong><code>browse_directory</code></div>
           <AppIcon name="arrow-up-right" :size="14" mode="static" /></button
         ><button type="button" @click="showTool('read_interface')">
           <span class="mg-route-index">04</span>
@@ -190,7 +194,7 @@ onScopeDispose(() => clearTimeout(timer))
           <div><strong>读取完整观测值</strong><code>read_field_values</code></div>
           <AppIcon name="arrow-up-right" :size="14" mode="static" /></button
         ><button class="mg-search-shortcut" type="button" @click="showTool('search_interfaces')">
-          <AppIcon name="search" :size="13" mode="static" />知道路径？直接搜索
+          <AppIcon name="search" :size="13" mode="static" />知道接口或字段？直接搜索
         </button>
       </div>
     </section>
@@ -208,8 +212,8 @@ onScopeDispose(() => clearTimeout(timer))
       </header>
       <p class="mg-intro">
         把本文链接交给能配置本机客户端的
-        Agent，当前实例的服务地址和凭证入口已经带入开场。登录后创建独立 MCP
-        Token，再在客户端本地填写并验证读取。
+        Agent，开场已带入当前实例地址、资料结构的用途和自主检索原则。Agent
+        先理解怎样利用这些结构，再完成接入；登录后创建独立 MCP Token，在客户端本地填写并验证读取。
       </p>
       <div class="mg-code">
         <header>
@@ -445,6 +449,37 @@ onScopeDispose(() => clearTimeout(timer))
       </p>
     </section>
 
+    <section id="mcp-retrieval" class="mg-section" aria-labelledby="mg-retrieval-title">
+      <header class="mg-heading">
+        <div>
+          <span class="mg-eyebrow">READ AS NEEDED</span>
+          <h2 id="mg-retrieval-title">把查找接口资料交给 Agent。</h2>
+        </div>
+      </header>
+      <p class="mg-intro">
+        你只需说明哪个项目、哪个环境，以及想解决什么问题。{{ mcpPurpose.spirit }}
+      </p>
+      <p class="mg-intro">{{ mcpPurpose.benefit }}</p>
+      <p class="mg-intro">{{ mcpPurpose.evidence }}</p>
+      <p class="mg-intro">
+        你不用提前查 ID，也不用安排工具调用顺序。下面是可以利用的入口，Agent
+        按任务选择、交替使用，需要时继续展开。
+      </p>
+      <ol class="mg-action-list">
+        <li v-for="(path, i) in mcpRetrievalPaths" :key="path.title">
+          <strong>0{{ i + 1 }}</strong>
+          <div>
+            <h3>{{ path.title }}</h3>
+            <p>{{ path.route }}</p>
+            <p>{{ path.detail }}</p>
+          </div>
+        </li>
+      </ol>
+      <ul>
+        <li v-for="rule in mcpReadingRules" :key="rule">{{ rule }}</li>
+      </ul>
+    </section>
+
     <section id="mcp-tools" ref="toolSection" class="mg-section" aria-labelledby="mg-tools-title">
       <header class="mg-heading">
         <div>
@@ -582,9 +617,9 @@ onScopeDispose(() => clearTimeout(timer))
         </article>
       </div>
       <p class="mg-source-boundary">
-        用
-        <code>request_materials.observed_at</code
-        >、环境和来源引用判断依据与时效。未观察到不代表不存在，整理说明也不自动成为新的独立事实。
+        核对环境、来源身份与采集上下文。判断先后时比较来源
+        <code>context.completed_at</code> 与目标 <code>context.started_at</code>，不能只看
+        observed_at。同页面不一定同 view_id；样本对应不证明必调顺序，整理说明也不是新观测。
       </p>
     </section>
 
@@ -620,9 +655,10 @@ onScopeDispose(() => clearTimeout(timer))
             : '项目和业务名称为示例，可替换成你实际想了解的名称。'
         }}Agent 会先查询有权限的项目和环境，取得实际 ID；同名时请你选择，无需手动查找 UUID。
       </p>
-      <h3 class="mg-conversation-title">模拟：准备一条“创建技术咨询单”的请求</h3>
+      <h3 class="mg-conversation-title">模拟：从任务 ID 查来源，再核实字典线索</h3>
       <p class="mg-intro">
-        以下是对话验收场景，不是已执行的业务调用。它同时检验搜索、资料续读、依赖核对和当前审计缺口。
+        以下展示可以怎样继续追问，具体结果以你项目里保存的资料为准。Agent
+        可以自行选择目录或搜索，找到线索后再展开依据和缺口，全程不发送业务请求。
       </p>
       <div class="mg-conversation">
         <article v-for="(turn, i) in mcpConversation" :key="turn.user">
@@ -638,12 +674,12 @@ onScopeDispose(() => clearTimeout(timer))
     <section id="mcp-audit" class="mg-section" aria-labelledby="mg-audit-title">
       <header class="mg-heading">
         <div>
-          <span class="mg-eyebrow">COVERAGE & AUDIT</span>
-          <h2 id="mg-audit-title">哪些能核对，哪些还缺能力。</h2>
+          <span class="mg-eyebrow">COVERAGE & EVIDENCE</span>
+          <h2 id="mg-audit-title">资料能说明什么，还有哪些未知。</h2>
         </div>
       </header>
       <div class="mg-audit-grid">
-        <article v-for="item in mcpAuditCapabilities" :key="item.title">
+        <article v-for="item in mcpCoverageCapabilities" :key="item.title">
           <span>{{ item.status }}</span>
           <h3>{{ item.title }}</h3>
           <p>{{ item.detail }}</p>

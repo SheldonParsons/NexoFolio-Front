@@ -14,6 +14,7 @@ import type { Candidate } from './types'
 import { canReviewDecision } from './reviewActions'
 import './review-menu.css'
 const props = defineProps<{
+  lifecycleStale?: boolean
   candidate: Candidate
   officialTo: RouteLocationRaw
   pending: boolean
@@ -25,9 +26,13 @@ const route = useRoute(),
   open = ref(false)
 const canResume = computed(
   () =>
-    !!props.candidate.execution_input && ['partial', 'interrupted'].includes(props.candidate.state),
+    !props.lifecycleStale &&
+    !!props.candidate.execution_input &&
+    ['partial', 'interrupted'].includes(props.candidate.state),
 )
-const canApply = computed(() => canReviewDecision(props.candidate.state, 'apply'))
+const canApply = computed(
+  () => !props.lifecycleStale && canReviewDecision(props.candidate.state, 'apply'),
+)
 const canDiscard = computed(() => canReviewDecision(props.candidate.state, 'discard'))
 watch(
   [() => route.fullPath, () => props.candidate.state, () => props.pending, () => props.resuming],

@@ -1,3 +1,4 @@
+import { pageVisible, waitForObservation } from '@/features/curation/observation'
 import { computed, ref, shallowRef } from 'vue'
 import * as knowledge from '@/contracts/knowledge/source'
 import type { CurateProgress } from '@/contracts/knowledge/types'
@@ -37,23 +38,7 @@ export function useDocumentCuration(
         ? '正在更新字段知识 ' + (value.fields_completed ?? 0) + '/' + value.total
         : '正在补全接口说明 ' + value.completed + '/' + value.total
   })
-  function waitForProgress(signal: AbortSignal) {
-    return new Promise<void>((resolve, reject) => {
-      if (signal.aborted) {
-        reject(signal.reason)
-        return
-      }
-      const cancel = () => {
-        clearTimeout(timer)
-        reject(signal.reason)
-      }
-      const timer = setTimeout(() => {
-        signal.removeEventListener('abort', cancel)
-        resolve()
-      }, 2000)
-      signal.addEventListener('abort', cancel, { once: true })
-    })
-  }
+  const waitForProgress = (signal: AbortSignal) => waitForObservation(signal, 2000)
   async function curate(endpointId?: string, resumed?: CurateProgress, resumeId?: string) {
     if (busy.value || !workspace.canStart()) return
     const pid = projectId()
@@ -66,6 +51,7 @@ export function useDocumentCuration(
     noticeError.value = false
     noticeCandidateId.value = resumed?.candidate_id ?? resumeId ?? ''
     const refresh = async (details: boolean) => {
+      if (!pageVisible()) await waitForObservation(request.signal)
       const updated = await source.documentIndex(pid, request.signal)
       if (!current()) return
       workspace.setIndex(updated)
@@ -81,7 +67,13 @@ export function useDocumentCuration(
         if (current()) notice.value = '暂时无法读取进度，正在重新连接后台整理任务'
       }
       const readProgress = () =>
-        reconnectCuration(pid, request.signal, () => waitForProgress(request.signal), recover)
+        reconnectCuration(
+          pid,
+          request.signal,
+          () => waitForProgress(request.signal),
+          recover,
+          progress.value?.run_id ?? progress.value?.candidate_id ?? '',
+        )
       let job: CurateProgress
       try {
         job =

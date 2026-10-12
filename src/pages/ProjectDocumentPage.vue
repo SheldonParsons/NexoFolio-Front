@@ -15,15 +15,20 @@ import CurationStartDialog from '@/features/curation/CurationStartDialog.vue'
 import DocumentFolderOverview from '@/features/documents/DocumentFolderOverview.vue'
 import DocumentBreadcrumbs from '@/features/documents/DocumentBreadcrumbs.vue'
 import DocumentShare from '@/features/documents/DocumentShare.vue'
+import EndpointSummary from '@/features/documents/EndpointSummary.vue'
 import InterfaceList from '@/features/documents/InterfaceList.vue'
 import DocumentSamples from '@/features/documents/samples/DocumentSamples.vue'
 import FieldStructure from '@/features/documents/FieldStructure.vue'
 import { groupFields } from '@/features/knowledge/fieldPresentation'
 import { formatTime } from '@/features/documents/presentation'
 import { useMarqueeOverflow } from '@/features/knowledge/useMarqueeOverflow'
+import { provideLifecycle } from '@/features/documents/lifecycle/context'
+import LifecycleMenu from '@/features/documents/lifecycle/LifecycleMenu.vue'
+import LifecyclePanel from '@/features/documents/lifecycle/LifecyclePanel.vue'
 import '@/features/documents/documents.css'
 import '@/features/documents/document-navigation.css'
 const route = useRoute()
+const emit = defineEmits<{ readOnly: [] }>()
 const auth = useAuthStore()
 const activeProject = useActiveProject()
 const startConfirmationOpen = ref(false)
@@ -32,8 +37,9 @@ const workspace = useDocumentWorkspace(
   () => {
     clearCredential()
     auth.user = null
-    auth.requestLogin(route.fullPath, '登录已过期，请重新登录。')
+    emit('readOnly')
   },
+  () => emit('readOnly'),
 )
 const {
   project,
@@ -76,7 +82,22 @@ watch(
   },
   { immediate: true },
 )
-const navigation = useDocumentNavigation(workspace, route, useRouter())
+const lifecycle = provideLifecycle(
+  () => String(route.params.projectId),
+  () => workspace.documentIndex.value,
+  true,
+  (state) => {
+    if (workspace.documentIndex.value)
+      workspace.documentIndex.value = { ...workspace.documentIndex.value, lifecycle: state }
+  },
+  () => emit('readOnly'),
+)
+const navigation = useDocumentNavigation(
+  workspace,
+  route,
+  useRouter(),
+  () => lifecycle.showRetired.value,
+)
 const {
   target,
   tree: sections,
@@ -95,9 +116,7 @@ const endpointName = computed(
 )
 const endpointPath = computed(() => detail.value?.facts.summary.path_template || '')
 const nameElement = ref<HTMLElement>()
-const pathElement = ref<HTMLElement>()
 const nameMarquee = useMarqueeOverflow(nameElement, endpointName)
-const pathMarquee = useMarqueeOverflow(pathElement, endpointPath)
 const usage = computed(() =>
   detail.value?.facts.summary.environments.find((e) => e.environment_id === environmentId.value),
 )
@@ -234,19 +253,23 @@ function confirmationUnauthorized() {
               此接口在当前环境尚无观测，以下说明为项目共享知识。
             </p>
             <div class="document-definition-title">
-              <span class="http-method" :data-method="detail.facts.summary.method">{{
-                detail.facts.summary.method
-              }}</span>
               <h2
                 ref="nameElement"
                 :title="endpointName"
-                :class="{ 'is-overflowing': nameMarquee.overflowing.value }"
+                :class="{
+                  'is-overflowing': nameMarquee.overflowing.value,
+                  'lifecycle-retired-name': !!lifecycle.get({ kind: 'endpoint', id: selectedId }),
+                }"
                 :style="nameMarquee.style()"
               >
                 <b>{{ endpointName }}</b>
               </h2>
               <span v-if="detail.facts.summary.external" class="document-chip">外部服务</span>
               <div class="document-description-action">
+                <LifecycleMenu
+                  :target="{ kind: 'endpoint', id: selectedId }"
+                  :name="endpointName"
+                />
                 <DocumentShare
                   :to="{ path: route.path, query: { ...route.query, env: environmentId } }"
                 />
@@ -269,16 +292,13 @@ function confirmationUnauthorized() {
                 <span v-else class="document-description-source">说明会在整理文档时一并补全</span>
               </div>
             </div>
-            <p
-              ref="pathElement"
-              class="document-endpoint-path"
-              :title="endpointPath"
-              :class="{ 'is-overflowing': pathMarquee.overflowing.value }"
-              :style="pathMarquee.style()"
-            >
-              <b>{{ endpointPath }}</b>
-            </p>
-            <p v-if="note?.purpose" class="document-purpose">{{ note.purpose }}</p>
+            <EndpointSummary
+              :endpoint-id="selectedId"
+              :method="detail.facts.summary.method"
+              :path="endpointPath"
+              :purpose="note?.purpose"
+              :retired-source-count="detail.retired_source_count"
+            />
           </header>
           <TabsRoot class="document-content-tabs" v-model="activeTab">
             <TabsList class="document-tabs" aria-label="接口内容">
@@ -370,6 +390,11 @@ function confirmationUnauthorized() {
       @resume="workspace.fillGaps($event)"
       @progress="workspace.loadProject"
       @unauthorized="confirmationUnauthorized"
+    />
+    <LifecyclePanel
+      :index="workspace.documentIndex.value"
+      :project-id="String(route.params.projectId)"
+      :environment-id="environmentId"
     />
   </section>
 </template>

@@ -48,6 +48,8 @@ export interface CurateResult {
 
 /** Progress belongs to the shared project document, not one browser tab. */
 export interface CurateProgress {
+  lifecycle_version?: number
+  lifecycle_stale?: boolean
   status: 'idle' | 'running' | 'done' | 'failed'
   stage: 'describe' | 'fields' | 'organize' | null
   run_id?: string | null
@@ -231,6 +233,8 @@ export interface FieldNote {
 }
 
 export interface EndpointDetail {
+  retired_source_count?: number
+  lifecycle?: import('./lifecycle').DocumentLifecycle
   facts: EndpointFacts
   knowledge: EndpointKnowledge | null
 }

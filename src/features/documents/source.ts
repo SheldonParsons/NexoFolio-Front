@@ -1,4 +1,5 @@
 import { api } from '@/api'
+import type { DocumentLifecycle } from './lifecycle/model'
 import * as knowledge from '@/contracts/knowledge/source'
 import type { Catalog, EndpointCard, EndpointSummary } from '@/contracts/knowledge/types'
 import { contractResponse } from './contract'
@@ -10,6 +11,7 @@ export interface DocumentEntry extends EndpointCard {
   summary: EndpointSummary
 }
 export interface DocumentIndex {
+  lifecycle?: DocumentLifecycle
   catalog: Catalog
   entries: DocumentEntry[]
 }
@@ -35,9 +37,13 @@ export async function environments(
 
 /** Read the shared project document; environments filter observations, not storage. */
 export async function documentIndex(pid: string, signal: AbortSignal): Promise<DocumentIndex> {
-  const [catalog, result] = await Promise.all([
+  const [catalog, result, lifecycle] = await Promise.all([
     knowledge.catalog(pid, signal),
     api.request<{ endpoints: EndpointSummary[] }>(path(pid) + '/endpoints', { signal }),
+    api.request<DocumentLifecycle>(path(pid) + '/document-lifecycle', {
+      signal,
+      cache: 'no-store',
+    }),
   ])
   const summaries = new Map(result.endpoints.map((item) => [item.id, item]))
   const folders: Array<string | null> = catalog.folders.map((folder) => folder.id)
@@ -58,7 +64,7 @@ export async function documentIndex(pid: string, signal: AbortSignal): Promise<D
       }
     }),
   )
-  return { catalog, entries: pages.flat() }
+  return { catalog, entries: pages.flat(), lifecycle }
 }
 
 export function example(pid: string, endpoint: string, id: string, signal: AbortSignal) {

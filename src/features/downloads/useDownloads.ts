@@ -39,10 +39,35 @@ export function createDownloadCatalog(fetcher: typeof fetch = fetch) {
     desktop: { internal: platformStates(), public: platformStates() },
   })
   const pending = new Map<DesktopChannel, Promise<void>>()
+  const checked = new Map<DesktopChannel, number>()
+  const interval = 5 * 60_000
+  let consumers = 0
+  let timer: ReturnType<typeof setTimeout> | undefined
   let sequence = 0
-  function refreshChannel(channel: DesktopChannel): Promise<void> {
+  function schedule() {
+    clearTimeout(timer)
+    if (!consumers || document.hidden) return
+    const at = checked.get(state.channel)
+    timer = setTimeout(
+      () => void refreshChannel(state.channel),
+      at === undefined ? interval : Math.max(0, at + interval - Date.now()),
+    )
+  }
+  function refreshChannel(channel: DesktopChannel, force = false): Promise<void> {
     const inflight = pending.get(channel)
     if (inflight) return inflight
+    const at = checked.get(channel)
+    if (
+      !force &&
+      state.fetcher.status !== 'error' &&
+      at !== undefined &&
+      Date.now() - at < interval
+    ) {
+      schedule()
+      return Promise.resolve()
+    }
+    checked.delete(channel)
+    const started = Date.now()
     const owner = state.desktop[channel]
     const requestId = ++sequence
     owner.forEach((item) => {
@@ -62,6 +87,11 @@ export function createDownloadCatalog(fetcher: typeof fetch = fetch) {
           platform.release = value.release
         }
         if (requestId === sequence) Object.assign(state.fetcher, data.fetcher)
+        if (
+          data.fetcher.status !== 'error' &&
+          data.desktop.every((item) => item.status !== 'error')
+        )
+          checked.set(channel, started)
       } catch {
         owner.forEach((item) => {
           item.status = 'error'
@@ -70,36 +100,53 @@ export function createDownloadCatalog(fetcher: typeof fetch = fetch) {
         if (requestId === sequence) Object.assign(state.fetcher, { status: 'error', release: null })
       } finally {
         pending.delete(channel)
+        schedule()
       }
     })()
     pending.set(channel, job)
     return job
   }
   function refresh() {
-    return refreshChannel(state.channel)
+    // Explicit "check again" always bypasses completed-result freshness.
+    return refreshChannel(state.channel, true)
   }
   function selectChannel(channel: DesktopChannel) {
     if (channel !== 'internal' && channel !== 'public') return Promise.resolve()
     state.channel = channel
     return refreshChannel(channel)
   }
-  return { state, refresh, selectChannel }
+  function visible() {
+    clearTimeout(timer)
+    if (!document.hidden) void refreshChannel(state.channel)
+  }
+  function observe() {
+    if (++consumers === 1) {
+      document.addEventListener('visibilitychange', visible)
+      window.addEventListener('online', visible)
+    }
+    visible()
+    let released = false
+    return () => {
+      if (released) return
+      released = true
+      if (--consumers === 0) {
+        clearTimeout(timer)
+        document.removeEventListener('visibilitychange', visible)
+        window.removeEventListener('online', visible)
+      }
+    }
+  }
+  return { state, refresh, selectChannel, observe }
 }
 
 const catalog = createDownloadCatalog()
 export function useDownloads() {
-  let timer: ReturnType<typeof setInterval> | undefined
-  const refreshVisible = () => {
-    if (document.visibilityState === 'visible') void catalog.refresh()
-  }
+  let release: (() => void) | undefined
   onMounted(() => {
-    void catalog.refresh()
-    timer = setInterval(refreshVisible, 5 * 60_000)
-    document.addEventListener('visibilitychange', refreshVisible)
+    release = catalog.observe()
   })
   onBeforeUnmount(() => {
-    clearInterval(timer)
-    document.removeEventListener('visibilitychange', refreshVisible)
+    release?.()
   })
   return catalog
 }

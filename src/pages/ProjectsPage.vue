@@ -94,7 +94,7 @@ onMounted(() => {
           <div class="project-filter">
             <AppSelect
               :model-value="access"
-              label="项目访问权限"
+              label="项目操作权限"
               :options="accessOptions"
               :disabled="!supportsProjectQuery"
               @update:model-value="browser.changeAccess"
