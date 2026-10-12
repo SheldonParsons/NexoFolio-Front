@@ -19,6 +19,10 @@ artifacts/
 test-results/
 playwright-report/
 
+# Local visual reviews, runtime evidence and source snapshots.
+# Existing tracked review notes remain versioned.
+/docs/reviews/
+
 # Editors and operating system
 .DS_Store
 Thumbs.db

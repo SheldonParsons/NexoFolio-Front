@@ -11,6 +11,7 @@ import agentDocsUpdate from '@/content/changelog/2026-10-09-mcp-agent-docs.md?ra
 import mcpRetrievalUpdate from '@/content/changelog/2026-10-10-mcp-progressive-retrieval.md?raw'
 import publicDocumentUpdate from '@/content/changelog/2026-10-10-public-document-reading.md?raw'
 import fetcher013Update from '@/content/changelog/2026-10-09-fetcher-0-1-3.md?raw'
+import fetcher021Update from '@/content/changelog/2026-10-12-fetcher-0-2-1.md?raw'
 import curationUpdate from '@/content/changelog/2026-10-09-curation-experience.md?raw'
 
 export interface ProductArticle {
@@ -77,6 +78,17 @@ export interface ProductUpdate {
 }
 // Feature updates, versioned releases, and preview records share one timeline.
 export const productUpdates: ProductUpdate[] = [
+  {
+    slug: 'fetcher-0-2-1',
+    product: 'fetcher',
+    date: '2026-10-12',
+    version: 'v0.2.1 开发版',
+    status: 'update',
+    title: 'Fetcher 接口详情、手动调试与强制更新',
+    description: '点击记录查看详情，编辑请求后手动发送；完善绑定指引、头像和 OSS 版本更新。',
+    documentation: '/docs/fetcher',
+    body: fetcher021Update,
+  },
   {
     slug: '2026-10-11-document-retirement',
     product: 'nexofolio',
