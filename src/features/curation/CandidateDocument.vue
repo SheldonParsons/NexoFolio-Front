@@ -5,10 +5,11 @@ import { computed, onScopeDispose, shallowRef, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { documentLocation } from '@/features/documents/documentRoutes'
 import FieldStructure from '@/features/documents/FieldStructure.vue'
+import FieldEvidencePanel from '@/features/documents/FieldEvidencePanel.vue'
 import { groupFields } from '@/features/knowledge/fieldPresentation'
-import { endpoint } from '@/contracts/knowledge/source'
+import { reviewEndpoint } from './source'
 import type { EndpointDetail, FieldNote } from '@/contracts/knowledge/types'
-import type { Candidate } from './types'
+import type { Candidate, CandidateEndpointPage } from './types'
 import type { DocumentIndex } from '@/features/documents/source'
 import type { DocumentTarget } from '@/features/documents/documentRoutes'
 import { documentTree, findFolder, folderPath } from '@/features/documents/documentTree'
@@ -52,12 +53,19 @@ const selected = computed(() => (target.value?.kind === 'endpoint' ? target.valu
 const detail = shallowRef<EndpointDetail | null>(null)
 const loading = ref(false),
   error = ref('')
-const cached = new Map<string, EndpointDetail>()
+const endpointPage = shallowRef<CandidateEndpointPage | null>(null)
+const fieldPage = ref(0)
 let request: AbortController | undefined
 const projected = computed(() => candidateIndex(props.candidate, props.index))
 const entries = computed(() => projected.value.entries)
 const tree = computed(() => documentTree(projected.value, null))
-const changes = computed(() => props.changes ?? candidateChanges(props.candidate))
+// Directory/placement bodies are already small and complete in the head.
+const directoryChanges = computed(() =>
+  candidateChanges(props.candidate).filter(
+    (c) => c.section === 'folders' || c.section === 'placements',
+  ),
+)
+const changes = computed(() => [...directoryChanges.value, ...(props.changes ?? [])])
 const folder = computed(() =>
   target.value?.kind === 'folder' ? findFolder(tree.value, target.value.id) : undefined,
 )
@@ -69,7 +77,8 @@ watch(
   () => props.candidate.id,
   () => {
     target.value = null
-    cached.clear()
+    endpointPage.value = null
+    detail.value = null
   },
 )
 watch(
@@ -79,14 +88,18 @@ watch(
   },
   { immediate: true },
 )
-const note = computed(() => props.candidate.view.notes.find((n) => n.endpoint === selected.value))
+const note = computed(
+  () =>
+    endpointPage.value?.note ??
+    props.candidate.view.notes.find((n) => n.endpoint === selected.value),
+)
 const notes = computed(() => {
-  const saved = props.candidate.view.fields.filter((f) => f.endpoint === selected.value)
-  if (!props.candidate.progress.values_archived) return saved
-  const input = props.candidate.execution_input?.prepared.inputs?.[selected.value] ?? []
-  return input.map((field): FieldNote => {
-    const old = saved.find((n) => n.path === field.key)
-    return {
+  const saved = endpointPage.value?.notes ?? []
+  const inputs = endpointPage.value?.inputs ?? []
+  const byKey = new Map(saved.map((n) => [n.path, n]))
+  for (const field of inputs) {
+    const old = byKey.get(field.key)
+    byKey.set(field.key, {
       ...(old ?? { endpoint: selected.value, path: field.key, text: '', values: [] }),
       context: {
         location: field.location,
@@ -102,35 +115,65 @@ const notes = computed(() => {
           ? { ...field.observations, archive_id: props.candidate.id }
           : old?.context?.observations,
       },
-    }
-  })
+    } as FieldNote)
+  }
+  return [...byKey.values()]
 })
 const groups = computed(() => groupFields(detail.value?.facts.fields ?? []))
-watch(selected, async (id) => {
+const moreFields = computed(
+  () =>
+    (fieldPage.value + 1) * 100 <
+    Math.max(endpointPage.value?.fields_total ?? 0, endpointPage.value?.notes_total ?? 0),
+)
+async function readEndpoint(append = false) {
   request?.abort()
   request = new AbortController()
-  const current = request
+  const current = request,
+    id = selected.value,
+    candidate = props.candidate
+  const owns = () =>
+    !current.signal.aborted &&
+    selected.value === id &&
+    props.candidate.id === candidate.id &&
+    props.candidate.project_id === candidate.project_id &&
+    props.candidate.version === candidate.version
   error.value = ''
-  loading.value = false
-  detail.value = cached.get(id) ?? null
-  if (!id || detail.value) return
+  if (!append) {
+    detail.value = null
+    endpointPage.value = null
+    fieldPage.value = 0
+  }
+  if (!id || candidate.version === undefined) return
   loading.value = true
   try {
-    const frozen = props.candidate.execution_input?.prepared.facts.find((f) => f.summary.id === id)
-    const value: EndpointDetail = frozen
-      ? { facts: frozen, knowledge: null }
-      : await endpoint(props.candidate.project_id, id, current.signal)
-    if (!current.signal.aborted) {
-      cached.set(id, value)
-      detail.value = value
+    const page = await reviewEndpoint(
+      candidate.project_id,
+      candidate.id,
+      candidate.version,
+      id,
+      (append ? fieldPage.value + 1 : 0) * 100,
+      current.signal,
+    )
+    if (!owns()) return
+    if (append && endpointPage.value) {
+      fieldPage.value++
+      page.notes = [...endpointPage.value.notes, ...page.notes]
+      page.inputs = [...endpointPage.value.inputs, ...page.inputs]
+      if (page.facts && detail.value)
+        page.facts.fields = [...detail.value.facts.fields, ...page.facts.fields]
     }
+    endpointPage.value = page
+    detail.value = page.facts ? { facts: page.facts, knowledge: null } : null
   } catch (cause) {
-    if (!current.signal.aborted)
-      error.value = cause instanceof Error ? cause.message : '暂时无法读取结构'
+    if (owns()) error.value = cause instanceof Error ? cause.message : '暂时无法读取历史结构'
   } finally {
-    if (!current.signal.aborted) loading.value = false
+    if (owns()) loading.value = false
   }
-})
+}
+watch(
+  [selected, () => props.candidate.id, () => props.candidate.version],
+  () => void readEndpoint(),
+)
 onScopeDispose(() => request?.abort())
 function choose(id: string) {
   target.value = { kind: 'endpoint', id }
@@ -189,8 +232,24 @@ const environment = computed(
             <p>{{ note?.purpose }}</p>
             <p v-if="note?.context?.description">{{ note.context.description }}</p>
           </header>
-          <p v-if="loading" class="curation-placeholder">正在读取真实字段结构…</p>
+          <p v-if="loading" class="curation-placeholder">正在读取本轮历史字段结构…</p>
           <p v-else-if="error" role="alert">{{ error }}</p>
+          <template v-if="endpointPage && !endpointPage.facts_available">
+            <p role="status">本轮冻结结构已释放或未保存；以下为保留的候选字段知识。</p>
+            <details v-for="field in notes" :key="field.path">
+              <summary>{{ field.context?.display_name || field.path }}</summary>
+              <FieldEvidencePanel
+                :path="field.context?.field_path || field.path"
+                :note="field"
+                :evidence="field.context?.evidence ?? []"
+                :endpoint-id="selected"
+                :environment-id="environment"
+                :entries="entries"
+                @related="choose"
+                @example="showExample"
+              />
+            </details>
+          </template>
           <section v-for="group in groups" :key="group.label" class="document-field-group">
             <h3>
               {{ group.label }} <small>{{ group.fields.length }}</small>
@@ -205,6 +264,15 @@ const environment = computed(
               @example="showExample"
             />
           </section>
+          <button
+            v-if="moreFields"
+            type="button"
+            class="curation-load-more"
+            :disabled="loading"
+            @click="readEndpoint(true)"
+          >
+            继续读取字段
+          </button>
         </template>
       </section>
     </slot>

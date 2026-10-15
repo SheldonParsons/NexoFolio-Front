@@ -40,7 +40,7 @@ async function fillGaps() {
     !candidate.value ||
     resuming.value ||
     deciding.value ||
-    !candidate.value.execution_input ||
+    !(candidate.value.resume_available ?? candidate.value.execution_input) ||
     !['partial', 'interrupted'].includes(candidate.value.state)
   )
     return
@@ -70,6 +70,8 @@ const {
   list,
   candidate,
   changes,
+  loadChanges,
+  decisionStatus,
   loading,
   deciding,
   error,
@@ -108,7 +110,10 @@ const summarySections: { kind: ChangeSection; label: string; description: string
 const selectedId = ref(''),
   page = ref(1)
 const filtered = computed(() => changes.value.filter((c) => c.section === section.value))
-const displayed = computed(() => filtered.value.slice(0, page.value * 60))
+const displayed = computed(() => filtered.value)
+watch([tab, section, () => candidate.value?.id, () => candidate.value?.version], () => {
+  if (tab.value === 'changes') void loadChanges(section.value)
+})
 const selected = computed(
   () => filtered.value.find((c) => c.id === selectedId.value) || filtered.value[0],
 )
@@ -169,7 +174,8 @@ function selectSection(kind: ReviewSection) {
   section.value = kind
   page.value = 1
 }
-const count = (kind: ChangeSection) => changes.value.filter((c) => c.section === kind).length
+const count = (kind: ChangeSection) =>
+  candidate.value?.changes?.[kind] ?? changes.value.filter((c) => c.section === kind).length
 const summary = computed(() =>
   summarySections.map((item) => ({ ...item, count: count(item.kind) })),
 )
@@ -263,7 +269,8 @@ const summary = computed(() =>
             <CurationReviewFilters
               :model-value="section"
               :changes="changes"
-              :relations="candidate.view.links.length"
+              :relations="candidate.counts?.links ?? candidate.view.links.length"
+              :counts="candidate.changes"
               @update:model-value="selectSection"
             />
             <div class="curation-change-list" data-scroll-container>
@@ -280,12 +287,12 @@ const summary = computed(() =>
                 >
               </button>
               <button
-                v-if="displayed.length < filtered.length"
+                v-if="displayed.length < count(section)"
                 type="button"
                 class="curation-load-more"
-                @click="page++"
+                @click="loadChanges(section, displayed.length)"
               >
-                继续显示 {{ filtered.length - displayed.length }} 项变化
+                继续显示 {{ count(section) - displayed.length }} 项变化
               </button>
             </div>
           </template>
@@ -306,7 +313,11 @@ const summary = computed(() =>
               <template v-if="section === 'links' && !count('links')">
                 <h2>本轮接口关系没有变化</h2>
                 <p>
-                  候选文档中共有 {{ candidate.view.links.length }} 条关系，本轮未新增、修改或删除。
+                  候选文档中共有
+                  {{
+                    candidate.counts?.links ?? candidate.view.links.length
+                  }}
+                  条关系，本轮未新增、修改或删除。
                 </p>
               </template>
               <template v-else>
@@ -337,6 +348,7 @@ const summary = computed(() =>
       :pending="deciding"
       :disabled="!decisionValid"
       :error="decisionError"
+      :status="decisionStatus"
       @confirm="confirmDecision"
     />
   </section>

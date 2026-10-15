@@ -236,3 +236,19 @@ it('ignores late results and selected rounds from another project', async () => 
   f.panel.select('p-result')
   expect(f.panel.selected.value?.id).toBe('q-result')
 })
+
+it('a waiting partial candidate remains observable while closed history never resumes', () => {
+  const waiting = {
+    ...row('c', 'partial'),
+    progress: {
+      task_id: 't',
+      task_state: 'waiting' as const,
+      run_id: 'r',
+      status: 'running' as const,
+    },
+  }
+  expect(panelProgress(waiting).status).toBe('running')
+  expect(canObservePanelRun(waiting, null, false, true)).toBe(true)
+  expect(panelProgress({ ...waiting, state: 'applied' }).status).toBe('done')
+  expect(canObservePanelRun({ ...waiting, state: 'discarded' }, null, false, true)).toBe(false)
+})

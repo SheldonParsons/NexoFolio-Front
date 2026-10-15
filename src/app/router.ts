@@ -38,6 +38,18 @@ export const router = createRouter({
           meta: { title: '用户管理' },
         },
         {
+          path: 'operations',
+          name: 'management-operations',
+          component: () => import('@/pages/ManagementOperationsPage.vue'),
+          meta: { title: '运行状态' },
+        },
+        {
+          path: 'storage',
+          name: 'management-storage',
+          component: () => import('@/pages/ManagementStoragePage.vue'),
+          meta: { title: '存储与清理' },
+        },
+        {
           path: 'audit',
           name: 'management-audit',
           component: () => import('@/pages/AuditPage.vue'),

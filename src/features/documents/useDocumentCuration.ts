@@ -1,3 +1,4 @@
+import { sameExecution } from '@/features/curation/progressIdentity'
 import { pageVisible, waitForObservation } from '@/features/curation/observation'
 import { computed, ref, shallowRef } from 'vue'
 import * as knowledge from '@/contracts/knowledge/source'
@@ -20,6 +21,9 @@ export function useDocumentCuration(
   report: DocumentErrorReporter,
   workspace: CurationWorkspace,
 ) {
+  const submitting = ref(false)
+  const submittingTarget = ref('')
+  const watching = ref(false)
   const describing = ref('')
   const organizing = ref(false)
   const progress = shallowRef<CurateProgress | null>(null)
@@ -39,17 +43,20 @@ export function useDocumentCuration(
         : '正在补全接口说明 ' + value.completed + '/' + value.total
   })
   const waitForProgress = (signal: AbortSignal) => waitForObservation(signal, 2000)
-  async function curate(endpointId?: string, resumed?: CurateProgress, resumeId?: string) {
-    if (busy.value || !workspace.canStart()) return
+  async function observe(initial: CurateProgress) {
+    if (!workspace.canStart() || (watching.value && sameExecution(progress.value, initial))) return
     const pid = projectId()
     const request = requests.begin('curate')
     const current = request.current
+    const endpointId = initial.target ?? undefined
     describing.value = endpointId ?? ''
     organizing.value = !endpointId
-    progress.value = resumed ?? null
+    watching.value = true
+    progress.value = initial
+    requestedRunKey.value = initial.task_id ?? initial.run_id ?? initial.candidate_id ?? ''
     notice.value = ''
     noticeError.value = false
-    noticeCandidateId.value = resumed?.candidate_id ?? resumeId ?? ''
+    noticeCandidateId.value = initial.candidate_id ?? ''
     const refresh = async (details: boolean) => {
       if (!pageVisible()) await waitForObservation(request.signal)
       const updated = await source.documentIndex(pid, request.signal)
@@ -72,28 +79,11 @@ export function useDocumentCuration(
           request.signal,
           () => waitForProgress(request.signal),
           recover,
-          progress.value?.run_id ?? progress.value?.candidate_id ?? '',
+          progress.value?.task_id
+            ? `task:${progress.value.task_id}`
+            : (progress.value?.run_id ?? progress.value?.candidate_id ?? ''),
         )
-      let job: CurateProgress
-      try {
-        job =
-          resumed ??
-          (resumeId
-            ? await knowledge.resumeCandidate(pid, resumeId, request.signal)
-            : endpointId
-              ? await knowledge.describeEndpoint(pid, endpointId, request.signal)
-              : await knowledge.startCurate(pid, request.signal))
-      } catch (cause) {
-        if (!temporaryCurationReadFailure(cause) || !current()) throw cause
-        recover()
-        job = await readProgress()
-        if (resumeId && job.candidate_id !== resumeId)
-          throw new Error('无法确认本轮恢复状态，请重新读取本轮进度。')
-        if (job.status === 'idle')
-          throw new Error('启动请求未确认，目前未发现运行中的整理任务，请重试。')
-      }
-      noticeCandidateId.value = job.candidate_id ?? noticeCandidateId.value
-      if (!resumed) requestedRunKey.value = job.run_id ?? job.candidate_id ?? ''
+      let job = initial
       let shown = -1
       while (current()) {
         progress.value = job
@@ -123,9 +113,17 @@ export function useDocumentCuration(
               ' 个字段'
           break
         }
+        if (job.task_state === 'stopped') {
+          notice.value = job.candidate_id ? '任务已停止，已保存批次保留' : '排队已取消'
+          break
+        }
         if (job.status === 'idle') throw new Error('整理被中断，已完成内容会保留，请再次整理。')
         if (job.status === 'failed') throw new Error(job.message || '整理暂时无法完成，请重试。')
-        if (!job.candidate_id && job.completed + (job.fields_completed ?? 0) > shown) {
+        if (
+          !job.task_id &&
+          !job.candidate_id &&
+          job.completed + (job.fields_completed ?? 0) > shown
+        ) {
           try {
             await refresh(job.stage === 'fields')
             shown = job.completed + (job.fields_completed ?? 0)
@@ -145,13 +143,78 @@ export function useDocumentCuration(
       }
     } finally {
       if (current()) {
+        watching.value = false
         describing.value = ''
         organizing.value = false
       }
     }
   }
+  async function submit(endpointId?: string, resumeId?: string) {
+    if (submitting.value || !workspace.canStart()) return
+    const pid = projectId(),
+      request = requests.begin('curate-submit')
+    submitting.value = true
+    submittingTarget.value = endpointId ?? ''
+    if (!watching.value) {
+      describing.value = endpointId ?? ''
+      organizing.value = !endpointId
+    }
+    notice.value = ''
+    noticeError.value = false
+    let accepted: CurateProgress | undefined
+    try {
+      try {
+        accepted = resumeId
+          ? await knowledge.resumeCandidate(pid, resumeId, request.signal)
+          : endpointId
+            ? await knowledge.describeEndpoint(pid, endpointId, request.signal)
+            : await knowledge.startCurate(pid, request.signal)
+      } catch (cause) {
+        if (!temporaryCurationReadFailure(cause) || !request.current()) throw cause
+        // An uncertain response does not authorize replaying the POST or adopting the selected old task.
+        let found = await reconnectCuration(
+          pid,
+          request.signal,
+          () => waitForProgress(request.signal),
+          () => {},
+        )
+        const matches = (job: CurateProgress) =>
+          resumeId ? job.candidate_id === resumeId : (job.target ?? null) === (endpointId ?? null)
+        if (!matches(found)) {
+          const tasks = await knowledge.activeCurationTasks(pid, request.signal)
+          const task = tasks.find((t) =>
+            resumeId ? t.candidate_id === resumeId : t.target === (endpointId ?? null),
+          )
+          if (!task) throw new Error('尚未确认本次提交；当前任务继续执行，请查看活动任务或重试。')
+          found = await knowledge.curateProgress(pid, request.signal, `task:${task.id}`)
+        }
+        if (!matches(found) || found.status === 'idle')
+          throw new Error('尚未确认本次提交，请重新读取任务状态或重试。')
+        accepted = found
+      }
+    } catch (cause) {
+      if (request.current()) {
+        noticeError.value = true
+        noticeCandidateId.value = resumeId ?? progress.value?.candidate_id ?? ''
+        report(cause, notice)
+      }
+    } finally {
+      if (request.current()) {
+        submitting.value = false
+        if (!watching.value) {
+          describing.value = ''
+          organizing.value = false
+        }
+      }
+    }
+    if (accepted && request.current()) await observe(accepted)
+  }
   function reset() {
     requests.cancel('curate')
+    requests.cancel('curate-submit')
+    requests.cancel('curate-stop')
+    submitting.value = false
+    watching.value = false
     describing.value = ''
     organizing.value = false
     progress.value = null
@@ -166,6 +229,8 @@ export function useDocumentCuration(
   )
   return {
     reviewPath,
+    submitting,
+    submittingTarget,
     describing,
     organizing,
     progress,
@@ -176,22 +241,44 @@ export function useDocumentCuration(
     noticeCandidateId,
     requestedRunKey,
     reset,
-    describe: (id: string) => (id ? curate(id) : Promise.resolve()),
-    organize: () => curate(),
-    viewProgress: (job: CurateProgress) => curate(job.target ?? undefined, job),
+    describe: (id: string) => (id ? submit(id) : Promise.resolve()),
+    organize: () => submit(),
+    viewProgress: observe,
     fillGaps: (id?: string) => {
       const candidate = id ?? progress.value?.candidate_id
-      return candidate ? curate(undefined, undefined, candidate) : Promise.resolve()
+      return candidate ? submit(undefined, candidate) : Promise.resolve()
     },
-    cancel: async (id?: string) => {
-      const candidate = id ?? progress.value?.candidate_id
+    cancel: async (id?: string, selection?: CurateProgress | null) => {
+      const candidate = id ?? progress.value?.task_id ?? progress.value?.candidate_id
       if (!candidate) return
+      const pid = projectId(),
+        selected = selection ?? progress.value,
+        request = requests.begin('curate-stop')
       noticeCandidateId.value = candidate
+      const owns = () =>
+        request.current() &&
+        (!progress.value || (!!selected && sameExecution(progress.value, selected)))
       try {
-        await knowledge.cancelCandidate(projectId(), candidate)
+        if (candidate === selected?.task_id)
+          await knowledge.stopCurationTask(pid, candidate, request.signal)
+        else await knowledge.cancelCandidate(pid, candidate, request.signal)
+        if (selected?.task_state === 'needs_attention' && selected.task_id) {
+          const stopped = await knowledge.curateProgress(
+            pid,
+            request.signal,
+            `task:${selected.task_id}`,
+          )
+          if (owns()) {
+            progress.value = stopped
+            notice.value = '任务已停止，已保存批次保留'
+            noticeError.value = false
+          }
+        }
       } catch (cause) {
-        noticeError.value = true
-        report(cause, notice)
+        if (owns()) {
+          noticeError.value = true
+          report(cause, notice)
+        }
       }
     },
   }

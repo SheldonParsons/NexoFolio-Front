@@ -17,6 +17,7 @@ describe('API transport contract', () => {
       kind: 'http',
       status: 500,
       message: '模型服务连接失败',
+      code: 'CURATION_FAILED',
     })
   })
 

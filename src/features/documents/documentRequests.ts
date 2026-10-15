@@ -1,5 +1,11 @@
 /** A reply may write state only while its request still owns its slot and project. */
-export type DocumentRequestSlot = 'project' | 'detail' | 'sample' | 'curate'
+export type DocumentRequestSlot =
+  | 'project'
+  | 'detail'
+  | 'sample'
+  | 'curate'
+  | 'curate-submit'
+  | 'curate-stop'
 export type DocumentRequest = { signal: AbortSignal; current: () => boolean }
 
 export function documentRequests(projectId: () => string) {

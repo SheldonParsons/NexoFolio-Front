@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import {
   diagnosticText,
+  diagnosticSubject,
   statusLabels,
   stageLabels,
   fact,
@@ -13,6 +14,7 @@ const props = defineProps<{ value: DiagnosticPackage }>()
 const feedback = ref(''),
   copying = ref(false),
   manual = ref(false)
+const subject = computed(() => diagnosticSubject(props.value))
 const text = computed(() => diagnosticText(props.value))
 const models = computed(
   () =>
@@ -56,7 +58,7 @@ function download() {
     url = URL.createObjectURL(blob),
     link = document.createElement('a')
   link.href = url
-  link.download = `nexofolio-diagnostic-${props.value.candidate.id}.txt`
+  link.download = `nexofolio-diagnostic-${subject.value.id}.txt`
   link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
@@ -65,10 +67,8 @@ function download() {
   <section class="diagnostic-detail" aria-label="整理排查详情">
     <header class="diagnostic-heading">
       <div>
-        <p class="audit-label">
-          {{ value.project.name }} · {{ auditTime(value.candidate.created_at) }}
-        </p>
-        <h2>{{ statusLabels[value.candidate.status] || value.candidate.status }}</h2>
+        <p class="audit-label">{{ value.project.name }} · {{ auditTime(subject.created_at) }}</p>
+        <h2>{{ statusLabels[subject.status] || subject.status }}</h2>
       </div>
       <div class="diagnostic-actions">
         <AppButton variant="primary" :disabled="copying" @click="copy">{{
@@ -87,15 +87,15 @@ function download() {
       @focus="($event.target as HTMLTextAreaElement).select()"
     ></textarea>
     <p
-      v-if="['review', 'applied', 'stopped', 'discarded'].includes(value.candidate.status)"
+      v-if="['review', 'applied', 'stopped', 'discarded'].includes(subject.status)"
       class="audit-note"
     >
       {{
-        value.candidate.status === 'stopped'
+        subject.status === 'stopped'
           ? '本轮由人工停止，已保存内容保留；停止本身不判为故障。'
-          : value.candidate.status === 'review'
+          : subject.status === 'review'
             ? '本轮等待审阅；尚未应用不表示整理失败。'
-            : value.candidate.status === 'applied'
+            : subject.status === 'applied'
               ? '此候选已经应用。'
               : '此候选已放弃，历史记录仍可用于追溯。'
       }}
@@ -105,17 +105,46 @@ function download() {
       {{ value.liveness.threshold_seconds }}
       秒未更新，请核对服务或任务是否中断；这不自动改判为失败。
     </p>
-    <p v-if="value.candidate.failure_code" class="audit-warning">
-      终止错误码：{{ value.candidate.failure_code }}。具体阶段问题见下方记录。
+    <p v-if="value.liveness?.lease_stale" class="audit-warning" role="alert">
+      任务仍记录为运行中，但租约已过期；尚未证明有有效执行者，需要核对队列接管结果。
     </p>
+    <p v-if="subject.failure_code" class="audit-warning">
+      已记录的问题码：{{ subject.failure_code }}。具体阶段问题见下方记录。
+    </p>
+    <p v-if="value.task?.state === 'waiting'" class="audit-note">
+      任务正在等待自动恢复；历史心跳未更新不表示等待任务失效。
+    </p>
+    <p v-if="value.task?.state === 'needs_attention'" class="audit-note">
+      任务需要人工处理，当前没有自动重试计划。
+    </p>
+    <dl v-if="value.task" class="diagnostic-facts" aria-label="持久任务计划">
+      <dt>任务 / 执行代次</dt>
+      <dd>{{ value.task.id }} · {{ value.task.generation }}</dd>
+      <dt>状态读取时间</dt>
+      <dd>{{ auditTime(value.task.observed_at) }}</dd>
+      <dt>重试原因 / 次数</dt>
+      <dd>{{ fact(value.task.retry_reason) }} / {{ value.task.retry_count }}</dd>
+      <dt>下次尝试</dt>
+      <dd>
+        {{
+          value.task.state === 'waiting'
+            ? auditTime(value.task.next_retry_at)
+            : '当前无自动重试计划'
+        }}
+      </dd>
+      <dt>排队 / 执行 / 等待累计</dt>
+      <dd>
+        {{
+          value.task.timing
+            ? `${value.task.timing.queued_ms} / ${value.task.timing.running_ms} / ${value.task.timing.waiting_ms} ms`
+            : '未记录'
+        }}
+      </dd>
+    </dl>
     <dl class="diagnostic-facts">
       <dt>当前阶段</dt>
       <dd>
-        {{
-          value.candidate.stage
-            ? stageLabels[value.candidate.stage] || value.candidate.stage
-            : '无执行阶段 / 未记录'
-        }}
+        {{ subject.stage ? stageLabels[subject.stage] || subject.stage : '无执行阶段 / 未记录' }}
       </dd>
       <dt>记录的模型</dt>
       <dd>{{ models }}</dd>
@@ -197,10 +226,10 @@ function download() {
     <details class="audit-coverage">
       <summary>批次、操作与请求标识</summary>
       <p>
-        候选 ID：<code>{{ value.candidate.id }}</code>
+        {{ subject.kind === 'task' ? '任务 ID' : '候选 ID' }}：<code>{{ subject.id }}</code>
       </p>
       <p>
-        当前 run ID：<code>{{ fact(value.candidate.run_id) }}</code>
+        当前 run ID：<code>{{ fact(subject.run_id) }}</code>
       </p>
       <pre>{{
         JSON.stringify(
@@ -217,8 +246,8 @@ function download() {
     <div class="audit-coverage">
       <h3>本包覆盖范围</h3>
       <p>
-        来自持久化候选，不依赖当前进程临时进度。阶段活动最多保留最近 80
-        条；关联事件按项目＋候选严格匹配，已纳入 {{ value.coverage.event_included }} /
+        当前状态来自持久任务；候选进度是已保存检查点，无任务记录时明确保留未知。阶段活动最多保留最近
+        80 条；关联事件按项目及精确候选/任务身份匹配，已纳入 {{ value.coverage.event_included }} /
         {{ fact(value.coverage.event_total) }} 条。
       </p>
       <p v-if="!value.coverage.events_available">关联审计事件暂不可用，候选诊断仍可读取。</p>

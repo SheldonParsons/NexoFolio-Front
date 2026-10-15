@@ -86,11 +86,11 @@ it('shows history as soon as its response arrives, without awaiting metadata or 
 })
 it('requests a candidate directly and does not hold it behind history or facts reads', async () => {
   const history = deferred<CandidateSummary[]>(),
-    facts = deferred<DocumentIndex>()
+    facts = deferred<{ version: number; reconciled_version: number; decisions: [] }>()
   vi.spyOn(projectSource, 'get').mockResolvedValue(project())
   vi.spyOn(source, 'candidates').mockReturnValue(history.promise)
-  vi.spyOn(source, 'factsIndex').mockReturnValue(facts.promise)
-  const detail = vi.spyOn(source, 'candidate').mockResolvedValue(candidate())
+  vi.spyOn(api, 'request').mockReturnValue(facts.promise)
+  const detail = vi.spyOn(source, 'reviewCandidate').mockResolvedValue(candidate())
   const f = fixture('c')
   await vi.waitFor(() => expect(f.value.loading.value).toBe(false))
   expect(detail).toHaveBeenCalledTimes(1)
@@ -98,15 +98,15 @@ it('requests a candidate directly and does not hold it behind history or facts r
   expect(f.value.indexLoading.value).toBe(true)
   expect(f.value.index.value).toBeNull()
   history.resolve([summary()])
-  facts.resolve(index())
+  facts.resolve({ version: 0, reconciled_version: 0, decisions: [] })
   await vi.waitFor(() => expect(f.value.indexLoading.value).toBe(false))
 })
 it('rejects late detail and metadata from a previous route scope', async () => {
   const old = deferred<Candidate>()
   vi.spyOn(projectSource, 'get').mockImplementation((pid) => Promise.resolve(project(pid)))
   vi.spyOn(source, 'candidates').mockImplementation((pid) => Promise.resolve([summary('c', pid)]))
-  vi.spyOn(source, 'factsIndex').mockImplementation((pid) => Promise.resolve(index(pid)))
-  vi.spyOn(source, 'candidate').mockImplementation((pid, id) =>
+  vi.spyOn(api, 'request').mockResolvedValue({ version: 0, reconciled_version: 0, decisions: [] })
+  vi.spyOn(source, 'reviewCandidate').mockImplementation((pid, id) =>
     pid === 'p' ? old.promise : Promise.resolve(candidate(id, pid)),
   )
   const f = fixture('c')

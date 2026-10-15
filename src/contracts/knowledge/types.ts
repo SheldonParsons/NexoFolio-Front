@@ -50,6 +50,13 @@ export interface CurateResult {
 export interface CurateProgress {
   lifecycle_version?: number
   lifecycle_stale?: boolean
+  task_id?: string | null
+  next_retry_at?: string | null
+  retry_reason?: string | null
+  retry_count?: number
+  task_timing?: { queued_ms: number; waiting_ms: number; running_ms: number; since: string | null } | null
+  task_state?: 'queued' | 'running' | 'waiting' | 'needs_attention' | 'done' | 'failed' | 'stopped' | null
+  queued_tasks?: number
   status: 'idle' | 'running' | 'done' | 'failed'
   stage: 'describe' | 'fields' | 'organize' | null
   run_id?: string | null
@@ -266,3 +273,8 @@ export interface ObservedValuePreview {
   sources: Array<{ example: string; environment: string | null; pointer: string | null; complete: boolean | null }>; sources_total: number
 }
 export interface ObservedValuePage { summary: FieldObservationSummary; items: ObservedValuePreview[]; offset: number; limit: number; has_more: boolean }
+
+export interface CurationTaskSummary {
+  id: string; project_id: string; target: string | null; candidate_id: string | null
+  state: 'queued' | 'running' | 'waiting' | 'needs_attention' | 'done' | 'failed' | 'stopped'; created_at: string
+}

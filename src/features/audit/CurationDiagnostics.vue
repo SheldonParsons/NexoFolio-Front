@@ -17,6 +17,7 @@ const auth = useAuthStore(),
   project = ref(''),
   rows = ref<DiagnosticSummary[]>([]),
   selected = ref(''),
+  selectedKind = ref<'candidate' | 'task'>('candidate'),
   data = ref<DiagnosticPackage | null>(null),
   busy = ref(false),
   loading = ref(false),
@@ -47,16 +48,17 @@ async function load() {
     if (!request.signal.aborted) busy.value = false
   }
 }
-async function choose(id: string) {
+async function choose(id: string, kind: 'candidate' | 'task' = 'candidate') {
   if (!project.value) return
   detailController?.abort()
   const request = (detailController = new AbortController())
   selected.value = id
+  selectedKind.value = kind
   data.value = null
   detailError.value = ''
   loading.value = true
   try {
-    const result = await loadDiagnostic(project.value, id, request.signal)
+    const result = await loadDiagnostic(project.value, id, request.signal, kind)
     if (!request.signal.aborted) data.value = result
   } catch (e) {
     if (!request.signal.aborted) detailError.value = fail(e)
@@ -88,21 +90,24 @@ onScopeDispose(() => {
     <template v-else
       ><div class="diagnostic-workspace">
         <div class="diagnostic-rounds">
-          <p class="audit-note">最近 100 轮，不代表全部历史</p>
+          <p class="audit-note">最近 100 轮及尚无候选的活动任务</p>
           <button
             v-for="row in rows"
             :key="row.id"
             type="button"
             class="diagnostic-round"
             :aria-pressed="selected === row.id"
-            @click="choose(row.id)"
+            @click="choose(row.id, row.kind)"
           >
             <strong>{{ statusLabels[row.status] || row.status }}</strong
             ><time>{{ auditTime(row.created_at) }}</time
             ><span
               >{{ row.target ? '单接口整理' : '项目整理' }} · {{ row.completed ?? '—' }} /
               {{ row.total ?? '—' }}</span
-            ><small>候选 {{ row.id.slice(0, 8) }}</small>
+            ><small
+              >{{ row.kind === 'task' ? '任务（尚无候选）' : '候选' }}
+              {{ row.id.slice(0, 8) }}</small
+            >
           </button>
           <p v-if="!rows.length" class="audit-note">此项目暂无保留的整理轮次。</p>
           <details class="audit-coverage">
@@ -123,7 +128,7 @@ onScopeDispose(() => {
         <div class="diagnostic-content">
           <p v-if="loading" role="status" class="audit-empty">正在生成脱敏排查包…</p>
           <p v-else-if="detailError" role="alert" class="audit-warning">
-            {{ detailError }} <AppButton @click="choose(selected)">重试</AppButton>
+            {{ detailError }} <AppButton @click="choose(selected, selectedKind)">重试</AppButton>
           </p>
           <DiagnosticDetail v-else-if="data" :value="data" />
           <p v-else class="audit-empty">选择一轮整理查看诊断。</p>

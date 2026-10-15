@@ -22,6 +22,8 @@ watch(
         <nav aria-label="管理中心">
           <RouterLink to="/management/projects">项目管理</RouterLink>
           <RouterLink to="/management/users">用户管理</RouterLink>
+          <RouterLink to="/management/operations">运行状态</RouterLink>
+          <RouterLink to="/management/storage">存储与清理</RouterLink>
           <RouterLink to="/management/audit">内容审计</RouterLink>
         </nav>
         <RouterLink to="/projects" class="management-back">← 返回工作区</RouterLink>

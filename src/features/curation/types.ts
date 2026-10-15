@@ -62,6 +62,14 @@ export interface CandidateSummary {
   progress: Partial<CurateProgress>
 }
 export interface Candidate extends Omit<CandidateSummary, 'commands'> {
+  /** Present only on the dedicated review projection; bodies are loaded by scope. */
+  commands?: number
+  version?: number
+  resume_available?: boolean
+  summaries?: import('@/contracts/knowledge/types').EndpointSummary[]
+  counts?: { fields: number; links: number }
+  changes?: Record<import('./changes').ChangeSection, number>
+
   operations?: CandidateOperation[]
   execution_input?: {
     prepared: {
@@ -108,4 +116,30 @@ export const candidateStateLabels: Record<CandidateState, string> = {
   applied: '已应用',
   discarded: '已废弃',
   interrupted: '中断可恢复',
+}
+
+export interface CandidateReviewStatus extends CandidateSummary {
+  version: number
+  resume_available: boolean
+  history_available: boolean
+  applied_rounds: string[]
+}
+export interface ApplyStatus {
+  candidate: CandidateReviewStatus
+  operation: string | null
+  progress: {
+    stage: 'waiting' | 'validating' | 'writing' | 'committing' | 'committed' | 'failed' | 'unknown'
+    processed: number
+    total: number
+  } | null
+}
+export interface CandidateEndpointPage {
+  version: number
+  note: import('@/contracts/knowledge/types').EndpointNote | null
+  notes: import('@/contracts/knowledge/types').FieldNote[]
+  notes_total: number
+  facts: import('@/contracts/knowledge/types').EndpointFacts | null
+  fields_total: number | null
+  inputs: NonNullable<NonNullable<Candidate['execution_input']>['prepared']['inputs']>[string]
+  facts_available: boolean
 }

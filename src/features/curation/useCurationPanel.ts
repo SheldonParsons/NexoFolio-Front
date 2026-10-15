@@ -30,9 +30,13 @@ export function useCurationPanel(
   const progress = computed(() => {
     const job = live(),
       chosen = selected.value
-    if (liveBusy() && !manual.value) return job
+    if ((liveBusy() || job?.task_id) && !manual.value) return job
     if (!chosen) return null
-    if (chosen.id === job?.candidate_id && chosen.state === 'running') return job
+    if (
+      chosen.id === job?.candidate_id &&
+      ['running', 'waiting', 'needs_attention'].includes(job?.task_state ?? chosen.state)
+    )
+      return job
     return panelProgress(chosen)
   })
   const busy = computed(() => (!manual.value && liveBusy()) || progress.value?.status === 'running')

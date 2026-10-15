@@ -66,7 +66,6 @@ const {
   sampleErrors,
   samplesPending,
   comparisonReady,
-  describing,
   progress,
   busy,
   notice,
@@ -163,7 +162,7 @@ function showExample(id: string) {
   void workspace.selectExample(id)
 }
 function askToOrganize() {
-  if (!busy.value && !loading.value && projectEndpointCount.value)
+  if (!workspace.submitting.value && !loading.value && projectEndpointCount.value)
     startConfirmationOpen.value = true
 }
 watch(
@@ -188,7 +187,7 @@ function confirmationUnauthorized() {
       :folder-count="folderCount"
       :environments="environments"
       :environment-id="environmentId"
-      :busy="busy"
+      :submitting="workspace.submitting.value"
       :loading="loading"
       @environment="navigation.selectEnvironment"
       @organize="askToOrganize"
@@ -274,11 +273,12 @@ function confirmationUnauthorized() {
                   :to="{ path: route.path, query: { ...route.query, env: environmentId } }"
                 />
                 <button
-                  v-if="note"
                   type="button"
                   class="document-describe"
-                  :disabled="busy"
-                  :aria-busy="describing === selectedId"
+                  :disabled="workspace.submitting.value"
+                  :aria-busy="
+                    workspace.submitting.value && workspace.submittingTarget.value === selectedId
+                  "
                   :title="
                     note?.author.by === 'curate'
                       ? '根据当前证据重新整理接口与字段说明'
@@ -287,9 +287,14 @@ function confirmationUnauthorized() {
                   @click="workspace.describe(selectedId)"
                 >
                   <AppIcon name="scan-search" :size="15" />
-                  {{ describing === selectedId ? '正在整理接口' : '重新整理接口' }}
+                  {{
+                    workspace.submitting.value && workspace.submittingTarget.value === selectedId
+                      ? '正在提交'
+                      : note
+                        ? '重新整理接口'
+                        : '整理接口'
+                  }}
                 </button>
-                <span v-else class="document-description-source">说明会在整理文档时一并补全</span>
               </div>
             </div>
             <EndpointSummary
@@ -366,10 +371,19 @@ function confirmationUnauthorized() {
       </section>
     </div>
     <CurationPanel
+      :endpoint-labels="
+        Object.fromEntries(
+          (workspace.documentIndex.value?.entries ?? []).map((e) => [
+            e.interface_id,
+            e.name || e.path,
+          ]),
+        )
+      "
       :project-id="String(route.params.projectId)"
       :page-key="route.fullPath"
       :environment-id="environmentId"
       :ready="!loading && !!project"
+      :submitting="workspace.submitting.value"
       :progress="progress"
       :busy="busy"
       :error="noticeError ? notice : ''"
@@ -385,10 +399,10 @@ function confirmationUnauthorized() {
       :project-id="String(route.params.projectId)"
       :project-name="project?.name ?? '当前项目'"
       :environment-id="environmentId"
-      :busy="busy || loading || !projectEndpointCount"
+      :busy="workspace.submitting.value || loading || !projectEndpointCount"
       @confirm="workspace.organize"
       @resume="workspace.fillGaps($event)"
-      @progress="workspace.loadProject"
+      @progress="workspace.observeCuration($event)"
       @unauthorized="confirmationUnauthorized"
     />
     <LifecyclePanel

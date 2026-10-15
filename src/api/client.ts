@@ -8,6 +8,7 @@ export class ApiError extends Error {
     public readonly kind: ApiErrorKind,
     public readonly status?: number,
     public readonly requestId?: string,
+    public readonly code?: string,
   ) {
     super(message)
     this.name = 'ApiError'
@@ -92,6 +93,7 @@ export function createApiClient({
             : response.status === 408
               ? '处理超时，请稍后重试。'
               : `请求失败（${response.status}）`
+        let code: string | undefined
         if (response.status !== 401 && /json/i.test(response.headers.get('content-type') ?? '')) {
           try {
             const body: unknown = await response.json()
@@ -104,13 +106,16 @@ export function createApiClient({
               'message' in body.error &&
               typeof body.error.message === 'string' &&
               body.error.message.trim()
-            )
+            ) {
               message = body.error.message.trim()
+              if ('code' in body.error && typeof body.error.code === 'string')
+                code = body.error.code
+            }
           } catch (error) {
             if (controller.signal.aborted) throw error
           }
         }
-        throw new ApiError(message, 'http', response.status, requestId)
+        throw new ApiError(message, 'http', response.status, requestId, code)
       }
       if (response.status === 204) return undefined as T
       if (

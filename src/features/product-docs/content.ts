@@ -12,6 +12,8 @@ import mcpRetrievalUpdate from '@/content/changelog/2026-10-10-mcp-progressive-r
 import publicDocumentUpdate from '@/content/changelog/2026-10-10-public-document-reading.md?raw'
 import fetcher013Update from '@/content/changelog/2026-10-09-fetcher-0-1-3.md?raw'
 import fetcher021Update from '@/content/changelog/2026-10-12-fetcher-0-2-1.md?raw'
+import reliabilityUpdate from '@/content/changelog/2026-10-15-curation-reliability-and-performance.md?raw'
+import fetcher022Update from '@/content/changelog/2026-10-15-fetcher-0-2-2.md?raw'
 import curationUpdate from '@/content/changelog/2026-10-09-curation-experience.md?raw'
 
 export interface ProductArticle {
@@ -78,6 +80,29 @@ export interface ProductUpdate {
 }
 // Feature updates, versioned releases, and preview records share one timeline.
 export const productUpdates: ProductUpdate[] = [
+  {
+    slug: '2026-10-15-curation-reliability-and-performance',
+    product: 'nexofolio',
+    date: '2026-10-15',
+    version: '功能更新',
+    status: 'update',
+    title: '整理更稳定，排队和恢复更省心',
+    description:
+      '忙时自动排队，临时故障后自动重试，已保存成果继续保留；文档打开和应用更快，等待过程更清楚。',
+    body: reliabilityUpdate,
+  },
+  {
+    slug: 'fetcher-0-2-2',
+    product: 'fetcher',
+    date: '2026-10-15',
+    version: 'v0.2.2 开发版 · 强制更新',
+    status: 'update',
+    title: 'Fetcher 上传与重试更稳定',
+    description:
+      '服务忙时自动等待，网络波动后自动重试，保留本地未确认上传的内容，减少账号和服务切换的干扰。',
+    documentation: '/docs/fetcher',
+    body: fetcher022Update,
+  },
   {
     slug: 'fetcher-0-2-1',
     product: 'fetcher',

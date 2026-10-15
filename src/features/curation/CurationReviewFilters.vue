@@ -5,6 +5,7 @@ defineProps<{
   modelValue: Section
   changes: KnowledgeChange[]
   relations: number
+  counts?: Partial<Record<ChangeSection, number>>
 }>()
 defineEmits<{ 'update:modelValue': [value: Section] }>()
 const kinds: Section[] = ['notes', 'fields', 'links']
@@ -25,7 +26,7 @@ const kinds: Section[] = ['notes', 'fields', 'links']
     >
       {{ sectionLabels[kind] }}
       <small
-        >{{ changes.filter((c) => c.section === kind).length }}
+        >{{ counts?.[kind] ?? changes.filter((c) => c.section === kind).length }}
         {{ kind === 'links' ? '项变化' : '项' }}</small
       >
     </button>

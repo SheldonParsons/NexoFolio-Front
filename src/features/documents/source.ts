@@ -1,8 +1,8 @@
 import { api } from '@/api'
 import type { DocumentLifecycle } from './lifecycle/model'
-import * as knowledge from '@/contracts/knowledge/source'
+import { readProject } from '@/contracts/knowledge/curationReads'
 import type { Catalog, EndpointCard, EndpointSummary } from '@/contracts/knowledge/types'
-import { contractResponse } from './contract'
+import { contractResponse, requireBinding } from './contract'
 import type { ProjectEnvironment } from './types'
 
 const path = (id: string) => 'v1/projects/' + encodeURIComponent(id)
@@ -37,34 +37,13 @@ export async function environments(
 
 /** Read the shared project document; environments filter observations, not storage. */
 export async function documentIndex(pid: string, signal: AbortSignal): Promise<DocumentIndex> {
-  const [catalog, result, lifecycle] = await Promise.all([
-    knowledge.catalog(pid, signal),
-    api.request<{ endpoints: EndpointSummary[] }>(path(pid) + '/endpoints', { signal }),
-    api.request<DocumentLifecycle>(path(pid) + '/document-lifecycle', {
-      signal,
-      cache: 'no-store',
-    }),
-  ])
-  const summaries = new Map(result.endpoints.map((item) => [item.id, item]))
-  const folders: Array<string | null> = catalog.folders.map((folder) => folder.id)
-  if (catalog.unplaced) folders.push(null)
-  const pages = await Promise.all(
-    folders.map(async (folderId) => {
-      const entries: DocumentEntry[] = []
-      for (let page = 1; ; page++) {
-        const result = folderId
-          ? await knowledge.interfaces(pid, folderId, page, 100, signal)
-          : await knowledge.unclassified(pid, page, 100, signal)
-        for (const card of result.items) {
-          const summary = summaries.get(card.interface_id)
-          if (summary) entries.push({ ...card, folderId, summary })
-        }
-        if (page * result.limit >= result.total) return entries
-        if (!result.items.length) throw new Error('接口列表不完整，请重新读取。')
-      }
-    }),
+  const index = await readProject<DocumentIndex>(pid, path(pid) + '/document', signal)
+  requireBinding(
+    index?.catalog?.project_id === pid &&
+      Array.isArray(index.entries) &&
+      index.entries.every((entry) => entry.summary?.project_id === pid),
   )
-  return { catalog, entries: pages.flat(), lifecycle }
+  return index
 }
 
 export function example(pid: string, endpoint: string, id: string, signal: AbortSignal) {

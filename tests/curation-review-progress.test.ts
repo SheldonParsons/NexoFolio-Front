@@ -9,6 +9,7 @@ vi.mock('@/contracts/knowledge/source', () => ({
   curateProgress: vi.fn(),
   resumeCandidate: vi.fn(),
   cancelCandidate: vi.fn(),
+  stopCurationTask: vi.fn(),
   startCurate: vi.fn(),
 }))
 const scopes: ReturnType<typeof effectScope>[] = []
@@ -102,4 +103,87 @@ it('an explicit full-size reveal does not overwrite the saved display size', () 
   const revealed = b.run(() => usePanelSize(() => false, 'full'))!
   expect(revealed.size.value).toBe('full')
   expect(remembered.size.value).toBe('mini')
+})
+
+it('tracks the accepted task through its queue and stops it before a candidate exists', async () => {
+  const queued = job({
+    task_id: 'task-one',
+    task_state: 'queued',
+    candidate_id: null,
+    run_id: null,
+    stage: null,
+  })
+  vi.mocked(source.curateProgress)
+    .mockResolvedValueOnce(queued)
+    .mockResolvedValueOnce(job({ ...queued, status: 'failed', task_state: 'stopped' }))
+  const f = fixture()
+  void f.state.observe(queued)
+  await vi.advanceTimersByTimeAsync(0)
+  expect(source.curateProgress).toHaveBeenCalledWith('p', expect.any(AbortSignal), 'task:task-one')
+  await f.state.cancel('task-one')
+  expect(source.stopCurationTask).toHaveBeenCalledWith('p', 'task-one', expect.any(AbortSignal))
+  expect(source.cancelCandidate).not.toHaveBeenCalled()
+  expect(f.state.progress.value?.task_state).toBe('stopped')
+  expect(f.state.busy.value).toBe(false)
+})
+
+it('switches between queued task identities even when both candidate and run IDs are empty', async () => {
+  vi.mocked(source.curateProgress).mockImplementation(
+    (_p, signal) =>
+      new Promise((_resolve, reject) =>
+        signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError'))),
+      ),
+  )
+  const f = fixture()
+  const a = job({ task_id: 'task-A', task_state: 'queued', candidate_id: null, run_id: null })
+  void f.state.observe(a)
+  const firstSignal = vi.mocked(source.curateProgress).mock.calls[0]![1]!
+  void f.state.observe({ ...a, task_id: 'task-B' })
+  expect(f.state.progress.value?.task_id).toBe('task-B')
+  expect(firstSignal.aborted).toBe(true)
+  expect(vi.mocked(source.curateProgress).mock.calls[1]?.[2]).toBe('task:task-B')
+})
+
+it('keeps an identical queued observation and replaces it when the execution owner changes', () => {
+  vi.mocked(source.curateProgress).mockImplementation(() => new Promise(() => {}))
+  const f = fixture(),
+    queued = job({ task_id: 'task', candidate_id: null, run_id: null })
+  void f.state.observe(queued)
+  const first = vi.mocked(source.curateProgress).mock.calls[0]![1]!
+  void f.state.observe({ ...queued })
+  expect(source.curateProgress).toHaveBeenCalledTimes(1)
+  void f.state.observe({ ...queued, candidate_id: 'c', run_id: 'owner-2' })
+  expect(first.aborted).toBe(true)
+  expect(source.curateProgress).toHaveBeenCalledTimes(2)
+  expect(f.state.progress.value?.run_id).toBe('owner-2')
+})
+it('ignores a canceled queued read arriving after the stop result', async () => {
+  let finish!: (p: CurateProgress) => void
+  const queued = job({ task_id: 'task', candidate_id: null, run_id: null })
+  vi.mocked(source.curateProgress)
+    .mockImplementationOnce(() => new Promise((resolve) => (finish = resolve)))
+    .mockResolvedValueOnce({ ...queued, status: 'failed', task_state: 'stopped' })
+  const f = fixture(),
+    observing = f.state.observe(queued)
+  await f.state.cancel('task')
+  finish({ ...queued, status: 'running' })
+  await observing
+  expect(f.state.progress.value?.task_state).toBe('stopped')
+  expect(f.state.busy.value).toBe(false)
+})
+it('switching tasks during a slow stop does not let its late reply replace the selection or leave it pending', async () => {
+  let stop!: () => void
+  vi.mocked(source.stopCurationTask).mockImplementation(
+    () => new Promise((resolve) => (stop = resolve)),
+  )
+  vi.mocked(source.curateProgress).mockImplementation(() => new Promise(() => {}))
+  const f = fixture(),
+    a = job({ task_id: 'A', candidate_id: null, run_id: null })
+  void f.state.observe(a)
+  const stopping = f.state.cancel('A')
+  void f.state.observe({ ...a, task_id: 'B' })
+  stop()
+  await stopping
+  expect(f.state.progress.value?.task_id).toBe('B')
+  expect(f.state.pending.value).toBe(false)
 })

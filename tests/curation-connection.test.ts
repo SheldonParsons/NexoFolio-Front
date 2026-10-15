@@ -87,3 +87,15 @@ it('stops after bounded read failures without declaring the server job failed', 
   ).rejects.toThrow('状态')
   expect(knowledge.curateProgress).toHaveBeenCalledTimes(3)
 })
+
+it('shows a rejected queue write as not submitted instead of adopting another old run', async () => {
+  vi.spyOn(knowledge, 'startCurate').mockRejectedValue(
+    new ApiError('尚未提交', 'http', 503, undefined, 'CURATION_NOT_SUBMITTED'),
+  )
+  const read = vi.spyOn(knowledge, 'curateProgress').mockResolvedValue(job('done'))
+  const state = workspace()
+  await state.organize()
+  expect(state.notice.value).toBe('尚未提交')
+  expect(state.noticeError.value).toBe(true)
+  expect(read).not.toHaveBeenCalled()
+})

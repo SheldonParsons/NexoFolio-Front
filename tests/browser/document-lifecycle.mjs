@@ -168,6 +168,7 @@ async function context(role) {
       if (path === `/v1/projects/${pid}`) return send(project)
       if (path.endsWith('/environments'))
         return send({ items: environments, total: 1, page: 1, limit: 100 })
+      if (path === `/v1/projects/${pid}/document`) return send({ ...index, lifecycle })
       if (path.endsWith('/catalog')) return send(index.catalog)
       if (path.endsWith('/endpoints'))
         return send({ endpoints: index.entries.map((e) => e.summary) })

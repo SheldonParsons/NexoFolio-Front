@@ -10,7 +10,8 @@ defineEmits<{ document: []; progress: []; resume: [] }>()
 const issues = computed(() => props.candidate.progress.issues ?? [])
 const canResume = computed(
   () =>
-    !!props.candidate.execution_input && ['partial', 'interrupted'].includes(props.candidate.state),
+    (props.candidate.resume_available ?? !!props.candidate.execution_input) &&
+    ['partial', 'interrupted'].includes(props.candidate.state),
 )
 const empty = computed<{ icon: IconName; title: string; description: string }>(() => {
   switch (props.candidate.state) {

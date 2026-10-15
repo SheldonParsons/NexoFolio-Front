@@ -1,6 +1,13 @@
 import { api } from '@/api'
 import { changeCuration, readCuration } from '@/contracts/knowledge/curationReads'
-import type { Candidate, CandidateSummary, CandidateOperations } from './types'
+import type {
+  Candidate,
+  CandidateSummary,
+  CandidateOperations,
+  CandidateReviewStatus,
+  CandidateEndpointPage,
+  ApplyStatus,
+} from './types'
 import type { DocumentIndex } from '@/features/documents/source'
 import type { DocumentLifecycle } from '@/contracts/knowledge/lifecycle'
 import type { EndpointSummary } from '@/contracts/knowledge/types'
@@ -52,13 +59,72 @@ export async function factsIndex(project: string, signal?: AbortSignal): Promise
     lifecycle,
   }
 }
-export const applyCandidate = (project: string, id: string, signal?: AbortSignal) =>
-  changeCuration(project, () => api.request<{ status: 'applied'; rounds: string[] }>(
-    `${path(project)}/${encodeURIComponent(id)}/apply`,
-    { method: 'POST', signal },
-  ))
+export const applyCandidate = (
+  project: string,
+  id: string,
+  signal?: AbortSignal,
+  operation?: string,
+) =>
+  changeCuration(project, () =>
+    api.request<{ status: 'applied'; rounds: string[] }>(
+      `${path(project)}/${encodeURIComponent(id)}/apply${operation ? `?operation=${encodeURIComponent(operation)}` : ''}`,
+      { method: 'POST', signal, timeoutMs: 190_000 },
+    ),
+  )
 export const discardCandidate = (project: string, id: string, signal?: AbortSignal) =>
-  changeCuration(project, () => api.request<{ status: 'discarded' }>(`${path(project)}/${encodeURIComponent(id)}/discard`, {
-    method: 'POST',
+  changeCuration(project, () =>
+    api.request<{ status: 'discarded' }>(`${path(project)}/${encodeURIComponent(id)}/discard`, {
+      method: 'POST',
+      signal,
+    }),
+  )
+
+export const reviewCandidate = (project: string, id: string, signal?: AbortSignal) =>
+  readCuration<Candidate>(project, `${path(project)}/${encodeURIComponent(id)}/review`, signal)
+export const reviewStatus = (project: string, id: string, signal?: AbortSignal) =>
+  readCuration<CandidateReviewStatus>(
+    project,
+    `${path(project)}/${encodeURIComponent(id)}/review?part=status`,
     signal,
-  }))
+  )
+export const reviewChanges = (
+  project: string,
+  id: string,
+  version: number,
+  section: string,
+  offset: number,
+  signal?: AbortSignal,
+  key?: string,
+) => {
+  const query = new URLSearchParams({
+    part: 'changes',
+    version: String(version),
+    section,
+    offset: String(offset),
+  })
+  if (key) query.set('key', key)
+  return readCuration<{ items: Array<{ key: string; before: unknown; after: unknown }> }>(
+    project,
+    `${path(project)}/${encodeURIComponent(id)}/review?${query}`,
+    signal,
+  )
+}
+export const reviewEndpoint = (
+  project: string,
+  id: string,
+  version: number,
+  endpoint: string,
+  offset: number,
+  signal?: AbortSignal,
+) =>
+  readCuration<CandidateEndpointPage>(
+    project,
+    `${path(project)}/${encodeURIComponent(id)}/review?${new URLSearchParams({ part: 'endpoint', version: String(version), endpoint, offset: String(offset) })}`,
+    signal,
+  )
+export const applyStatus = (project: string, id: string, operation: string, signal?: AbortSignal) =>
+  readCuration<ApplyStatus>(
+    project,
+    `${path(project)}/${encodeURIComponent(id)}/apply-status?operation=${encodeURIComponent(operation)}`,
+    signal,
+  )

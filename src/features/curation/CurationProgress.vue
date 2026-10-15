@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { executionKey } from './progressIdentity'
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { RouterLink, type RouteLocationRaw } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -31,7 +32,12 @@ const props = withDefaults(
   }>(),
   { historicalOnly: false, lockClose: false, actionBusy: false },
 )
-const emit = defineEmits<{ retry: [id: string]; cancel: [id: string]; close: []; view: [] }>()
+const emit = defineEmits<{
+  retry: [id: string]
+  cancel: [id: string, selection: CurateProgress | null]
+  close: []
+  view: []
+}>()
 const closed = ref(false)
 const { size, setSize } = usePanelSize(() => props.historicalOnly, props.initialSize)
 function close() {
@@ -56,7 +62,7 @@ const now = ref(Date.now())
 const timer = setInterval(() => (now.value = Date.now()), 1000)
 onScopeDispose(() => clearInterval(timer))
 watch(
-  () => props.progress?.run_id ?? props.progress?.candidate_id,
+  () => executionKey(props.progress),
   () => {
     closed.value = false
   },
@@ -82,6 +88,10 @@ const label = computed(() => props.error || processingHeadline(props.progress, p
 const percent = computed(() => phaseProgress(props.progress))
 const health = computed(() => (props.busy ? liveness(props.progress, now.value) : null))
 const title = computed(() => {
+  if (props.progress?.task_state === 'waiting') return '等待恢复 · 将自动继续'
+  if (props.progress?.task_state === 'needs_attention') return '需要处理'
+  if (props.progress?.task_state === 'stopped') return '任务已停止'
+  if (props.progress?.task_state === 'queued') return '任务已接受，正在排队'
   if (props.progress?.lifecycle_stale) return '本轮基于旧废弃状态'
   if (!props.progress && props.error) return '整理暂时无法继续'
   if (props.progress?.candidate_state === 'applied') return '本轮已应用'
@@ -98,13 +108,19 @@ const title = computed(() => {
     : '本轮整理需要补充'
 })
 const subtitle = computed(() =>
-  props.busy
-    ? '生成候选结果 · 现行文档保持稳定'
-    : props.progress?.candidate_state === 'applied'
-      ? '内容已应用到现行文档'
-      : props.progress?.candidate_state === 'discarded'
-        ? '已保留本轮历史记录'
-        : '已保存本轮候选结果',
+  props.progress?.task_state === 'stopped'
+    ? props.progress.candidate_id
+      ? '已保存批次保留'
+      : '排队已取消'
+    : props.progress?.task_state === 'queued'
+      ? '关闭页面后仍会继续 · 可停止排队'
+      : props.busy
+        ? '生成候选结果 · 现行文档保持稳定'
+        : props.progress?.candidate_state === 'applied'
+          ? '内容已应用到现行文档'
+          : props.progress?.candidate_state === 'discarded'
+            ? '已保留本轮历史记录'
+            : '已保存本轮候选结果',
 )
 const reviewLabel = computed(() =>
   props.busy
@@ -114,6 +130,22 @@ const reviewLabel = computed(() =>
       : '审阅整理结果',
 )
 const fieldsDone = computed(() => props.progress?.fields_completed ?? 0)
+const executing = computed(
+  () =>
+    props.busy &&
+    !['queued', 'waiting', 'needs_attention'].includes(props.progress?.task_state ?? ''),
+)
+const timing = computed(() => {
+  const value = props.progress?.task_timing
+  if (!value) return ''
+  const delta = Math.max(0, now.value - Date.parse(value.since ?? '')) || 0
+  const duration = (ms: number) => elapsedLabel(new Date(0).toISOString(), ms)
+  const state = props.progress?.task_state
+  return `排队 ${duration(value.queued_ms + (state === 'queued' ? delta : 0))} · 执行 ${duration(value.running_ms + (state === 'running' ? delta : 0))} · 等待 ${duration(value.waiting_ms + (state === 'waiting' ? delta : 0))}`
+})
+const nextRetry = computed(() =>
+  props.progress?.next_retry_at ? new Date(props.progress.next_retry_at).toLocaleString() : '',
+)
 const duration = computed(() =>
   elapsedLabel(
     props.progress?.attempt_started_at ?? props.progress?.started_at,
@@ -133,7 +165,7 @@ const duration = computed(() =>
       :data-finished-now="finishedNow"
     >
       <header class="curation-dock-header">
-        <span class="curation-brand-pulse" :class="{ 'is-running': busy }"
+        <span class="curation-brand-pulse" :class="{ 'is-running': executing }"
           ><BrandLogo variant="icon"
         /></span>
         <div>
@@ -188,16 +220,26 @@ const duration = computed(() =>
         >
           <div>
             <div class="curation-state-line" :role="error ? 'alert' : undefined">
-              <ThinkingState :text="label" :busy="busy" /><span aria-hidden="true">{{
-                duration
+              <ThinkingState :text="label" :busy="executing" /><span aria-hidden="true">{{
+                timing ? '' : duration
               }}</span>
             </div>
-            <CurationStages :progress="progress" :busy="busy" />
+            <p v-if="timing" class="t-reason" aria-label="任务分别计时">{{ timing }}</p>
+            <p v-if="progress?.task_state === 'waiting'" class="t-reason" role="status">
+              下次尝试：{{ nextRetry || '等待确认' }}。关闭页面不影响恢复。
+            </p>
+            <CurationStages
+              v-if="
+                progress?.task_state !== 'queued' && (!progress?.task_id || progress?.candidate_id)
+              "
+              :progress="progress"
+              :busy="executing"
+            />
             <CurationLiveness v-if="busy" :progress="progress" :now="now" />
           </div>
         </div>
         <div
-          v-if="busy && size !== 'mini'"
+          v-if="executing && size !== 'mini'"
           class="curation-meter"
           :class="{ 'is-indeterminate': percent === null }"
           role="progressbar"
@@ -218,7 +260,12 @@ const duration = computed(() =>
             <div v-if="expanded && $slots.switch" class="curation-panel-switch">
               <slot name="switch" />
             </div>
-            <div class="curation-stat-grid">
+            <div
+              v-if="
+                progress?.task_state !== 'queued' && (!progress?.task_id || progress?.candidate_id)
+              "
+              class="curation-stat-grid"
+            >
               <span
                 ><small>接口说明</small
                 ><strong
@@ -256,20 +303,33 @@ const duration = computed(() =>
               ></span>
             </div>
             <CurationActivity
-              v-if="progress"
-              :key="progress.run_id || progress.candidate_id || 'starting'"
+              v-if="
+                progress &&
+                progress.task_state !== 'queued' &&
+                (!progress.task_id || progress.candidate_id)
+              "
+              :key="executionKey(progress)"
               :progress="progress"
-              :busy="busy"
+              :busy="executing"
               :now="now"
             />
+            <p v-else-if="progress?.task_state === 'queued'" class="t-reason">
+              任务开始后会在这里显示处理进度。
+            </p>
           </div>
         </div>
       </div>
-      <footer v-if="expanded && (progress?.candidate_id || error)" class="curation-dock-actions">
+      <footer
+        v-if="expanded && (progress?.task_id || progress?.candidate_id || error)"
+        class="curation-dock-actions"
+      >
         <button
-          v-if="busy && progress?.candidate_id"
+          v-if="
+            (busy || progress?.task_state === 'needs_attention') &&
+            (progress?.task_id || progress?.candidate_id)
+          "
           type="button"
-          @click="$emit('cancel', progress.candidate_id)"
+          @click="$emit('cancel', progress?.task_id ?? progress?.candidate_id ?? '', progress)"
         >
           停止本轮
         </button>

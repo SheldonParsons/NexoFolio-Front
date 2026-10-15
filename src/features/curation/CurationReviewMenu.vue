@@ -27,7 +27,7 @@ const route = useRoute(),
 const canResume = computed(
   () =>
     !props.lifecycleStale &&
-    !!props.candidate.execution_input &&
+    (props.candidate.resume_available ?? !!props.candidate.execution_input) &&
     ['partial', 'interrupted'].includes(props.candidate.state),
 )
 const canApply = computed(

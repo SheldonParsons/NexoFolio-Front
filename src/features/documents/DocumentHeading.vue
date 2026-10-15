@@ -14,7 +14,7 @@ const props = defineProps<{
   folderCount: number
   environments: ProjectEnvironment[]
   environmentId: string
-  busy: boolean
+  submitting: boolean
   loading: boolean
 }>()
 defineEmits<{ environment: [id: string]; organize: [] }>()
@@ -70,12 +70,14 @@ const review = useCurationReviewEntry(
       <button
         type="button"
         class="document-organize"
-        :disabled="busy || loading || !endpointCount"
-        :aria-busy="busy"
+        :disabled="submitting || loading || !endpointCount"
+        :aria-busy="submitting"
         title="生成目录、接口与字段知识的候选结果，审阅后再应用"
         @click="$emit('organize')"
       >
-        <AppIcon name="layers" :size="16" /><span>{{ busy ? '正在整理' : '开始新一轮整理' }}</span>
+        <AppIcon name="layers" :size="16" /><span>{{
+          submitting ? '正在提交' : '开始新一轮整理'
+        }}</span>
       </button>
     </div>
   </header>

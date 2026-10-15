@@ -7,6 +7,7 @@ import type { CurateProgress } from '@/contracts/knowledge/types'
 export function temporaryCurationReadFailure(cause: unknown): boolean {
   return (
     cause instanceof ApiError &&
+    cause.code !== 'CURATION_NOT_SUBMITTED' &&
     (cause.kind === 'timeout' ||
       cause.kind === 'network' ||
       (cause.kind === 'http' && [408, 429, 502, 503, 504].includes(cause.status ?? 0)))

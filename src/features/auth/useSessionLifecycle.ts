@@ -22,6 +22,9 @@ export function useSessionLifecycle() {
       if (auth.user) auth.forgetSession()
       return
     }
+    // A known offline transport cannot validate identity. Expiry and credential changes
+    // above still clear identity; reconnect immediately performs the existing server check.
+    if (!navigator.onLine) return
     try {
       await auth.checkSession()
     } catch {
@@ -56,6 +59,7 @@ export function useSessionLifecycle() {
     window.addEventListener('nexofolio:session-cleared', cleared)
     window.addEventListener('storage', stored)
     window.addEventListener('focus', visible)
+    window.addEventListener('online', visible)
     document.addEventListener('visibilitychange', visible)
     if (!auth.user) void validate()
     refresh = setInterval(() => {
@@ -68,6 +72,7 @@ export function useSessionLifecycle() {
     window.removeEventListener('nexofolio:session-cleared', cleared)
     window.removeEventListener('storage', stored)
     window.removeEventListener('focus', visible)
+    window.removeEventListener('online', visible)
     document.removeEventListener('visibilitychange', visible)
   })
 }

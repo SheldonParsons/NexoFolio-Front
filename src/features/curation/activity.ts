@@ -6,6 +6,11 @@ export function unfinishedFields(progress: CurateProgress | null): number {
 }
 export function processingHeadline(progress: CurateProgress | null, busy: boolean): string {
   if (!progress) return '正在启动整理任务'
+  if (progress.task_state === 'stopped')
+    return progress.candidate_id ? '任务已停止，已保存批次保留' : '排队已取消，任务未开始执行'
+  if (progress.task_state === 'waiting' || progress.task_state === 'needs_attention')
+    return progress.message || '已保存成果保留'
+  if (progress.task_state === 'queued') return '任务已接受，正在排队；关闭页面不影响执行'
   if (progress.candidate_state === 'applied') return '本轮内容已应用到现行文档'
   if (progress.candidate_state === 'discarded') return '本轮结果已废弃，仅保留历史记录'
   if (progress.candidate_state === 'interrupted')

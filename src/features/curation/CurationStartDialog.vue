@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, onScopeDispose } from 'vue'
+import { ApiError } from '@/api'
+import { curateProgress } from '@/contracts/knowledge/source'
+import type { CurateProgress } from '@/contracts/knowledge/types'
+import { startIntent } from './startIntent'
 import { RouterLink } from 'vue-router'
 import AppConfirmDialog from '@/components/ui/AppConfirmDialog.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
@@ -12,29 +16,92 @@ const props = defineProps<{
   projectName: string
   environmentId: string
   busy: boolean
+  target?: string | null
 }>()
-const emit = defineEmits<{ confirm: []; unauthorized: []; resume: [id: string]; progress: [] }>()
+const emit = defineEmits<{
+  confirm: []
+  unauthorized: []
+  resume: [id: string]
+  progress: [job: CurateProgress]
+}>()
 const open = defineModel<boolean>('open', { default: false })
-const { awaiting, running, loading, error, readyToStart, load } = usePendingCuration(
-  () => open.value,
-  () => props.projectId,
-  () => {
-    open.value = false
-    emit('unauthorized')
-  },
+const { awaiting, currentTask, otherActive, resumable, loading, error, readyToStart, load } =
+  usePendingCuration(
+    () => open.value,
+    () => props.projectId,
+    () => {
+      open.value = false
+      emit('unauthorized')
+    },
+    () => props.target ?? null,
+  )
+const suggested = computed(() => {
+  const current = awaiting.value.find(
+    (candidate) => candidate.id === currentTask.value?.candidate_id,
+  )
+  return (
+    current
+      ? [current, ...awaiting.value.filter((candidate) => candidate.id !== current.id)]
+      : awaiting.value
+  ).slice(0, 3)
+})
+const shownResumable = computed(() =>
+  resumable.value.filter((candidate) => suggested.value.some((shown) => shown.id === candidate.id)),
 )
-const suggested = computed(() => (running.value ? [running.value] : awaiting.value.slice(0, 3)))
-function confirm() {
-  if (!readyToStart.value || props.busy) return
+const intent = computed(() => startIntent(currentTask.value, otherActive.value))
+const viewing = ref(false),
+  viewError = ref('')
+let request: AbortController | undefined
+function cancelRead() {
+  request?.abort()
+  request = undefined
+  viewing.value = false
+  viewError.value = ''
+}
+watch([open, () => props.projectId, () => props.target], cancelRead)
+onScopeDispose(cancelRead)
+function submit() {
+  if (!readyToStart.value || props.busy || viewing.value) return
   open.value = false
   emit('confirm')
 }
-function viewProgress() {
-  open.value = false
-  emit('progress')
+function confirm() {
+  if (intent.value.observe) void viewProgress()
+  else submit()
+}
+async function viewProgress() {
+  const task = currentTask.value
+  if (!task || props.busy || viewing.value) return
+  const current = new AbortController(),
+    project = props.projectId
+  request = current
+  viewing.value = true
+  viewError.value = ''
+  const owns = () =>
+    request === current &&
+    !current.signal.aborted &&
+    open.value &&
+    props.projectId === project &&
+    currentTask.value?.id === task.id
+  try {
+    const job = await curateProgress(project, current.signal, `task:${task.id}`)
+    if (owns()) {
+      open.value = false
+      emit('progress', job)
+    }
+  } catch (cause) {
+    if (owns()) {
+      if (cause instanceof ApiError && cause.status === 401) {
+        open.value = false
+        emit('unauthorized')
+      } else viewError.value = '暂时无法读取任务，请重试。'
+    }
+  } finally {
+    if (request === current) viewing.value = false
+  }
 }
 function resume(id: string) {
-  if (props.busy) return
+  if (props.busy || viewing.value || !readyToStart.value) return
   open.value = false
   emit('resume', id)
 }
@@ -42,27 +109,42 @@ function resume(id: string) {
 <template>
   <AppConfirmDialog
     v-model:open="open"
-    title="开始新一轮整理？"
-    :description="
-      '根据「' +
-      projectName +
-      '」最新采集资料和正式文档生成新候选，不继承未应用的候选结果。完成后仍由你审阅并决定是否应用。'
-    "
-    :confirm-label="running ? '整理进行中' : '开始新一轮整理'"
-    :disabled="!readyToStart || busy"
-    :error="error"
+    :title="intent.title"
+    :description="`「${projectName}」${intent.description}`"
+    :confirm-label="intent.label"
+    :disabled="!readyToStart || busy || viewing"
+    :error="error || viewError"
     @confirm="confirm"
   >
-    <p v-if="loading" class="confirm-context" role="status">正在查找待审阅的整理结果…</p>
-    <section v-else-if="suggested.length" class="curation-confirm-guidance">
-      <h3>{{ running ? '项目正在整理' : '有待审阅的整理结果' }}</h3>
+    <p v-if="loading" class="confirm-context" role="status">正在核对当前范围的任务与候选…</p>
+    <section v-if="!loading && currentTask" class="curation-confirm-guidance">
+      <h3>当前范围的已接受任务</h3>
       <p>
-        {{
-          running
-            ? '可以先查看已生成内容，当前任务结束后再开始新一轮。'
-            : '旧轮结果会保留。选择续跑会沿用该轮资料和已生成内容；开始新一轮则独立整理。'
-        }}
+        任务 {{ currentTask.id.slice(0, 8) }} ·
+        {{ currentTask.candidate_id ? '已有候选成果可查看' : '尚未生成候选' }}
       </p>
+      <button
+        v-if="!intent.observe"
+        type="button"
+        class="curation-confirm-retry"
+        :disabled="viewing || busy"
+        @click="viewProgress"
+      >
+        查看当前任务
+      </button>
+      <button
+        v-if="currentTask.state === 'needs_attention' && !currentTask.candidate_id"
+        type="button"
+        class="curation-confirm-retry"
+        :disabled="busy || viewing"
+        @click="submit"
+      >
+        修复后重新提交
+      </button>
+    </section>
+    <section v-if="!loading && suggested.length" class="curation-confirm-guidance">
+      <h3>保留的候选结果</h3>
+      <p>旧轮结果会保留。可查看成果；没有同范围活动任务占用时，也可明确选择续跑原候选。</p>
       <RouterLink
         v-for="item in suggested"
         :key="item.id"
@@ -75,7 +157,7 @@ function resume(id: string) {
         @click="open = false"
       >
         <div>
-          <strong>{{ running ? '查看已生成内容' : '查看待审阅结果' }}</strong
+          <strong>查看候选结果</strong
           ><small
             >{{ formatTime(item.created_at) }} · {{ item.target ? '单接口整理' : '项目整体整理' }} ·
             {{ candidateStateLabels[item.state] }}</small
@@ -83,24 +165,19 @@ function resume(id: string) {
         </div>
         <AppIcon name="arrow-right" :size="15" />
       </RouterLink>
-      <button v-if="running" type="button" class="curation-confirm-retry" @click="viewProgress">
-        查看本轮进度
-      </button>
-      <button
-        v-for="item in suggested.filter(
-          (i) =>
-            (i.state === 'partial' || i.state === 'interrupted') &&
-            i.progress.resume_available !== false,
-        )"
-        :key="'resume-' + item.id"
-        type="button"
-        class="curation-confirm-retry"
-        :disabled="busy"
-        @click="resume(item.id)"
-        title="沿用该轮冻结资料和已生成内容，只补齐缺口"
-      >
-        续跑本轮 · {{ formatTime(item.created_at) }}
-      </button>
+      <div class="curation-confirm-resume-actions">
+        <button
+          v-for="item in shownResumable"
+          :key="'resume-' + item.id"
+          type="button"
+          class="curation-confirm-retry"
+          :disabled="busy"
+          @click="resume(item.id)"
+          title="沿用该轮冻结资料和已生成内容，只补齐缺口"
+        >
+          续跑本轮 · {{ formatTime(item.created_at) }}
+        </button>
+      </div>
     </section>
     <button v-if="error" type="button" class="curation-confirm-retry" @click="load">
       重新读取

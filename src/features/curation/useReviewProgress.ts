@@ -1,3 +1,4 @@
+import { sameExecution } from './progressIdentity'
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { pageVisible, waitForObservation } from './observation'
 import { ApiError } from '@/api'
@@ -23,17 +24,13 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
   }
   async function observe(initial: CurateProgress) {
     const previous = progress.value
-    if (
-      watching.value &&
-      previous &&
-      previous.candidate_id === initial.candidate_id &&
-      previous.run_id === initial.run_id
-    )
-      return
+    if (watching.value && sameExecution(previous, initial)) return
     request?.abort()
+    pending.value = false
     const pid = projectId(),
       current = new AbortController()
     request = current
+    requestedRunKey.value = initial.task_id ?? initial.run_id ?? initial.candidate_id ?? ''
     progress.value = initial
     watching.value = true
     blocked.value = false
@@ -49,7 +46,9 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
           const job = await knowledge.curateProgress(
             pid,
             current.signal,
-            progress.value?.run_id ?? progress.value?.candidate_id ?? '',
+            progress.value?.task_id
+              ? `task:${progress.value.task_id}`
+              : (progress.value?.run_id ?? progress.value?.candidate_id ?? ''),
           )
           if (!owns()) return
           progress.value = job
@@ -69,7 +68,7 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
       if (request === current) watching.value = false
     }
   }
-  async function action(kind: 'resume' | 'cancel', id: string) {
+  async function action(kind: 'resume' | 'cancel', id: string, selection?: CurateProgress | null) {
     if (pending.value || !id) return
     const pid = projectId(),
       current = new AbortController()
@@ -80,17 +79,19 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
     blocked.value = false
     error.value = ''
     noticeCandidateId.value = id
+    const task = id === (selection ?? progress.value)?.task_id
     try {
       if (kind === 'resume') {
         const job = await knowledge.resumeCandidate(pid, id, current.signal)
         if (disposed || request !== current || current.signal.aborted || projectId() !== pid) return
-        requestedRunKey.value = job.run_id ?? job.candidate_id ?? ''
+        requestedRunKey.value = job.task_id ?? job.run_id ?? job.candidate_id ?? ''
         pending.value = false
         void observe(job)
       } else {
-        await knowledge.cancelCandidate(pid, id, current.signal)
+        if (task) await knowledge.stopCurationTask(pid, id, current.signal)
+        else await knowledge.cancelCandidate(pid, id, current.signal)
         if (disposed || request !== current || current.signal.aborted || projectId() !== pid) return
-        const job = await knowledge.curateProgress(pid, current.signal)
+        const job = await knowledge.curateProgress(pid, current.signal, task ? `task:${id}` : '')
         if (request === current && !current.signal.aborted) progress.value = job
       }
     } catch (cause) {
@@ -119,6 +120,7 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
   )
   return {
     progress,
+    pending,
     error,
     busy,
     blocked,
@@ -126,6 +128,6 @@ export function useReviewProgress(projectId: () => string, unauthorized: () => v
     requestedRunKey,
     observe,
     resume: (id: string) => action('resume', id),
-    cancel: (id: string) => action('cancel', id),
+    cancel: (id: string, selection?: CurateProgress | null) => action('cancel', id, selection),
   }
 }

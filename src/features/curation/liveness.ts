@@ -8,7 +8,12 @@ function age(value: string | null | undefined, now: number): number | null {
 
 /** A successful poll or heartbeat does not prove that work has advanced. */
 export function liveness(progress: CurateProgress | null, now: number) {
-  if (!progress || progress.status !== 'running') return null
+  if (
+    !progress ||
+    progress.status !== 'running' ||
+    ['queued', 'waiting', 'needs_attention'].includes(progress.task_state ?? '')
+  )
+    return null
   const last = progress.updated_at ?? progress.attempt_started_at ?? progress.started_at
   const quiet = age(last, now)
   const heartbeat = age(progress.heartbeat_at, now)

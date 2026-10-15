@@ -125,6 +125,7 @@ async function fixture(admin, viewport, theme) {
       return send({ version: 0, reconciled_version: 0, decisions: [] })
     if (path.endsWith('/environments'))
       return send({ items: [{ id: env, name: '测试环境' }], total: 1, page: 1, limit: 100 })
+    if (path === `/v1/projects/${pid}/document`) return send(index)
     if (path.endsWith('/catalog')) return send(index.catalog)
     if (path.endsWith('/endpoints')) return send({ endpoints: index.entries.map((e) => e.summary) })
     if (path.endsWith('/catalog/interfaces')) {

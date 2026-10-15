@@ -77,6 +77,7 @@ const fixtureRoute = async (route) => {
       limit: 100,
       total: 2,
     })
+  if (path === `/v1/projects/${pid}/document`) return send(index)
   if (path === `/v1/projects/${pid}/catalog`) return send(index.catalog)
   if (path === `/v1/projects/${pid}/endpoints`)
     return send({ endpoints: index.entries.map((e) => e.summary) })

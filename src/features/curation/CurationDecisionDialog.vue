@@ -10,6 +10,7 @@ const props = defineProps<{
   pending: boolean
   disabled: boolean
   error: string
+  status?: string
 }>()
 defineEmits<{ confirm: [] }>()
 const open = defineModel<boolean>('open', { default: false })
@@ -38,6 +39,7 @@ const description = computed(() =>
     :error="error"
     @confirm="$emit('confirm')"
   >
+    <p v-if="status" class="confirm-context" role="status" aria-live="polite">{{ status }}</p>
     <p v-if="candidate" class="confirm-context">
       {{ projectName }} · {{ formatTime(candidate.created_at) }}
     </p>

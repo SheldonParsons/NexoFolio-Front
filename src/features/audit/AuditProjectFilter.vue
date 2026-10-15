@@ -4,7 +4,9 @@ import { ApiError } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 import AppSearchSelect from '@/components/ui/AppSearchSelect.vue'
 import { listManagementProjects, type ManagementProject } from '@/features/management/projects'
-const props = withDefaults(defineProps<{ required?: boolean }>(), { required: false })
+const props = withDefaults(defineProps<{ required?: boolean; disabled?: boolean }>(), {
+  required: false,
+})
 const auth = useAuthStore()
 const project = defineModel<string>({ required: true })
 const model = computed({
@@ -73,6 +75,7 @@ onScopeDispose(() => {
     <span class="audit-label">项目</span
     ><AppSearchSelect
       v-model="model"
+      :disabled="disabled"
       label="项目"
       placeholder="按项目名称查找"
       :options="options"

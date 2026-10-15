@@ -30,13 +30,15 @@ export function panelProgress(row: CandidateSummary): CurateProgress {
   return {
     ...p,
     status:
-      row.state === 'running'
-        ? p.status === 'failed'
-          ? 'failed'
-          : 'running'
-        : ['ready', 'applied', 'discarded'].includes(row.state)
-          ? 'done'
-          : 'failed',
+      p.task_state === 'waiting' && row.state === 'partial'
+        ? 'running'
+        : row.state === 'running'
+          ? p.status === 'failed'
+            ? 'failed'
+            : 'running'
+          : ['ready', 'applied', 'discarded'].includes(row.state)
+            ? 'done'
+            : 'failed',
     stage: p.stage ?? null,
     completed: p.completed ?? 0,
     total: p.total ?? 0,
@@ -69,8 +71,8 @@ export function canObservePanelRun(
   busy: boolean,
   ready: boolean,
 ): boolean {
-  if (!ready || busy || row?.state !== 'running' || panelProgress(row).status !== 'running')
-    return false
+  if (!ready || busy || !row || panelProgress(row).status !== 'running') return false
+  if (live?.task_id && live.task_id !== row.progress?.task_id) return false
   return !(
     live?.candidate_id === row.id &&
     live.run_id === row.progress?.run_id &&

@@ -223,21 +223,40 @@ it('does not let a stale project request replace the newly opened project', asyn
   }
 })
 
-it('uses current endpoints and catalog routes instead of the retired interface route', async () => {
-  const request = vi.spyOn(api, 'request').mockImplementation(async (path) => {
-    if (path.endsWith('/document-lifecycle'))
-      return { version: 0, reconciled_version: 0, decisions: [] }
-    if (path.endsWith('/catalog')) return { project_id: pid, folders: [], unplaced: 2 }
-    if (path.endsWith('/endpoints')) return { endpoints: index.entries.map((e) => e.summary) }
-    if (path.includes('/catalog/unclassified?'))
-      return { items: index.entries, total: 2, page: 1, limit: 100 }
-    throw new Error('Unexpected route: ' + path)
-  })
+it('reads one protected index and rejects a response from another project', async () => {
+  const request = vi.spyOn(api, 'request').mockResolvedValue(index)
   const result = await source.documentIndex(pid, new AbortController().signal)
-  expect(result.entries.map((e) => e.interface_id)).toEqual(['a', 'b'])
-  expect(request.mock.calls.some(([path]) => path === 'v1/projects/project-1/interfaces')).toBe(
-    false,
+  expect(result).toEqual(index)
+  expect(request).toHaveBeenCalledTimes(1)
+  expect(request).toHaveBeenCalledWith('v1/projects/project-1/document', {
+    signal: expect.any(AbortSignal),
+    cache: 'no-store',
+  })
+  request.mockResolvedValue({ ...index, catalog: { ...index.catalog, project_id: 'foreign' } })
+  await expect(source.documentIndex(pid, new AbortController().signal)).rejects.toThrow('不匹配')
+})
+
+it('shares an index read while independently cancelling consumers and discards completed results', async () => {
+  let finish!: (value: DocumentIndex) => void
+  const request = vi.spyOn(api, 'request').mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
   )
+  const first = new AbortController(),
+    second = new AbortController()
+  const cancelled = source.documentIndex(pid, first.signal).catch((error) => error)
+  const retained = source.documentIndex(pid, second.signal)
+  expect(request).toHaveBeenCalledTimes(1)
+  first.abort()
+  expect(request.mock.calls[0]![1]!.signal!.aborted).toBe(false)
+  finish(index)
+  expect((await cancelled).name).toBe('AbortError')
+  expect(await retained).toEqual(index)
+  request.mockResolvedValue(index)
+  await source.documentIndex(pid, new AbortController().signal)
+  expect(request).toHaveBeenCalledTimes(2)
 })
 
 it('follows description progress before directory progress and refreshes partial names', async () => {

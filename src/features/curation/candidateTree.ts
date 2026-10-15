@@ -8,12 +8,13 @@ export function candidateIndex(candidate: Candidate, index: DocumentIndex | null
   const notes = new Map(candidate.view.notes.map((n) => [n.endpoint, n]))
   const placements = new Map(candidate.view.placements.map((p) => [p.endpoint, p.folder]))
   const retained = new Map<string, DocumentEntry>(
-    (index?.entries ?? []).map((e) => [e.interface_id, e]),
+    (candidate.version === undefined ? (index?.entries ?? []) : []).map((e) => [e.interface_id, e]),
   )
   // A canonical ID can disappear after a merge; the review keeps the original
   // frozen identity and path instead of borrowing a later current document.
-  for (const facts of candidate.execution_input?.prepared.facts ?? []) {
-    const summary = facts.summary
+  for (const summary of candidate.summaries ??
+    candidate.execution_input?.prepared?.facts?.map((f) => f.summary) ??
+    []) {
     retained.set(summary.id, {
       interface_id: summary.id,
       method: summary.method,
@@ -23,6 +24,17 @@ export function candidateIndex(candidate: Candidate, index: DocumentIndex | null
       folderId: null,
       summary,
     })
+  }
+  for (const id of included) {
+    if (!retained.has(id))
+      retained.set(id, {
+        interface_id: id,
+        method: '',
+        path: '历史接口 ' + id,
+        name: null,
+        purpose: null,
+        folderId: null,
+      } as DocumentEntry)
   }
   const entries = [...retained.values()]
     .filter((e) => included.has(e.interface_id))

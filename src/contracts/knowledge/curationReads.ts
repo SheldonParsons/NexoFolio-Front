@@ -6,8 +6,8 @@ const pending = new Map<string, Read>()
 const revisions = new Map<string, number>()
 const listeners = new Set<(project: string) => void>()
 
-/** Only curation GETs share transport. No retained results or second copy of job state. */
-export function readCuration<T>(
+/** Project document and curation GETs share only in-flight transport, fenced by identity and writes. */
+export function readProject<T>(
   project: string,
   path: string,
   signal?: AbortSignal,
@@ -53,7 +53,7 @@ export function readCuration<T>(
       (value) => {
         if (!finish()) return
         if (readCredential()?.token !== token || (revisions.get(project) ?? 0) !== revision)
-          reject(new ApiError('整理状态或登录身份已变化，请重新读取。', 'network'))
+          reject(new ApiError('项目状态或登录身份已变化，请重新读取。', 'network'))
         else resolve(value as T)
       },
       (cause) => {
@@ -62,6 +62,9 @@ export function readCuration<T>(
     )
   })
 }
+
+// Preserve the curation port; documents use the same cancellation and revision boundary.
+export const readCuration = readProject
 
 export function onCurationChanged(listener: (project: string) => void) {
   listeners.add(listener)

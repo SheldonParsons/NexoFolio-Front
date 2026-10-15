@@ -67,3 +67,23 @@ it('does not offer same-round recovery before input was saved', () => {
     ),
   ).toBe('整理资料尚未保存完整，请开始新一轮整理')
 })
+
+it('does not report a queued accepted task as a stalled worker', () => {
+  const queued = { ...job, task_id: 't', task_state: 'queued' as const }
+  expect(liveness(queued, now)).toBeNull()
+  expect(processingHeadline(queued, true)).toContain('任务已接受，正在排队')
+})
+
+it.each(['waiting', 'needs_attention'] as const)(
+  'does not turn durable %s into a stale heartbeat warning',
+  (state) => {
+    const paused = {
+      ...job,
+      task_state: state,
+      message: '等待服务恢复',
+      heartbeat_at: '2026-10-01T00:00:00Z',
+    }
+    expect(liveness(paused, now)).toBeNull()
+    expect(processingHeadline(paused, state === 'waiting')).toBe('等待服务恢复')
+  },
+)

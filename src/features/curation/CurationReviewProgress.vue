@@ -17,7 +17,9 @@ const focused = computed<CandidateSummary>(() => ({
   created_at: props.candidate.created_at,
   updated_at: props.candidate.updated_at,
   progress: props.candidate.progress,
-  commands: props.candidate.batches.reduce((n, batch) => n + batch.commands.length, 0),
+  commands:
+    props.candidate.commands ??
+    props.candidate.batches.reduce((n, batch) => n + batch.commands.length, 0),
 }))
 </script>
 <template>
@@ -28,6 +30,7 @@ const focused = computed<CandidateSummary>(() => ({
     :focus-candidate="focused"
     :progress="monitor.progress.value"
     :busy="monitor.busy.value"
+    :submitting="monitor.pending.value"
     :ready="!monitor.blocked.value"
     :error="monitor.error.value"
     :notice-candidate-id="monitor.noticeCandidateId.value"

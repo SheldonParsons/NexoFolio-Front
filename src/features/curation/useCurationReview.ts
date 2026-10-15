@@ -8,7 +8,8 @@ import type { Project } from '@/features/projects/types'
 import type { DocumentIndex } from '@/features/documents/source'
 import * as source from './source'
 import type { Candidate, CandidateSummary } from './types'
-import { candidateChanges } from './changes'
+import { candidateChanges, type ChangeSection, type KnowledgeChange } from './changes'
+import { applyMessage } from './applyProgress'
 import { canReviewDecision, type ReviewDecision } from './reviewActions'
 
 export function useCurationReview(
@@ -31,9 +32,44 @@ export function useCurationReview(
   let accessDenied = false
   let refreshVersion = 0
   const paths = computed(() => new Map(index.value?.entries.map((e) => [e.interface_id, e.path])))
-  const changes = computed(() =>
-    candidate.value ? candidateChanges(candidate.value, paths.value) : [],
-  )
+  const changes = shallowRef<KnowledgeChange[]>([])
+  const decisionStatus = ref('')
+  let changeRequest: AbortController | undefined
+  let decisionGeneration = 0
+  async function loadChanges(section: ChangeSection, offset = 0) {
+    changeRequest?.abort()
+    const controller = new AbortController()
+    changeRequest = controller
+    const value = candidate.value
+    if (!value || value.version === undefined) return
+    const owns = () =>
+      !controller.signal.aborted &&
+      candidate.value?.id === value.id &&
+      candidate.value?.version === value.version &&
+      projectId() === value.project_id
+    if (!offset) changes.value = []
+    try {
+      const page = await source.reviewChanges(
+        value.project_id,
+        value.id,
+        value.version,
+        section,
+        offset,
+        controller.signal,
+      )
+      if (!owns()) return
+      const scope = {
+        ...value,
+        base: { ...value.base, [section]: page.items.flatMap((i) => (i.before ? [i.before] : [])) },
+        view: { ...value.view, [section]: page.items.flatMap((i) => (i.after ? [i.after] : [])) },
+      } as Candidate
+      // The established rule still supplies identities, titles and before/after rendering.
+      const rows = candidateChanges(scope, paths.value).filter((c) => c.section === section)
+      changes.value = offset ? [...changes.value, ...rows] : rows
+    } catch (cause) {
+      if (owns()) report(cause)
+    }
+  }
   function report(cause: unknown) {
     if (cause instanceof ApiError && [401, 403].includes(cause.status ?? 0)) accessDenied = true
     if (cause instanceof ApiError && cause.status === 401) return onUnauthorized()
@@ -45,8 +81,11 @@ export function useCurationReview(
     const pid = projectId(),
       id = candidateId()
     const current = () =>
-      !disposed && version === refreshVersion && !signal?.aborted &&
-      projectId() === pid && candidateId() === id
+      !disposed &&
+      version === refreshVersion &&
+      !signal?.aborted &&
+      projectId() === pid &&
+      candidateId() === id
     const [rows, lifecycle] = await Promise.all([
       source.candidates(pid, signal),
       api.request<DocumentLifecycle>(`v1/projects/${encodeURIComponent(pid)}/document-lifecycle`, {
@@ -58,22 +97,27 @@ export function useCurationReview(
     list.value = rows
     if (index.value) index.value = { ...index.value, lifecycle }
     if (id) {
-      const latest = rows.find((c) => c.id === id)
+      const latest = await source.reviewStatus(pid, id, signal)
+      if (!current()) return
+      if (!latest.history_available)
+        throw new Error('历史已精简，仅保留摘要；详情、对比与回滚已到期')
       if (
         !candidate.value ||
         candidate.value.id !== id ||
-        candidate.value.updated_at !== latest?.updated_at
+        candidate.value.version !== latest.version
       ) {
-        const value = await source.candidate(pid, id, signal)
+        const value = await source.reviewCandidate(pid, id, signal)
         if (current()) candidate.value = value
-      }
+      } else candidate.value = { ...candidate.value, ...latest }
     }
     if (current()) error.value = ''
   }
   const polling = useVisiblePolling(
     () => void poll(),
-    () => candidate.value?.state === 'running' || list.value.some(c => c.state === 'running')
-      ? 2500 : 30_000,
+    () =>
+      candidate.value?.state === 'running' || list.value.some((c) => c.state === 'running')
+        ? 2500
+        : 30_000,
     () => !disposed && !accessDenied && !loading.value,
   )
   async function poll() {
@@ -87,7 +131,7 @@ export function useCurationReview(
       if (!signal.aborted) polling.schedule()
     }
   }
-  const unlisten = onCurationChanged(pid => {
+  const unlisten = onCurationChanged((pid) => {
     if (pid === projectId() && !deciding.value) {
       polling.clear()
       void poll()
@@ -95,6 +139,11 @@ export function useCurationReview(
   })
   async function load() {
     request?.abort()
+    changeRequest?.abort()
+    decisionGeneration++
+    deciding.value = false
+    decisionStatus.value = ''
+    changes.value = []
     refreshVersion++
     accessDenied = false
     polling.clear()
@@ -133,15 +182,22 @@ export function useCurationReview(
         else projectError.value = '项目名称暂时无法读取，整理结果仍可查看。'
       })
     if (id) {
-      void source
-        .factsIndex(pid, current.signal)
-        .then((value) => {
-          if (owns()) index.value = value
+      void api
+        .request<DocumentLifecycle>(`v1/projects/${encodeURIComponent(pid)}/document-lifecycle`, {
+          signal: current.signal,
+          cache: 'no-store',
+        })
+        .then((lifecycle) => {
+          if (owns())
+            index.value = {
+              catalog: { project_id: pid, folders: [], unplaced: 0 },
+              entries: [],
+              lifecycle,
+            }
         })
         .catch((cause) => {
-          if (!owns()) return
-          if (cause instanceof ApiError && cause.status === 401) onUnauthorized()
-          else indexError.value = '暂时无法读取接口索引，请重新读取整理结果。'
+          if (owns())
+            indexError.value = cause instanceof Error ? cause.message : '暂时无法读取废弃状态'
         })
         .finally(() => {
           if (owns()) indexLoading.value = false
@@ -160,7 +216,7 @@ export function useCurationReview(
     }
     try {
       if (id) {
-        const value = await source.candidate(pid, id, current.signal)
+        const value = await source.reviewCandidate(pid, id, current.signal)
         if (owns()) candidate.value = value
       } else {
         const rows = await source.candidates(pid, current.signal)
@@ -177,45 +233,119 @@ export function useCurationReview(
   }
   async function decide(action: ReviewDecision, expectedId?: string): Promise<boolean> {
     const value = candidate.value
-    if (!value || deciding.value || (expectedId && value.id !== expectedId)) return false
-    if (!canReviewDecision(value.state, action)) return false
-    deciding.value = true
-    error.value = ''
-    const pid = projectId(),
+    if (
+      !value ||
+      deciding.value ||
+      (expectedId && value.id !== expectedId) ||
+      !canReviewDecision(value.state, action)
+    )
+      return false
+    const generation = ++decisionGeneration,
+      pid = projectId(),
       id = value.id,
       signal = request?.signal
-    const current = () => !signal?.aborted && projectId() === pid && candidateId() === id
+    const current = () =>
+      generation === decisionGeneration &&
+      !disposed &&
+      !signal?.aborted &&
+      projectId() === pid &&
+      candidateId() === id
     const accepted = action === 'apply' ? 'applied' : 'discarded'
+    const operation = crypto.randomUUID()
+    deciding.value = true
+    decisionStatus.value = action === 'apply' ? '等待服务器确认应用阶段…' : '正在保存废弃决定…'
+    error.value = ''
+    let timer: ReturnType<typeof setTimeout> | undefined
+    let observing = true
+    const stopObserving = () => {
+      observing = false
+      if (timer) clearTimeout(timer)
+    }
+    let saved = false
+    let confirmSaved: () => void = () => {}
+    const committed = new Promise<void>((resolve) => {
+      confirmSaved = resolve
+    })
+    let lastStage = ''
+    const observe = async () => {
+      if (!observing || !current() || saved) return
+      try {
+        if (pageVisible()) {
+          const status = await source.applyStatus(pid, id, operation, signal)
+          if (!observing || !current() || saved) return
+          saved = status.candidate.state === accepted
+          lastStage = status.progress?.stage ?? ''
+          if (saved) {
+            candidate.value = { ...candidate.value!, ...status.candidate }
+            confirmSaved()
+          }
+          decisionStatus.value = saved
+            ? '服务器已应用，正在刷新页面…'
+            : applyMessage(status.progress)
+        }
+      } catch {
+        /* A progress read cannot determine the transaction outcome. */
+      }
+      if (observing && current() && !saved) timer = setTimeout(() => void observe(), 600)
+    }
+    if (action === 'apply') void observe()
     try {
-      await (action === 'apply' ? source.applyCandidate : source.discardCandidate)(pid, id, signal)
+      try {
+        const mutation =
+          action === 'apply'
+            ? source.applyCandidate(pid, id, signal, operation)
+            : source.discardCandidate(pid, id, signal)
+        await (action === 'apply' ? Promise.race([mutation, committed]) : mutation)
+        if (!current()) return false
+        saved = true
+      } catch (cause) {
+        // In-flight observation can outlive its timer; reconciliation owns reads now.
+        stopObserving()
+        if (!current()) return false
+        // A single POST only. After an uncertain response, read persisted state and
+        // this exact operation until it settles; never infer success from processed counts.
+        const until = Date.now() + 185_000
+        do {
+          if (!pageVisible() && signal) await waitForObservation(signal)
+          if (!current()) return false
+          const status = await source.applyStatus(pid, id, operation, signal)
+          if (!current()) return false
+          saved = status.candidate.state === accepted
+          lastStage = status.progress?.stage ?? ''
+          if (saved) break
+          decisionStatus.value = applyMessage(status.progress)
+          if (!['waiting', 'validating', 'writing', 'committing'].includes(lastStage)) break
+          await new Promise((resolve) => setTimeout(resolve, 600))
+        } while (current() && Date.now() < until)
+        if (!saved) {
+          report(cause)
+          decisionStatus.value =
+            lastStage === 'failed'
+              ? '服务器未应用此候选'
+              : '应用结果尚未确认，请重新读取状态；不会自动重发应用请求。'
+          return false
+        }
+      }
       if (!current()) return false
-      await refresh(signal, true)
+      candidate.value = { ...candidate.value!, state: accepted }
+      decisionStatus.value =
+        action === 'apply' ? '服务器已应用，正在刷新页面…' : '决定已保存，正在刷新页面…'
+      try {
+        await refresh(signal, true)
+      } catch {
+        if (current()) error.value = '决定已确认保存，页面刷新失败；请重新读取。'
+      }
       polling.schedule()
-      return current() && candidate.value?.state === accepted
+      return current()
     } catch (cause) {
       if (current()) {
-        // A timed out write is uncertain. Reconcile its saved decision, never replay POST.
-        try {
-          const saved = await source.candidate(pid, id, signal)
-          if (!current()) return false
-          candidate.value = saved
-          if (saved.state === accepted) {
-            // The decision is proven saved even if its history refresh is unavailable.
-            try {
-              await refresh(signal, true)
-            } catch {
-              /* Retain the verified decision. */
-            }
-            return true
-          }
-        } catch {
-          /* Preserve the original actionable error. */
-        }
         report(cause)
+        decisionStatus.value = '应用结果尚未确认，请重新读取状态；不会自动重发应用请求。'
       }
       return false
     } finally {
-      deciding.value = false
+      stopObserving()
+      if (current()) deciding.value = false
     }
   }
   watch([projectId, candidateId], () => void load(), { immediate: true })
@@ -223,6 +353,8 @@ export function useCurationReview(
     disposed = true
     unlisten()
     request?.abort()
+    changeRequest?.abort()
+    decisionGeneration++
     polling.clear()
   })
   return {
@@ -231,6 +363,8 @@ export function useCurationReview(
     list,
     candidate,
     changes,
+    loadChanges,
+    decisionStatus,
     loading,
     deciding,
     error,
