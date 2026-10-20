@@ -3,13 +3,16 @@ import { effectScope, reactive, ref } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { api, ApiError } from '@/api'
 import { useDocumentAccess } from '@/features/documents/useDocumentAccess'
-import { usePublicDocument } from '@/features/documents/public/usePublicDocument'
+import { useDocumentWorkspace } from '@/features/documents/useDocumentWorkspace'
+import { useDocumentNavigation } from '@/features/documents/useDocumentNavigation'
+import * as documentSource from '@/features/documents/source'
 import { useDocumentSelection } from '@/features/documents/useDocumentSelection'
 import { documentRequests } from '@/features/documents/documentRequests'
 import * as publicSource from '@/features/documents/public/source'
 import * as privateSource from '@/contracts/knowledge/source'
 import navigation from './fixtures/document-navigation.json'
 import type { PublicDocumentIndex, PublicEndpoint } from '@/features/documents/public/source'
+vi.mock('@/features/projects/source', () => ({ projectSource: { get: vi.fn() } }))
 const scopes: ReturnType<typeof effectScope>[] = []
 afterEach(() => {
   scopes.splice(0).forEach((s) => s.stop())
@@ -36,7 +39,7 @@ function access(user = '') {
   )!
   return { state, id, pid }
 }
-it('keeps guests public without probing private data, and downgrades a member immediately on logout', async () => {
+it('keeps guests read-only without probing private data, and downgrades a member immediately on logout', async () => {
   const read = vi.spyOn(api, 'request').mockResolvedValue(project)
   const f = access()
   expect(f.state.mode.value).toBe('public')
@@ -64,7 +67,7 @@ it('falls back to public for a denied or unavailable member check and ignores ol
   await Promise.resolve()
   expect(f.state.mode.value).toBe('public')
 })
-it('notifies the page when a member loses endpoint permission so private content can unmount', async () => {
+it('notifies the page when a member loses endpoint permission so write controls can unmount', async () => {
   vi.spyOn(privateSource, 'endpoint').mockRejectedValue(new ApiError('denied', 'http', 403))
   const forbidden = vi.fn()
   const scope = effectScope()
@@ -82,6 +85,9 @@ it('notifies the page when a member loses endpoint permission so private content
   expect(forbidden).toHaveBeenCalledOnce()
   expect(selection.detail.value).toBeNull()
 })
+function indexSummary() {
+  return navigation.entries[0]!.summary
+}
 async function reader(path: string) {
   const index = structuredClone(navigation) as unknown as PublicDocumentIndex
   index.project = {
@@ -99,16 +105,19 @@ async function reader(path: string) {
     .mockImplementation(async (pid, endpoint, env) => {
       if (endpoint === 'missing') throw new ApiError('不存在', 'http', 404)
       return {
-        project_id: pid,
-        endpoint_id: endpoint === 'alias' ? 'endpoint-0' : endpoint,
-        environment_id: env || null,
-        name: '正式说明',
-        purpose: '用途',
-        description: null,
-        unknowns: [],
-        method: 'GET',
-        path: '/orders',
-        fields: [],
+        facts: {
+          summary: {
+            ...index.entries[0]!.summary,
+            project_id: pid,
+            id: endpoint === 'alias' ? 'endpoint-0' : endpoint,
+          },
+          aliases: [],
+          addresses: [],
+          fields: [],
+          examples: [],
+          requests: [],
+        },
+        knowledge: null,
       }
     })
   const privateRead = vi.spyOn(privateSource, 'endpoint')
@@ -134,7 +143,16 @@ async function reader(path: string) {
   router.afterEach((to) => Object.assign(route, to))
   const scope = effectScope()
   scopes.push(scope)
-  const state = scope.run(() => usePublicDocument(route, router))!
+  const state = scope.run(() => {
+    const workspace = useDocumentWorkspace(
+      () => String(route.params.projectId),
+      vi.fn(),
+      vi.fn(),
+      true,
+    )
+    const navigation = useDocumentNavigation(workspace, route, router)
+    return { ...workspace, ...navigation }
+  })!
   await vi.waitFor(() => expect(state.loading.value).toBe(false))
   return { state, router, readIndex, readDetail, privateRead, progressRead }
 }
@@ -142,7 +160,7 @@ it('opens a shared endpoint/environment and navigates folders without any privat
   const f = await reader(
     '/projects/fixture-navigation/interfaces/endpoints/endpoint-0?env=test-env&tab=examples&sample=private',
   )
-  await vi.waitFor(() => expect(f.state.detail.value?.endpoint_id).toBe('endpoint-0'))
+  await vi.waitFor(() => expect(f.state.detail.value?.facts.summary.id).toBe('endpoint-0'))
   expect(f.readDetail).toHaveBeenCalledWith(
     'fixture-navigation',
     'endpoint-0',
@@ -179,22 +197,14 @@ it('discards a late endpoint response after navigating back to the public direct
   await vi.waitFor(() => expect(f.state.detailLoading.value).toBe(true))
   await f.router.push('/projects/fixture-navigation/interfaces/folders/child?env=test-env')
   resolve({
-    project_id: 'fixture-navigation',
-    endpoint_id: 'endpoint-0',
-    environment_id: 'test-env',
-    name: 'late',
-    purpose: null,
-    description: null,
-    unknowns: [],
-    method: 'GET',
-    path: '/orders',
-    fields: [],
+    facts: { summary: indexSummary(), aliases: [], addresses: [], fields: [], examples: [] },
+    knowledge: null,
   })
   await Promise.resolve()
   expect(f.state.detail.value).toBeNull()
 })
 
-it('rejects a public response bound to a different project or environment', async () => {
+it('rejects a public response bound to a different project', async () => {
   vi.spyOn(api, 'request').mockResolvedValue({
     project_id: 'other',
     endpoint_id: 'endpoint',
@@ -212,4 +222,30 @@ it('rejects a public response bound to a different project or environment', asyn
   await expect(publicSource.publicIndex('p', new AbortController().signal)).rejects.toMatchObject({
     kind: 'invalid-response',
   })
+})
+
+it('read-only workspace exposes full detail and samples without starting curation', async () => {
+  const f = await reader(
+    '/projects/fixture-navigation/interfaces/endpoints/endpoint-0?env=test-env',
+  )
+  await vi.waitFor(() => expect(f.state.detail.value?.facts.summary.id).toBe('endpoint-0'))
+  const sample = vi
+    .spyOn(documentSource, 'example')
+    .mockResolvedValue({ observation: { request: { body: 'captured' } } })
+  const start = vi.spyOn(privateSource, 'startCurate'),
+    describe = vi.spyOn(privateSource, 'describeEndpoint')
+  await f.state.selectExample('sample')
+  expect(f.state.sample.value).toEqual({ request: { body: 'captured' } })
+  expect(sample).toHaveBeenCalledWith(
+    'fixture-navigation',
+    'endpoint-0',
+    'sample',
+    expect.any(AbortSignal),
+    true,
+  )
+  await f.state.organize()
+  await f.state.describe('endpoint-0')
+  expect(start).not.toHaveBeenCalled()
+  expect(describe).not.toHaveBeenCalled()
+  expect(f.progressRead).not.toHaveBeenCalled()
 })

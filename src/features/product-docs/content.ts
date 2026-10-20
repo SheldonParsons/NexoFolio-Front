@@ -15,6 +15,9 @@ import fetcher021Update from '@/content/changelog/2026-10-12-fetcher-0-2-1.md?ra
 import reliabilityUpdate from '@/content/changelog/2026-10-15-curation-reliability-and-performance.md?raw'
 import fetcher022Update from '@/content/changelog/2026-10-15-fetcher-0-2-2.md?raw'
 import curationUpdate from '@/content/changelog/2026-10-09-curation-experience.md?raw'
+import mcpCompactUpdate from '@/content/changelog/2026-10-19-mcp-compact-evidence.md?raw'
+import projectsAndMcpUpdate from '@/content/changelog/2026-10-20-projects-and-mcp-reading.md?raw'
+import fetcher024Update from '@/content/changelog/2026-10-20-fetcher-0-2-4.md?raw'
 
 export interface ProductArticle {
   slug: string
@@ -80,6 +83,42 @@ export interface ProductUpdate {
 }
 // Feature updates, versioned releases, and preview records share one timeline.
 export const productUpdates: ProductUpdate[] = [
+  {
+    slug: '2026-10-20-projects-and-mcp-reading',
+    product: 'nexofolio',
+    date: '2026-10-20',
+    version: '功能更新',
+    status: 'update',
+    title: '项目更好找，MCP 读取更集中',
+    description:
+      '项目搜索、最近整理与整理人一眼可见；MCP 支持解析正文与字段分组，补充两道真实 Agent 对照，完善下载渠道和页面恢复提示。',
+    documentation: '/docs/mcp',
+    body: projectsAndMcpUpdate,
+  },
+  {
+    slug: 'fetcher-0-2-4',
+    product: 'fetcher',
+    date: '2026-10-20',
+    version: 'v0.2.4 开发版 · 强制更新',
+    status: 'update',
+    title: 'Fetcher 内外网双包、Header 采集与更新校验修复',
+    description:
+      '内外网分别下载安装，修复部分 Header 缺失及升级后误报策略冲突，重新检查有明确反馈；本版为强制更新。',
+    documentation: '/docs/fetcher',
+    body: fetcher024Update,
+  },
+  {
+    slug: '2026-10-19-mcp-compact-evidence',
+    product: 'nexofolio',
+    date: '2026-10-19',
+    version: '功能更新',
+    status: 'update',
+    title: 'MCP 说明更精简，关联依据更清楚',
+    description:
+      '减少重复说明，完善参数来源判断与证据边界；公开四组真实 Agent 对照及关系消重复测，检索路线仍由 Agent 自主决定。',
+    documentation: '/docs/mcp',
+    body: mcpCompactUpdate,
+  },
   {
     slug: '2026-10-15-curation-reliability-and-performance',
     product: 'nexofolio',

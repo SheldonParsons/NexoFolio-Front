@@ -3,6 +3,7 @@ import { useLifecycle } from './lifecycle/context'
 const lifecycle = useLifecycle()
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/icons/AppIcon.vue'
+import { useAuthStore } from '@/stores/auth'
 import EnvironmentSelect from './EnvironmentSelect.vue'
 import type { ProjectEnvironment } from './types'
 import { useCurationReviewEntry } from '@/features/curation/useCurationReviewEntry'
@@ -16,10 +17,12 @@ const props = defineProps<{
   environmentId: string
   submitting: boolean
   loading: boolean
+  readOnly?: boolean
 }>()
 defineEmits<{ environment: [id: string]; organize: [] }>()
 const route = useRoute(),
   router = useRouter()
+const auth = useAuthStore()
 const review = useCurationReviewEntry(
   () => props.projectId,
   () => props.environmentId,
@@ -30,7 +33,10 @@ const review = useCurationReviewEntry(
 <template>
   <header class="document-workspace-heading">
     <div class="document-project-context">
-      <RouterLink to="/projects" class="document-project-return" aria-label="返回项目列表"
+      <RouterLink
+        :to="auth.user ? '/projects' : '/'"
+        class="document-project-return"
+        aria-label="返回项目列表"
         ><AppIcon name="arrow-left" :size="18"
       /></RouterLink>
       <div>
@@ -51,6 +57,7 @@ const review = useCurationReviewEntry(
         loading ? '读取环境中…' : '暂无环境'
       }}</span>
       <button
+        v-if="!readOnly"
         type="button"
         class="document-review-entry"
         :disabled="review.loading.value"
@@ -68,6 +75,7 @@ const review = useCurationReviewEntry(
         废弃内容（{{ lifecycle.count.value }}）
       </button>
       <button
+        v-if="!readOnly"
         type="button"
         class="document-organize"
         :disabled="submitting || loading || !endpointCount"
@@ -78,6 +86,15 @@ const review = useCurationReviewEntry(
         <AppIcon name="layers" :size="16" /><span>{{
           submitting ? '正在提交' : '开始新一轮整理'
         }}</span>
+      </button>
+      <span v-if="readOnly" class="document-description-source">只读查看</span>
+      <button
+        v-if="readOnly && !auth.user"
+        type="button"
+        class="document-secondary-button"
+        @click="auth.requestLogin(route.fullPath)"
+      >
+        登录
       </button>
     </div>
   </header>

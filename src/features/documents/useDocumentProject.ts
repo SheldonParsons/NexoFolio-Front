@@ -4,6 +4,7 @@ import type { Project } from '@/features/projects/types'
 import * as knowledge from '@/contracts/knowledge/source'
 import type { CurateProgress } from '@/contracts/knowledge/types'
 import * as source from './source'
+import { publicIndex } from './public/source'
 import type { ProjectEnvironment } from './types'
 import type { DocumentRequests, DocumentErrorReporter } from './documentRequests'
 
@@ -12,6 +13,7 @@ export function useDocumentProject(
   projectId: () => string,
   requests: DocumentRequests,
   report: DocumentErrorReporter,
+  readOnly = false,
 ) {
   const project = shallowRef<Project | null>(null)
   const environments = shallowRef<ProjectEnvironment[]>([])
@@ -55,6 +57,21 @@ export function useDocumentProject(
     const pid = projectId()
     let running: CurateProgress | undefined
     try {
+      if (readOnly) {
+        const document = await publicIndex(pid, request.signal)
+        if (!request.current()) return
+        project.value = {
+          ...document.project,
+          can_access: false,
+          access_state: 'denied',
+          reason_code: null,
+        }
+        environments.value = document.project.environments
+        index.value = document
+        if (!environments.value.some((e) => e.id === environmentId.value))
+          environmentId.value = environments.value[0]?.id ?? ''
+        return
+      }
       const [value, envs, document, job] = await Promise.all([
         projectSource.get(pid, request.signal),
         source.environments(pid, request.signal),

@@ -23,6 +23,13 @@ it('keeps project, field, environment and page offset when reading complete valu
   expect(params.get('offset')).toBe('12')
   expect(options?.cache).toBe('no-store')
 })
+it('uses the public read transport for a read-only document without changing value scope', async () => {
+  const request = vi.spyOn(api, 'request').mockResolvedValue({ json: '9007199254740993' })
+  expect(await observedValueJson({ ...scope, publicRead: true }, 'value')).toBe('9007199254740993')
+  expect(request.mock.calls.at(-1)![0]).toContain(
+    'v1/public/projects/p%2F1/endpoints/e%2F1/field-values?',
+  )
+})
 it.each([
   'null',
   '""',

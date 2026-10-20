@@ -1,4 +1,4 @@
-# NexoFolio 阿里云前端部署
+# NexoFolio 双环境前端发布与阿里云部署
 
 本地构建 → 上传 OSS → 服务器下载并校验 ZIP → 解压为独立版本 → 原子切换 `current` → Nginx 提供 HTTPS。
 
@@ -12,11 +12,42 @@
 
 线上发布脚本现在默认使用 `VITE_WORKSPACE_ENABLED=true`：点击登录或工作空间入口会走真实登录和会话验证流程，不再默认显示「敬请期待」。本地开发同样默认开放登录；发布脚本显式传入该值，不修改本地环境文件。
 
-直接运行 `./upload-server.sh` 即可构建并上传开放登录的版本，再按下文更新服务器静态产物。该值属于构建时配置，已经部署的旧产物仍需替换才会生效。仅在刻意发布预览版时使用 `VITE_WORKSPACE_ENABLED=false ./upload-server.sh` 关闭入口；普通 `pnpm build` 默认保留登录能力。
+直接运行 `./upload-server.sh` 会从同一份源码快照构建并发布外网、内网两个版本，再分别更新服务器静态产物。该值属于构建时配置，已经部署的旧产物仍需替换才会生效。仅在刻意发布预览版时使用 `VITE_WORKSPACE_ENABLED=false ./upload-server.sh` 关闭入口；普通 `pnpm build` 默认保留登录能力。
+
+## 两个环境，一套源码
+
+| 环境            | 页面基础路径  | API 基础路径     | OSS 清单                                          |
+| --------------- | ------------- | ---------------- | ------------------------------------------------- |
+| 外网 `public`   | `/`           | `/api`           | `linux_files/nexofolio/front/latest.txt`          |
+| 内网 `intranet` | `/nexofolio/` | `/nexofolio/api` | `linux_files/nexofolio/front/intranet/latest.txt` |
+
+发布入口会捕获包括未提交和未跟踪相关源码的稳定快照，在临时目录安装锁定依赖、检查类型，再分别构建。两个包内的 `dist/.nexofolio-release.tsv` 记录同一个 `source_sha` 和各自的环境、页面/API 前缀；本地 `dist`、本地环境文件和正在运行的开发服务不参与修改。真实 `.env`、`.npmrc` 凭据和 `node_modules` 不进入源码快照或发布包。
+
+所有选中环境的版本包先上传并回下载核对 SHA-256，之后分别更新两个 latest。两个 OSS 指针独立写入；发布成功后才在各服务器执行更新命令，发布脚本不会登录服务器。
+
+```bash
+./upload-server.sh
+./upload-server.sh --build-only
+./upload-server.sh --env public
+./upload-server.sh --env intranet
+```
+
+服务器首次下载或替换更新脚本后，先执行一次 `chmod 755 /home/nexofolio/front/update-front.sh`。进入该目录，新服务器内网首次执行 `./update-front.sh --env intranet`，外网使用 `./update-front.sh --env public`。首次成功后，环境写入部署目录的 `.environment`；旧外网部署默认识别为 public。目录绑定后拒绝切换到另一环境，发布包的环境及基础路径也必须一致。
+
+两边以后都使用同样的命令：
+
+```bash
+cd /home/nexofolio/front
+./update-front.sh
+./update-front.sh status
+./update-front.sh --rollback
+```
+
+新发布版本支持 `--release <版本号>` 固定更新，该版本目录保存自己的 `release.txt`、`dist.zip`、`manifest.tsv` 和 `update-front.sh`。公网原有 latest/ZIP 路径与两列清单格式保持兼容；已有旧更新脚本仍可继续读取公网包。内网需配置 `/nexofolio/` 静态路由及 `/nexofolio/api/` 同源反向代理，部署主机及后端允许列表独立设置。
 
 ## 1. 本地配置与上传
 
-需要 Node.js >= 22.13.0、项目指定的 pnpm、zip 和 ossutil。脚本使用 `pnpm install --frozen-lockfile` 和 `pnpm build`（包含类型检查），构建时固定同源 `/api` 与 live 数据来源。
+需要 Node.js >= 22.13.0、项目指定的 pnpm、zip、curl 和 ossutil。脚本在临时源码快照中执行 `pnpm install --frozen-lockfile`、类型检查与两次 Vite 构建，分别设置页面/API 前缀和 live 数据来源。
 
 OSS 密钥不写入项目。本地上传使用现有 ossutil 配置，或通过交互方式创建专用配置；服务器通过 HTTPS 匿名下载公共读对象，无需配置密钥：
 
@@ -39,8 +70,13 @@ OSS_CONFIG_FILE="$HOME/.config/nexofolio/ossutil.config" ./upload-server.sh
 
 ```text
 linux_files/nexofolio/front/
-  latest.txt                         # 版本号 + ZIP 的 SHA-256，最后上传
-  releases/<版本号>/dist.zip           # ZIP 内含 dist/index.html 和静态资源
+  latest.txt                         # 外网版本号 + ZIP SHA-256
+  releases/<外网版本号>/dist.zip
+  releases/<外网版本号>/release.txt
+  releases/<外网版本号>/manifest.tsv
+  releases/<外网版本号>/update-front.sh
+  intranet/latest.txt                # 内网独立清单
+  intranet/releases/<内网版本号>/...  # 相同文件布局
 ```
 
 本地产物保存在 Git 忽略的 `artifacts/front-releases/<版本号>/`。上传包成功后才更新 `latest.txt`，服务器通过该清单下载对应版本。不要同时运行多个本地发布，否则最后写入清单的版本会成为最新版。
@@ -56,15 +92,16 @@ scp deploy/nexofolio.net.conf deploy/nexofolio.net.bootstrap.conf.example \
   root@你的服务器IP:/home/nexofolio/front/deploy/
 ```
 
-后续步骤在服务器执行。服务器需要 Bash、Python 3、curl、Nginx、Certbot；无需安装 Node.js 或 ossutil。现有 AsyncTest Nginx 已由 Certbot 管理，可先 `certbot --version` 检查是否可复用。若尚未安装 Certbot，请按[官方安装说明](https://certbot.eff.org/instructions)选择服务器实际操作系统。
+后续步骤在服务器执行。静态更新需要 Bash、curl、unzip、SHA-256 工具和 Nginx；服务器无需 Python、Node.js 或 ossutil。以下公网 HTTPS 步骤另需 Certbot；内网现有 HTTP 子路径部署不执行证书申请。现有 AsyncTest Nginx 已由 Certbot 管理，可先 `certbot --version` 检查是否可复用。若尚未安装 Certbot，请按[官方安装说明](https://certbot.eff.org/instructions)选择服务器实际操作系统。
 
 文件变更范围：首次新增 `/home/nexofolio/front/update-front.sh` 和 `deploy/` 下两个配置副本（再次复制会覆盖同名文件）；`/etc/nginx/conf.d/nexofolio.net.conf` 首次新增，申请证书后会由 HTTPS 版本覆盖。若服务器已经存在同名站点配置，请先备份再执行 `cp`。主配置 `/etc/nginx/nginx.conf` 保持不动。
 
 确保 `latest.txt` 和对应的 `dist.zip` 都允许公共读，然后在服务器直接拉取：
 
 ```bash
-chmod +x /home/nexofolio/front/update-front.sh
-bash /home/nexofolio/front/update-front.sh
+chmod 755 /home/nexofolio/front/update-front.sh
+cd /home/nexofolio/front
+./update-front.sh --env public
 ```
 
 服务器脚本不读取 ossutil 配置或 AccessKey；之前配置的凭证也不会被使用。脚本先校验 SHA-256、ZIP 路径、入口文件，再切换 `current`；失败时保留当前已部署版本。`previous` 指向上一版本，历史版本保留在 `releases/`。
@@ -183,9 +220,10 @@ location / {
 本地运行 `./upload-server.sh`（使用专用配置时继续加 `OSS_CONFIG_FILE=...`），然后服务器运行：
 
 ```bash
-bash /home/nexofolio/front/update-front.sh
+cd /home/nexofolio/front
+./update-front.sh
 # 需要时回退到上一个版本，不访问 OSS：
-bash /home/nexofolio/front/update-front.sh --rollback
+./update-front.sh --rollback
 ```
 
 静态代码更新不需要重载 Nginx。回退后下一次普通更新会重新部署 OSS `latest.txt` 指向的版本。脚本不自动删除历史版本；按需清理时保留 `current`、`previous` 指向的两个目录。已打开的旧页面若在更新后加载旧版本延迟资源失败，刷新页面即可获取新入口。

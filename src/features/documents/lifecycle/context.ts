@@ -119,6 +119,7 @@ export function provideLifecycle(
     pending: computed(() => state.value.version !== state.value.reconciled_version),
     get: (target: LifecycleTarget) => retirement(state.value, target),
     edit: (target: LifecycleTarget, name: string) => {
+      if (!allowed.value) return
       error.value = ''
       editing.value = {
         target,

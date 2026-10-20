@@ -78,25 +78,29 @@ function scrollKeys(event: KeyboardEvent) {
       >
         <table class="project-list">
           <caption class="sr-only">
-            项目名称、状态和操作权限。最近访问独立于全部项目分页。
+            项目名称、最近整理、整理人和操作权限。时间为北京时间。最近访问独立于全部项目分页。
           </caption>
           <colgroup>
             <col />
-            <col class="project-status-col" />
+            <col class="project-curation-col" />
+            <col class="project-curator-col" />
             <col class="project-access-col" />
             <col class="project-action-col" />
           </colgroup>
           <thead>
             <tr>
               <th scope="col" class="project-name-header">项目名称</th>
-              <th scope="col" class="project-status-cell">状态</th>
+              <th scope="col" class="project-curation-cell">
+                最近整理 <span class="sr-only">（北京时间）</span>
+              </th>
+              <th scope="col" class="project-curator-cell">整理人</th>
               <th scope="col" class="project-access-cell">操作权限</th>
               <th scope="col" class="project-action-cell"><span class="sr-only">操作</span></th>
             </tr>
           </thead>
           <tbody v-if="error">
             <tr>
-              <td colspan="4">
+              <td colspan="5">
                 <div class="project-state" role="alert">
                   <AppIcon name="network" :size="28" />
                   <h2>项目暂时无法加载</h2>
@@ -113,7 +117,8 @@ function scrollKeys(event: KeyboardEvent) {
           >
             <tr v-for="i in limit" :key="i" class="project-skeleton-row">
               <td><span></span></td>
-              <td class="project-status-cell"><span></span></td>
+              <td class="project-curation-cell"><span></span></td>
+              <td class="project-curator-cell"><span></span></td>
               <td class="project-access-cell"><span></span></td>
               <td class="project-action-cell"></td>
             </tr>
@@ -121,7 +126,7 @@ function scrollKeys(event: KeyboardEvent) {
           <tbody v-else :key="revision" class="project-table-body" :class="{ 'is-stale': busy }">
             <template v-if="!filtered && recent.length"
               ><tr class="project-group">
-                <th colspan="4" scope="rowgroup">
+                <th colspan="5" scope="rowgroup">
                   <span>最近访问</span><span class="group-count">{{ recent.length }}</span>
                 </th>
               </tr>
@@ -134,7 +139,7 @@ function scrollKeys(event: KeyboardEvent) {
                 @open="emit('open', $event)"
             /></template>
             <tr v-if="!filtered && recent.length" class="project-group project-group--all">
-              <th colspan="4" scope="rowgroup">
+              <th colspan="5" scope="rowgroup">
                 <span>{{ filtered ? '搜索结果' : '全部项目' }}</span>
               </th>
             </tr>
@@ -147,18 +152,18 @@ function scrollKeys(event: KeyboardEvent) {
               @open="emit('open', $event)"
             />
             <tr v-if="!items.length">
-              <td colspan="4">
+              <td colspan="5">
                 <div class="project-state" role="status">
                   <AppIcon :name="filtered ? 'search' : 'folder'" :size="28" />
                   <h2>{{ filtered ? '没有找到匹配的项目' : '还没有同步的项目' }}</h2>
                   <p>
                     {{
                       filtered
-                        ? '试试其他关键词，或清除权限筛选。'
+                        ? '试试其他项目名称，或清除搜索。'
                         : '项目会在普通禅道账号登录成功后同步到这里。'
                     }}
                   </p>
-                  <AppButton v-if="filtered" @click="emit('clear')">清除筛选</AppButton>
+                  <AppButton v-if="filtered" @click="emit('clear')">清除搜索</AppButton>
                 </div>
               </td>
             </tr>

@@ -2,9 +2,10 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { createDownloadCatalog } from '@/features/downloads/useDownloads'
 let page: EventTarget & { hidden: boolean }
 const releases: (() => void)[] = []
-const response = (channel: string, error = false) => ({
+const response = (channel: string, error = false, fetcherChannel = 'internal') => ({
   schema_version: 1,
   desktop_channel: channel,
+  fetcher_channel: fetcherChannel,
   fetcher: { status: error ? 'error' : 'unpublished', release: null },
   desktop: ['windows', 'mac-arm64', 'mac-x64'].map((platform) => ({
     platform,
@@ -13,11 +14,12 @@ const response = (channel: string, error = false) => ({
   })),
 })
 const fetcher = () =>
-  vi
-    .fn<typeof fetch>()
-    .mockImplementation(async (input) =>
-      Response.json(response(String(input).endsWith('public') ? 'public' : 'internal')),
+  vi.fn<typeof fetch>().mockImplementation(async (input) => {
+    const query = new URL(String(input), 'https://site.test').searchParams
+    return Response.json(
+      response(query.get('desktop_channel')!, false, query.get('fetcher_channel')!),
     )
+  })
 beforeEach(() => {
   vi.useFakeTimers()
   page = Object.assign(new EventTarget(), { hidden: false })

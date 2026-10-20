@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, watch } from 'vue'
+import { computed, nextTick, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import WorkspaceLayout from '@/layouts/WorkspaceLayout.vue'
 import ProjectsLayout from '@/layouts/ProjectsLayout.vue'
@@ -14,6 +14,15 @@ import { useAuthStore } from '@/stores/auth'
 import { clearBrowserViews } from '@/features/projects/browserState'
 import BrandTransition from '@/components/brand/BrandTransition.vue'
 import { useNavigationTransition } from '@/stores/navigationTransition'
+import AppDialog from '@/components/ui/AppDialog.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import { routeLoadFailure } from './routeLoadFailure'
+const routeLoadFailureOpen = computed({
+  get: () => routeLoadFailure.value !== null,
+  set: (open) => {
+    if (!open) routeLoadFailure.value = null
+  },
+})
 const route = useRoute()
 const auth = useAuthStore()
 useSessionLifecycle()
@@ -83,4 +92,24 @@ watch(
     :label="navigationTransition.current.label"
     @complete="finishNavigation"
   />
+  <AppDialog
+    v-model:open="routeLoadFailureOpen"
+    title="页面暂时未能打开"
+    description="页面资源加载失败，可能是版本已更新或网络暂时中断。请确认未保存的内容，再重新加载目标页面。"
+  >
+    <div class="route-load-actions">
+      <AppButton @click="routeLoadFailureOpen = false">留在当前页面</AppButton>
+      <a :href="routeLoadFailure?.href" class="button button--primary">重新加载页面</a>
+    </div>
+  </AppDialog>
 </template>
+
+<style scoped>
+.route-load-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+</style>

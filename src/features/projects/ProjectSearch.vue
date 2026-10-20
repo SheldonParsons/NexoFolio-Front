@@ -4,7 +4,7 @@ import AppIcon from '@/components/icons/AppIcon.vue'
 import { useIconInteraction } from '@/components/motion/useIconInteraction'
 const iconMotion = useIconInteraction()
 const clearMotion = useIconInteraction()
-defineProps<{ modelValue: string; busy: boolean; disabled: boolean }>()
+defineProps<{ modelValue: string; busy: boolean }>()
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   submit: []
@@ -30,22 +30,16 @@ function onKey(event: KeyboardEvent) {
 }
 </script>
 <template>
-  <div class="project-search" :class="{ 'is-disabled': disabled }" v-on="iconMotion.events">
-    <AppIcon
-      name="search"
-      active-name="scan-search"
-      :active="iconMotion.active.value && !disabled"
-      :size="18"
-    />
+  <div class="project-search" v-on="iconMotion.events">
+    <AppIcon name="search" active-name="scan-search" :active="iconMotion.active.value" :size="18" />
     <input
       ref="input"
       :value="modelValue"
       type="search"
       autocomplete="off"
       spellcheck="false"
-      :disabled="disabled"
       aria-label="搜索全部项目"
-      :placeholder="disabled ? '全项目搜索尚未上线' : '搜索项目…'"
+      placeholder="搜索项目名称…"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       @keydown="onKey"
       @compositionstart="emit('compositionStart')"

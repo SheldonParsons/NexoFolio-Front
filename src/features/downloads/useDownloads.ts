@@ -4,12 +4,13 @@ import {
   desktopPlatforms,
   parseDownloadsResponse,
   type DesktopChannel,
+  type FetcherChannel,
   type FetcherRelease,
   type ReleaseArtifact,
   type ReleaseStatus,
 } from './releases'
 
-export type { DesktopChannel } from './releases'
+export type { DesktopChannel, FetcherChannel } from './releases'
 type Status = 'idle' | 'loading' | ReleaseStatus
 interface DownloadState<T> {
   status: Status
@@ -34,76 +35,107 @@ export function createDownloadCatalog(fetcher: typeof fetch = fetch) {
     timeoutMs: 10_000,
   })
   const state = reactive({
-    fetcher: { status: 'idle', release: null } as DownloadState<FetcherRelease>,
+    fetcherChannel: 'internal' as FetcherChannel,
+    fetchers: {
+      internal: { status: 'idle', release: null } as DownloadState<FetcherRelease>,
+      public: { status: 'idle', release: null } as DownloadState<FetcherRelease>,
+    },
+    get fetcher(): DownloadState<FetcherRelease> {
+      return this.fetchers[this.fetcherChannel]
+    },
     channel: 'internal' as DesktopChannel,
     desktop: { internal: platformStates(), public: platformStates() },
   })
-  const pending = new Map<DesktopChannel, Promise<void>>()
-  const checked = new Map<DesktopChannel, number>()
+  // Four fixed selection pairs, with independent ownership of each channel state.
+  const pending = new Map<string, Promise<void>>()
+  const checked = new Map<string, number>()
+  const fetcherOwner = new Map<FetcherChannel, number>()
+  const desktopOwner = new Map<DesktopChannel, number>()
   const interval = 5 * 60_000
   let consumers = 0
   let timer: ReturnType<typeof setTimeout> | undefined
   let sequence = 0
+  const selectionKey = (channel: DesktopChannel, fetcherChannel: FetcherChannel) =>
+    `${channel}:${fetcherChannel}`
   function schedule() {
     clearTimeout(timer)
     if (!consumers || document.hidden) return
-    const at = checked.get(state.channel)
+    const at = checked.get(selectionKey(state.channel, state.fetcherChannel))
     timer = setTimeout(
       () => void refreshChannel(state.channel),
       at === undefined ? interval : Math.max(0, at + interval - Date.now()),
     )
   }
-  function refreshChannel(channel: DesktopChannel, force = false): Promise<void> {
-    const inflight = pending.get(channel)
+  function refreshChannel(
+    channel: DesktopChannel,
+    force = false,
+    fetcherChannel: FetcherChannel = state.fetcherChannel,
+  ): Promise<void> {
+    const key = selectionKey(channel, fetcherChannel)
+    const inflight = pending.get(key)
     if (inflight) return inflight
-    const at = checked.get(channel)
+    const fetcherState = state.fetchers[fetcherChannel]
+    const owner = state.desktop[channel]
+    const at = checked.get(key)
     if (
       !force &&
-      state.fetcher.status !== 'error' &&
+      fetcherState.status !== 'error' &&
+      owner.every((item) => item.status !== 'error') &&
       at !== undefined &&
       Date.now() - at < interval
     ) {
       schedule()
       return Promise.resolve()
     }
-    checked.delete(channel)
+    checked.delete(key)
     const started = Date.now()
-    const owner = state.desktop[channel]
     const requestId = ++sequence
+    fetcherOwner.set(fetcherChannel, requestId)
+    desktopOwner.set(channel, requestId)
     owner.forEach((item) => {
       item.status = 'loading'
     })
-    state.fetcher.status = 'loading'
+    fetcherState.status = 'loading'
     const job = (async () => {
       try {
-        const query = new URLSearchParams({ desktop_channel: channel })
+        const query = new URLSearchParams({
+          desktop_channel: channel,
+          fetcher_channel: fetcherChannel,
+        })
         const data = parseDownloadsResponse(
           await client.request(`v1/downloads?${query}`, { credentials: 'omit', cache: 'no-store' }),
           channel,
+          fetcherChannel,
         )
-        for (const platform of owner) {
-          const value = data.desktop.find((item) => item.id === platform.id)!
-          platform.status = value.status
-          platform.release = value.release
+        if (desktopOwner.get(channel) === requestId) {
+          for (const platform of owner) {
+            const value = data.desktop.find((item) => item.id === platform.id)!
+            platform.status = value.status
+            platform.release = value.release
+          }
         }
-        if (requestId === sequence) Object.assign(state.fetcher, data.fetcher)
+        if (fetcherOwner.get(fetcherChannel) === requestId)
+          Object.assign(fetcherState, data.fetcher)
         if (
           data.fetcher.status !== 'error' &&
           data.desktop.every((item) => item.status !== 'error')
         )
-          checked.set(channel, started)
+          checked.set(key, started)
       } catch {
-        owner.forEach((item) => {
-          item.status = 'error'
-          item.release = null
-        })
-        if (requestId === sequence) Object.assign(state.fetcher, { status: 'error', release: null })
+        if (desktopOwner.get(channel) === requestId) {
+          owner.forEach((item) => {
+            item.status = 'error'
+            item.release = null
+          })
+        }
+        if (fetcherOwner.get(fetcherChannel) === requestId)
+          Object.assign(fetcherState, { status: 'error', release: null })
       } finally {
-        pending.delete(channel)
+        pending.delete(key)
         schedule()
       }
     })()
-    pending.set(channel, job)
+    pending.set(key, job)
     return job
   }
   function refresh() {
@@ -114,6 +146,11 @@ export function createDownloadCatalog(fetcher: typeof fetch = fetch) {
     if (channel !== 'internal' && channel !== 'public') return Promise.resolve()
     state.channel = channel
     return refreshChannel(channel)
+  }
+  function selectFetcherChannel(channel: FetcherChannel) {
+    if (channel !== 'internal' && channel !== 'public') return Promise.resolve()
+    state.fetcherChannel = channel
+    return refreshChannel(state.channel)
   }
   function visible() {
     clearTimeout(timer)
@@ -136,7 +173,7 @@ export function createDownloadCatalog(fetcher: typeof fetch = fetch) {
       }
     }
   }
-  return { state, refresh, selectChannel, observe }
+  return { state, refresh, selectChannel, selectFetcherChannel, observe }
 }
 
 const catalog = createDownloadCatalog()

@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
-import { useDownloads } from '@/features/downloads/useDownloads'
+import { desktopChannels, useDownloads } from '@/features/downloads/useDownloads'
 
 const { state, refresh } = useDownloads()
 const release = computed(() => state.fetcher.release)
+const channelLabel = computed(
+  () => desktopChannels.find((channel) => channel.id === state.fetcherChannel)!.label,
+)
 const waiting = computed(() => !release.value && ['idle', 'loading'].includes(state.fetcher.status))
 const caption = computed(() => {
-  if (release.value) return `下载插件 · v${release.value.version}`
+  if (release.value) return `下载${channelLabel.value}插件 · v${release.value.version}`
   if (state.fetcher.status === 'error') return '版本获取失败 · 点击重试'
   if (state.fetcher.status === 'unpublished') return '暂未发布 · 点击检查'
   return '正在获取最新版本…'

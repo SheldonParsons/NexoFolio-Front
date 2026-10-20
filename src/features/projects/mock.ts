@@ -53,12 +53,12 @@ function delay(signal: AbortSignal) {
   })
 }
 export const mockProjects: ProjectSource = {
-  async list({ page, limit, q, access_state }, signal) {
+  async list({ page, limit, q, ids }, signal) {
     await delay(signal)
     const matched = projects.filter(
       (project) =>
         (!q || project.name.toLocaleLowerCase().includes(q.trim().toLocaleLowerCase())) &&
-        (!access_state || project.access_state === access_state),
+        (!ids || ids.includes(project.project_id)),
     )
     return {
       items: matched.slice((page - 1) * limit, page * limit).map((p) => ({ ...p })),

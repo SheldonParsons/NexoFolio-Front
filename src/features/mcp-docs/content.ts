@@ -118,7 +118,7 @@ export const mcpTools = [
         name: 'query / search_in',
         type: 'string',
         required: false,
-        detail: 'query 可留空；search_in=interface（默认）或 fields。多个空白分隔词需同时匹配。',
+        detail: 'query 可留空；search_in=interface（默认）或 fields。字段模式可选 view=grouped，同页共享接口/目录；每字段保留完整入口，offset/total 按字段计数。精确 key/名称优先，同级稳定；多个词需同时匹配。',
       },
       {
         name: 'directory_id',
@@ -168,7 +168,7 @@ export const mcpTools = [
     name: 'read_interface',
     label: '分块读接口',
     description:
-      '接口上下文用 overview；精确字段命中可直接用 field_summary 读完整语义和少量引用，完整资料再按需展开。',
+      '各 section 均可直接读取；description_summary 保留完整说明、用途和未知点，合并重复认证观测并延后来源坐标；description 保留旧全文。field_summary 提供完整字段语义和少量引用。',
     parameters: [
       {
         name: 'project_id',
@@ -193,7 +193,7 @@ export const mcpTools = [
         type: 'string',
         required: true,
         detail:
-          'overview / description / fields / field_summary / field / relations / samples。field_summary 保留完整语义，field 保留完整资料快照；省略保留旧版组合读取。',
+          'overview / description_summary / description / fields / field_summary / field / relations / samples。field_summary 保留完整语义，field 保留完整资料快照；省略保留旧版组合读取。',
       },
       {
         name: 'field_key / parent_key',
@@ -213,7 +213,7 @@ export const mcpTools = [
         name: 'direction',
         type: 'string',
         required: false,
-        detail: 'relations 支持 incoming / outgoing / both，并可按 field_key 找关联。',
+        detail: 'relations 支持 incoming / outgoing / both，并可按 field_key 找关联；evidence_assessment 区分记录对应、来源候选和未证明项，旧关系未重验仍标未知。',
       },
       {
         name: 'offset / limit',
@@ -254,7 +254,7 @@ export const mcpTools = [
       {
         field: 'data / next',
         detail:
-          'field_summary / field / description 返回可完整续读的 JSON 文本块；语义视图不截断说明，证据与值另行展开。',
+          'description_summary / description / field_summary / field 返回可完整续读的 JSON 文本块；语义视图不截断说明，证据与值另行展开。',
       },
     ],
     tip: '文字提及是搜索线索；已保存的关联和字段证据提供直接接口引用，不能把观测对应当成强制前置。',
@@ -292,7 +292,7 @@ export const mcpTools = [
         name: 'part',
         type: 'string',
         required: false,
-        detail: 'all（默认）/ headers / url / body。',
+        detail: 'all（默认）/ headers / url / body / parsed_body。parsed_body 只返回完整解析根和采集状态，提供同记录原文入口；旧 all/body 保留。',
       },
       {
         name: 'content_offset / max_chars',
@@ -523,7 +523,7 @@ export const mcpTools = [
         name: 'part',
         type: 'string',
         required: false,
-        detail: 'all（默认）/ headers / body。',
+        detail: 'all（默认）/ headers / body / parsed_body。解析根的 JSON null、未采集、不可读、截断、二进制状态分别表达；旧原文读取保留。',
       },
       {
         name: 'content_offset / max_chars',

@@ -1,12 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'reka-ui'
+import {
+  TabsRoot,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  CollapsibleRoot,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from 'reka-ui'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useActiveProject } from '@/features/projects/useActiveProject'
 import { clearCredential } from '@/api/session'
 import { useDocumentWorkspace } from '@/features/documents/useDocumentWorkspace'
+import { publicDocumentReads } from '@/features/documents/public/source'
 import { useDocumentNavigation } from '@/features/documents/useDocumentNavigation'
 import { provideDocumentPreview } from '@/features/documents/useDocumentPreview'
 import DocumentHeading from '@/features/documents/DocumentHeading.vue'
@@ -28,6 +37,8 @@ import LifecyclePanel from '@/features/documents/lifecycle/LifecyclePanel.vue'
 import '@/features/documents/documents.css'
 import '@/features/documents/document-navigation.css'
 const route = useRoute()
+const props = withDefaults(defineProps<{ readOnly?: boolean }>(), { readOnly: false })
+provide(publicDocumentReads, props.readOnly)
 const emit = defineEmits<{ readOnly: [] }>()
 const auth = useAuthStore()
 const activeProject = useActiveProject()
@@ -40,6 +51,7 @@ const workspace = useDocumentWorkspace(
     emit('readOnly')
   },
   () => emit('readOnly'),
+  props.readOnly,
 )
 const {
   project,
@@ -84,7 +96,7 @@ watch(
 const lifecycle = provideLifecycle(
   () => String(route.params.projectId),
   () => workspace.documentIndex.value,
-  true,
+  !props.readOnly,
   (state) => {
     if (workspace.documentIndex.value)
       workspace.documentIndex.value = { ...workspace.documentIndex.value, lifecycle: state }
@@ -162,7 +174,12 @@ function showExample(id: string) {
   void workspace.selectExample(id)
 }
 function askToOrganize() {
-  if (!workspace.submitting.value && !loading.value && projectEndpointCount.value)
+  if (
+    !props.readOnly &&
+    !workspace.submitting.value &&
+    !loading.value &&
+    projectEndpointCount.value
+  )
     startConfirmationOpen.value = true
 }
 watch(
@@ -189,6 +206,7 @@ function confirmationUnauthorized() {
       :environment-id="environmentId"
       :submitting="workspace.submitting.value"
       :loading="loading"
+      :read-only="readOnly"
       @environment="navigation.selectEnvironment"
       @organize="askToOrganize"
     />
@@ -273,6 +291,7 @@ function confirmationUnauthorized() {
                   :to="{ path: route.path, query: { ...route.query, env: environmentId } }"
                 />
                 <button
+                  v-if="!readOnly"
                   type="button"
                   class="document-describe"
                   :disabled="workspace.submitting.value"
@@ -304,6 +323,20 @@ function confirmationUnauthorized() {
               :purpose="note?.purpose"
               :retired-source-count="detail.retired_source_count"
             />
+            <CollapsibleRoot
+              v-if="note?.context?.description || note?.context?.unknowns?.length"
+              class="document-endpoint-notes"
+            >
+              <CollapsibleTrigger class="document-endpoint-notes-trigger">
+                补充说明与尚未验证的事项<AppIcon name="chevron-down" :size="12" />
+              </CollapsibleTrigger>
+              <CollapsibleContent class="document-endpoint-notes-body">
+                <p v-if="note.context?.description">{{ note.context.description }}</p>
+                <ul v-if="note.context?.unknowns?.length">
+                  <li v-for="item in note.context.unknowns" :key="item">{{ item }}</li>
+                </ul>
+              </CollapsibleContent>
+            </CollapsibleRoot>
           </header>
           <TabsRoot class="document-content-tabs" v-model="activeTab">
             <TabsList class="document-tabs" aria-label="接口内容">
@@ -371,6 +404,7 @@ function confirmationUnauthorized() {
       </section>
     </div>
     <CurationPanel
+      v-if="!readOnly"
       :endpoint-labels="
         Object.fromEntries(
           (workspace.documentIndex.value?.entries ?? []).map((e) => [
@@ -395,6 +429,7 @@ function confirmationUnauthorized() {
       @unauthorized="confirmationUnauthorized"
     />
     <CurationStartDialog
+      v-if="!readOnly"
       v-model:open="startConfirmationOpen"
       :project-id="String(route.params.projectId)"
       :project-name="project?.name ?? '当前项目'"
@@ -418,5 +453,35 @@ function confirmationUnauthorized() {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+.document-endpoint-notes {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.document-endpoint-notes-body {
+  margin-top: 8px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.document-endpoint-notes-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.document-endpoint-notes-trigger:hover {
+  color: var(--text);
+}
+.document-endpoint-notes-trigger[data-state='open'] > svg {
+  transform: rotate(180deg);
+}
+.document-endpoint-notes-body ul {
+  padding-left: 18px;
 }
 </style>

@@ -253,9 +253,6 @@
 .project-search input::-webkit-search-cancel-button {
   appearance: none;
 }
-.project-search.is-disabled {
-  opacity: 0.6;
-}
 .project-search-suffix {
   position: relative;
   display: grid;
@@ -290,23 +287,6 @@
 .search-clear-leave-to {
   opacity: 0;
 }
-.project-filter {
-  flex: none;
-}
-.project-filter .nf-select-trigger {
-  min-width: 128px;
-  min-height: 40px;
-  height: 40px;
-  padding-inline: 12px;
-  gap: 14px;
-  font-size: 13px;
-  font-weight: 400;
-}
-.project-service-note {
-  padding-block: 14px;
-  color: var(--project-quiet);
-  font-size: 12px;
-}
 .project-list-frame {
   flex: 1;
   min-height: 0;
@@ -338,8 +318,47 @@
   border-collapse: separate;
   border-spacing: 0;
 }
-.project-status-col {
-  width: 120px;
+.project-curation-col {
+  width: 190px;
+}
+.project-curator-col {
+  width: 124px;
+}
+.project-curation {
+  font-size: 12px;
+  color: var(--project-quiet);
+  overflow-wrap: anywhere;
+}
+.project-curation.is-running {
+  color: var(--project-ink);
+  animation: project-curating 3.6s ease-in-out infinite;
+}
+.project-curator {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--project-quiet);
+  cursor: help;
+}
+.project-curator:focus-visible {
+  outline: 2px solid var(--input-focus-border);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.project-mobile-label {
+  display: none;
+}
+@keyframes project-curating {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+  }
 }
 .project-access-col {
   width: 148px;
@@ -480,7 +499,6 @@
 .project-row[data-interacting='true'] .project-hover-cell {
   animation-play-state: running, running;
 }
-.project-row[data-interacting='true'] .project-status,
 .project-row[data-interacting='true'] .project-access {
   color: var(--project-ink);
 }
@@ -551,7 +569,6 @@
   outline: 2px solid var(--input-focus-border);
   outline-offset: -2px;
 }
-.project-status,
 .project-access {
   display: inline-flex;
   align-items: center;
@@ -562,7 +579,6 @@
   color: var(--project-quiet);
   white-space: nowrap;
 }
-.project-status > svg,
 .project-access > svg {
   flex: none;
 }
@@ -788,8 +804,11 @@
   .project-collection-heading h2 {
     font-size: 16px;
   }
-  .project-status-col {
-    width: 106px;
+  .project-curation-col {
+    width: 172px;
+  }
+  .project-curator-col {
+    width: 100px;
   }
   .project-access-col {
     width: 128px;
@@ -805,9 +824,6 @@
   }
   .project-search:focus-within {
     flex-basis: 280px;
-  }
-  .project-filter .nf-select-trigger {
-    min-width: 120px;
   }
   .project-toolbar {
     gap: 16px;
@@ -871,7 +887,7 @@
     flex-basis: 340px;
   }
 }
-@media (max-width: 639px) {
+@media (max-width: 760px) {
   .project-browser {
     padding: 24px 16px 0;
     gap: 24px;
@@ -902,19 +918,13 @@
     gap: 8px;
   }
   .project-search {
-    flex: 0 1 calc(85% - 104px);
+    flex: 1 1 100%;
     margin-right: auto;
     min-width: 0;
     height: 44px;
   }
   .project-search:focus-within {
-    flex-basis: calc(100% - 122px);
-  }
-  .project-filter .nf-select-trigger {
-    min-width: 114px;
-    height: 44px;
-    font-size: 12px;
-    padding-inline: 10px;
+    flex-basis: 100%;
   }
   .project-list,
   .project-list thead,
@@ -933,7 +943,6 @@
     display: flex;
     align-items: center;
   }
-  .project-list .project-status-cell,
   .project-list .project-access-cell {
     display: none;
   }
@@ -950,12 +959,49 @@
     padding-left: 8px;
   }
   .project-row {
-    height: 64px;
+    height: auto;
+    padding-bottom: 10px;
+    box-shadow: inset 0 -1px 0 var(--project-line);
   }
+  .project-row:last-child {
+    box-shadow: none;
+  }
+  .project-list thead .project-curation-cell,
+  .project-list thead .project-curator-cell {
+    display: none;
+  }
+  .project-row .project-curation-cell,
+  .project-row .project-curator-cell {
+    grid-column: 1 / -1;
+    height: auto;
+    padding: 2px 6px 2px 50px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .project-mobile-label {
+    display: inline;
+    flex: 0 0 48px;
+    font-size: 11px;
+    color: var(--project-quiet);
+  }
+  .project-curation {
+    font-size: 11px;
+  }
+  .project-curator {
+    min-width: 0;
+    font-size: 11px;
+  }
+  .project-row .project-action-cell {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
   .project-row td {
     min-width: 0;
     height: 64px;
     padding: 6px 6px;
+    box-shadow: none;
   }
   .project-name-button {
     min-height: 28px;
@@ -1030,77 +1076,10 @@
   .project-search:focus-within {
     flex-basis: 100%;
   }
-  .project-filter {
-    margin-left: auto;
-  }
-  .project-pagination {
-    flex-direction: column;
-    justify-content: center;
-    align-items: stretch;
-    min-height: 82px;
-    gap: 6px;
-  }
-  .project-pagination nav {
-    justify-content: space-between;
-  }
-}
-@media (max-height: 650px) and (min-width: 901px) {
-  .project-browser {
-    padding-top: 28px;
-  }
-  .project-intro h1 {
-    font-size: 48px;
-    margin-top: 20px;
-  }
-  .project-intro-caption {
-    margin-top: 20px;
-  }
-  .project-intro-art {
-    display: none;
-  }
-}
-@media (max-height: 600px) and (max-width: 900px) {
-  .project-browser {
-    padding-top: 16px;
-    gap: 16px;
-  }
-  .project-intro {
-    min-height: 0;
-  }
-  .project-intro h1 {
-    font-size: 28px;
-    margin-top: 0;
-  }
-  .project-eyebrow,
-  .project-intro-description {
-    display: none;
-  }
-  .project-toolbar {
-    min-height: 0;
-    padding-bottom: 12px;
-    gap: 10px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .project-hover-fill {
-    transition: none;
-  }
-  .project-hover-progress {
-    animation: none;
-    clip-path: none;
-  }
-  .project-hover-cells {
-    opacity: 0.35;
-  }
-  .project-hover-cell {
-    animation: none;
-    transform: none;
-  }
-  .project-intro-copy,
-  .project-intro-caption > span,
   .project-list-frame,
   .project-table-body,
-  .project-progress i {
+  .project-progress i,
+  .project-curation.is-running {
     animation: none;
   }
   .project-search,

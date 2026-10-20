@@ -46,9 +46,15 @@ export async function documentIndex(pid: string, signal: AbortSignal): Promise<D
   return index
 }
 
-export function example(pid: string, endpoint: string, id: string, signal: AbortSignal) {
+export function example(
+  pid: string,
+  endpoint: string,
+  id: string,
+  signal: AbortSignal,
+  readOnly = false,
+) {
   return api.request<{ observation: unknown }>(
-    path(pid) +
+    (readOnly ? `v1/public/projects/${encodeURIComponent(pid)}` : path(pid)) +
       '/endpoints/' +
       encodeURIComponent(endpoint) +
       '/examples/' +

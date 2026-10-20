@@ -76,7 +76,15 @@ DEV_API_PROXY_TARGET=http://127.0.0.1:18080
 ```
 
 `DEV_API_PROXY_TARGET` 仅供 Vite 开发代理使用，默认是后端 Compose 映射地址 `http://127.0.0.1:18080`。浏览器请求 `/api/v1/...`，开发代理去掉 `/api` 后转发至后端 `/v1/...`。后端必须实际运行，部署到其他地址时修改该配置。生产环境 Nginx 也应去掉 `/api/` 前缀。
-`VITE_API_BASE_URL` 是构建时公开配置，修改后需要重新构建。同源 `/api` 能让同一份静态产物在不同环境部署。
+`VITE_API_BASE_URL` 是构建时公开配置，修改后需要重新构建。项目维护同一套源码，由统一发布入口生成外网与内网两个配置的静态包：外网使用 `/` 和 `/api`，内网使用 `/nexofolio/` 和 `/nexofolio/api`。两包记录相同的源码快照 SHA-256，并使用独立 OSS latest 清单。
+
+```bash
+./upload-server.sh                         # 同一快照构建、校验并发布两个环境
+./upload-server.sh --build-only            # 只构建两个环境，不上传
+./upload-server.sh --env public            # 单独发布外网
+./upload-server.sh --env intranet          # 单独发布内网
+node tests/deployment-environments.mjs     # 发布渠道、隔离、回退与失败保留检查
+```
 
 请求层支持 JSON、取消、包含响应读取的总超时、401 回调和统一错误；写请求不自动重试。登录状态由 `/v1/auth/me` 验证，网络故障与凭证失效区分处理，不伪造登录成功。TypeScript 的返回类型不是运行时 Schema 校验，接入真实接口时在领域 API 层校验数据。
 
@@ -84,7 +92,9 @@ DEV_API_PROXY_TARGET=http://127.0.0.1:18080
 
 ## Nginx 静态部署
 
-阿里云 `nexofolio.net` 的 OSS 上传、服务器拉取、Certbot 免费证书、HTTPS 与回退流程见 [部署操作手册](deploy/aliyun.md)。本地入口为 `./upload-server.sh`，服务器入口为 `deploy/update-front.sh`。
+双环境 OSS 发布、服务器环境绑定、阿里云 HTTPS 与回退流程见 [部署操作手册](deploy/aliyun.md)。本地入口为 `./upload-server.sh`，服务器入口为 `deploy/update-front.sh`。
+
+服务器首次下载或替换更新脚本后，执行一次 `chmod 755 /home/nexofolio/front/update-front.sh`。以后进入 `/home/nexofolio/front` 执行 `./update-front.sh`；脚本按该服务器已绑定的环境读取 OSS 清单。上传到 OSS 后，两台服务器仍需分别运行更新脚本。
 
 ```bash
 pnpm install --frozen-lockfile

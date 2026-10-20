@@ -3,8 +3,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { TooltipContent, TooltipPortal, TooltipRoot, TooltipTrigger } from 'reka-ui'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import { useIconInteraction } from '@/components/motion/useIconInteraction'
-import type { IconName } from '@/components/icons/registry'
-import { accessLabels, statusLabels, type Project } from './types'
+import { accessLabels, type Project } from './types'
+import { curationLabel, curatorLabel } from './curation'
 import { createHoverCells, HOVER_CELL_SIZE, HOVER_CELL_GAP, HOVER_FILL_RATIO } from './hoverCells'
 const props = defineProps<{
   project: Project
@@ -55,17 +55,15 @@ watch(
   },
 )
 onBeforeUnmount(() => sizeObserver?.disconnect())
-const statusIcons: Record<string, IconName> = {
-  doing: 'circle-dashed',
-  wait: 'circle',
-  suspended: 'circle-pause',
-  closed: 'circle-check',
-}
 function open() {
   if (!props.blocked) emit('open', props.project)
 }
 function clickRow(event: MouseEvent) {
-  if ((event.target as HTMLElement).closest('button') || window.getSelection()?.toString()) return
+  if (
+    (event.target as HTMLElement).closest('button, [data-project-tooltip]') ||
+    window.getSelection()?.toString()
+  )
+    return
   open()
 }
 </script>
@@ -124,18 +122,37 @@ function clickRow(event: MouseEvent) {
           ></TooltipPortal
         ></TooltipRoot
       >
-      <span class="project-mobile-meta"
-        ><span>{{ statusLabels[project.status] || '未知状态' }}</span
-        ><span aria-hidden="true">·</span
-        ><span>{{ accessLabels[project.access_state] }}</span></span
-      >
+      <span class="project-mobile-meta">{{ accessLabels[project.access_state] }}</span>
     </td>
-    <td class="project-status-cell">
-      <span class="project-status"
-        ><AppIcon :name="statusIcons[project.status] || 'circle'" :size="15" />{{
-          statusLabels[project.status] || '未知状态'
-        }}</span
+    <td class="project-curation-cell">
+      <span class="project-mobile-label">最近整理</span>
+      <span
+        class="project-curation"
+        :class="{ 'is-running': project.curation?.state === 'running' }"
       >
+        {{ curationLabel(project.curation) }}
+      </span>
+    </td>
+    <td class="project-curator-cell">
+      <span class="project-mobile-label">整理人</span>
+      <TooltipRoot>
+        <TooltipTrigger as-child>
+          <span
+            tabindex="0"
+            data-project-tooltip
+            class="project-curator"
+            :aria-label="`整理人：${curatorLabel(project.curation)}`"
+            @click.stop
+          >
+            {{ curatorLabel(project.curation) }}
+          </span>
+        </TooltipTrigger>
+        <TooltipPortal
+          ><TooltipContent class="nf-project-tooltip" :side-offset="8" :collision-padding="12">
+            {{ curatorLabel(project.curation) }}
+          </TooltipContent></TooltipPortal
+        >
+      </TooltipRoot>
     </td>
     <td class="project-access-cell">
       <span class="project-access"

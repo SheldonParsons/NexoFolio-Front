@@ -15,16 +15,29 @@ export function parseProject(value: unknown): Project {
     !(p.reason_code === null || typeof p.reason_code === 'string')
   )
     throw new ApiError('项目数据格式不正确。', 'invalid-response')
+  if (p.curation != null) {
+    const c = p.curation
+    if (
+      typeof c.id !== 'string' ||
+      !['queued', 'running', 'waiting', 'needs_attention', 'done', 'failed', 'stopped'].includes(
+        c.state,
+      ) ||
+      !(
+        c.started_at === null ||
+        (typeof c.started_at === 'string' && Number.isFinite(Date.parse(c.started_at)))
+      ) ||
+      !(c.actor_name === null || typeof c.actor_name === 'string')
+    )
+      throw new ApiError('项目整理摘要格式不正确。', 'invalid-response')
+  }
   return p as Project
 }
-export function createLiveProjectSource(request: Request, supportsQuery: boolean): ProjectSource {
+export function createLiveProjectSource(request: Request): ProjectSource {
   return {
     async list(query, signal) {
-      if (!supportsQuery && (query.q || query.access_state))
-        throw new ApiError('当前项目服务尚未启用全项目搜索。', 'invalid-response')
       const params = new URLSearchParams({ page: String(query.page), limit: String(query.limit) })
       if (query.q?.trim()) params.set('q', query.q.trim())
-      if (query.access_state) params.set('access_state', query.access_state)
+      if (query.ids) params.set('ids', query.ids.join(','))
       const data = await request<ProjectPage>(`v1/projects?${params}`, { signal })
       if (
         !data ||

@@ -8,6 +8,7 @@ export function useDocumentSamples(
   endpointId: () => string,
   environmentId: () => string,
   report: DocumentErrorReporter,
+  readOnly = false,
 ) {
   const sample = shallowRef<unknown | null>(null)
   const sampleId = ref(''),
@@ -39,7 +40,7 @@ export function useDocumentSamples(
       endpoint = endpointId()
     pending.value = new Set(pending.value).add(id)
     const promise = source
-      .example(pid, endpoint, id, controller.signal)
+      .example(pid, endpoint, id, controller.signal, readOnly)
       .then((value) => {
         if (controller.signal.aborted || generation !== epoch || ownedScope !== scope()) return null
         cached.delete(key)

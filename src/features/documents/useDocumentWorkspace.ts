@@ -11,6 +11,7 @@ export function useDocumentWorkspace(
   projectId: () => string,
   onUnauthorized: () => void,
   onForbidden?: () => void,
+  readOnly = false,
 ) {
   const requests = documentRequests(projectId)
   function report(cause: unknown, target: { value: string }) {
@@ -18,17 +19,21 @@ export function useDocumentWorkspace(
     if (cause instanceof ApiError && cause.status === 403 && onForbidden) return onForbidden()
     target.value = cause instanceof Error ? cause.message : '暂时无法读取，请重试。'
   }
-  const project = useDocumentProject(projectId, requests, report)
+  const project = useDocumentProject(projectId, requests, report, readOnly)
   const selection = useDocumentSelection(
     projectId,
     () => project.environmentId.value,
     requests,
     report,
     onForbidden,
+    readOnly,
   )
   const curation = useDocumentCuration(projectId, requests, report, {
     canStart: () =>
-      !project.loading.value && !!project.project.value && !!project.projectEndpointCount.value,
+      !readOnly &&
+      !project.loading.value &&
+      !!project.project.value &&
+      !!project.projectEndpointCount.value,
     selectedId: () => selection.selectedId.value,
     setIndex: (index) => {
       project.index.value = index

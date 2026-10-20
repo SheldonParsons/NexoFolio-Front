@@ -6,6 +6,7 @@ export interface ObservedValueScope {
   archive: string
   field: string
   environment?: string
+  publicRead?: boolean
 }
 function url(scope: ObservedValueScope, offset: number, valueId?: string) {
   const query = new URLSearchParams({
@@ -16,7 +17,7 @@ function url(scope: ObservedValueScope, offset: number, valueId?: string) {
   })
   if (scope.environment) query.set('environment', scope.environment)
   if (valueId) query.set('value_id', valueId)
-  return `v1/projects/${encodeURIComponent(scope.project)}/endpoints/${encodeURIComponent(scope.endpoint)}/field-values?${query}`
+  return `v1/${scope.publicRead ? 'public/' : ''}projects/${encodeURIComponent(scope.project)}/endpoints/${encodeURIComponent(scope.endpoint)}/field-values?${query}`
 }
 export function observedValues(scope: ObservedValueScope, offset = 0, signal?: AbortSignal) {
   return api.request<ObservedValuePage>(url(scope, offset), { signal, cache: 'no-store' })

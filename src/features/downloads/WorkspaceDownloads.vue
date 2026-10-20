@@ -10,10 +10,13 @@ import AppIcon from '@/components/icons/AppIcon.vue'
 import { desktopChannels, downloadStatus, useDownloads } from './useDownloads'
 import './downloads.css'
 
-const { state, refresh, selectChannel } = useDownloads()
+const { state, refresh, selectChannel, selectFetcherChannel } = useDownloads()
 const desktop = computed(() => state.desktop[state.channel])
 const channelLabel = computed(
   () => desktopChannels.find((channel) => channel.id === state.channel)!.label,
+)
+const fetcherChannelLabel = computed(
+  () => desktopChannels.find((channel) => channel.id === state.fetcherChannel)!.label,
 )
 const assetBase = import.meta.env.BASE_URL
 const desktopVersion = computed(() => {
@@ -36,7 +39,7 @@ const megabytes = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
   >
     <NavigationMenuTrigger
       class="workspace-navigation-trigger navigation-download-trigger"
-      title="下载 NexoFolio Fetcher 开发版"
+      :title="`下载 NexoFolio Fetcher 开发版 · ${fetcherChannelLabel}`"
     >
       <img
         :src="`${assetBase}brand/nexofolio-icon.svg`"
@@ -59,7 +62,24 @@ const megabytes = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
         <div class="download-heading">
           <strong>NexoFolio Fetcher</strong><span class="navigation-development-badge">开发版</span>
         </div>
-        <p class="download-description">下载后解压，通过浏览器开发者模式手动加载。</p>
+        <p class="download-description">选择版本渠道，下载后解压，通过浏览器开发者模式加载。</p>
+        <fieldset
+          class="download-channel-switch"
+          aria-label="Fetcher 版本渠道"
+          @keydown.left.stop
+          @keydown.right.stop
+        >
+          <label v-for="channel in desktopChannels" :key="channel.id">
+            <input
+              type="radio"
+              name="fetcher-download-channel"
+              :value="channel.id"
+              :checked="state.fetcherChannel === channel.id"
+              @change="selectFetcherChannel(channel.id)"
+            />
+            <span>{{ channel.label }}</span>
+          </label>
+        </fieldset>
         <NavigationMenuLink v-if="state.fetcher.release" as-child>
           <a
             class="download-primary"
@@ -68,7 +88,7 @@ const megabytes = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
             target="_blank"
             rel="noopener noreferrer"
           >
-            下载 ZIP · v{{ state.fetcher.release.version }}
+            下载 {{ fetcherChannelLabel }} ZIP · v{{ state.fetcher.release.version }}
             <span>{{ megabytes(state.fetcher.release.size) }}</span
             ><AppIcon name="arrow-right" mode="static" :size="16" />
           </a>

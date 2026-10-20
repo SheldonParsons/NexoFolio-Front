@@ -7,9 +7,11 @@ export interface ReleaseArtifact {
 export interface FetcherRelease extends ReleaseArtifact {
   sha256: string
   minimumChromeVersion: string
+  distributionChannel: FetcherChannel
 }
 export type DesktopPlatform = 'windows' | 'mac-arm64' | 'mac-x64'
 export type DesktopChannel = 'internal' | 'public'
+export type FetcherChannel = 'internal' | 'public'
 export type ReleaseStatus = 'ready' | 'unpublished' | 'error'
 export interface ReleaseState<T> {
   status: ReleaseStatus
@@ -59,11 +61,16 @@ function releaseState<T>(value: unknown, parse: (value: unknown) => T): ReleaseS
     return { status: data.status, release: null }
   throw new Error('下载状态与版本信息不一致')
 }
-export function parseDownloadsResponse(value: unknown, channel: DesktopChannel) {
+export function parseDownloadsResponse(
+  value: unknown,
+  channel: DesktopChannel,
+  fetcherChannel: FetcherChannel = 'internal',
+) {
   const data = record(value)
   if (
     data.schema_version !== 1 ||
     data.desktop_channel !== channel ||
+    data.fetcher_channel !== fetcherChannel ||
     !Array.isArray(data.desktop) ||
     data.desktop.length !== desktopPlatforms.length
   )
@@ -74,13 +81,19 @@ export function parseDownloadsResponse(value: unknown, channel: DesktopChannel) 
     if (
       item.channel !== 'development' ||
       item.installation !== 'load-unpacked' ||
+      item.distribution_channel !== fetcherChannel ||
       typeof item.sha256 !== 'string' ||
       !/^[a-f0-9]{64}$/.test(item.sha256) ||
       typeof item.minimum_chrome_version !== 'string' ||
       !/^\d+(?:\.\d+)*$/.test(item.minimum_chrome_version)
     )
       throw new Error('Fetcher 开发版信息无效')
-    return { ...result, sha256: item.sha256, minimumChromeVersion: item.minimum_chrome_version }
+    return {
+      ...result,
+      sha256: item.sha256,
+      minimumChromeVersion: item.minimum_chrome_version,
+      distributionChannel: fetcherChannel,
+    }
   })
   const items = data.desktop.map(record)
   const desktop = desktopPlatforms.map((platform) => {

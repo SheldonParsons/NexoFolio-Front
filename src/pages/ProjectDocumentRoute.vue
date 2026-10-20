@@ -3,7 +3,6 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDocumentAccess } from '@/features/documents/useDocumentAccess'
 import ProjectDocumentPage from './ProjectDocumentPage.vue'
-import PublicDocumentPage from './PublicDocumentPage.vue'
 const route = useRoute()
 const auth = useAuthStore()
 const access = useDocumentAccess(
@@ -16,9 +15,9 @@ const access = useDocumentAccess(
     正在读取文档…
   </div>
   <ProjectDocumentPage
-    v-else-if="access.mode.value === 'member'"
-    :key="auth.user?.id"
+    v-else
+    :key="`${access.mode.value}:${auth.user?.id ?? ''}`"
+    :read-only="access.mode.value === 'public'"
     @read-only="access.readOnly"
   />
-  <PublicDocumentPage v-else />
 </template>

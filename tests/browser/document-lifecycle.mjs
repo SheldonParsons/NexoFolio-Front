@@ -150,16 +150,45 @@ async function context(role) {
         entry = index.entries.find((e) => e.interface_id === endpoint)
       if (!entry) return send({ error: { message: '接口不存在' } }, 404)
       return send({
-        project_id: pid,
-        endpoint_id: endpoint,
-        environment_id: url.searchParams.get('environment_id'),
-        name: entry.name,
-        purpose: entry.purpose,
-        description: '正式接口说明',
-        unknowns: [],
-        method: entry.method,
-        path: entry.path,
-        fields,
+        facts: {
+          summary: entry.summary,
+          aliases: [],
+          addresses: [],
+          examples: [],
+          fields: fields.map((f) => f.structure),
+        },
+        knowledge: {
+          note: {
+            endpoint,
+            name: entry.name,
+            purpose: entry.purpose,
+            context: {},
+            author: { by: 'person', user: 'fixture-member' },
+            at: '2026-10-10T00:00:00Z',
+          },
+          fields: fields.map((f) => ({
+            endpoint,
+            path: f.key,
+            text: f.description,
+            values: [],
+            author: { by: 'person', user: 'fixture-member' },
+            at: '2026-10-10T00:00:00Z',
+            context: {
+              display_name: f.name,
+              location: f.structure.location,
+              field_path: f.key,
+              evidence: [],
+              completion: {
+                name: { state: 'filled', reason: null },
+                description: { state: 'filled', reason: null },
+              },
+              meaning: { details: f.details, unknowns: f.unknowns, confirmation: f.confirmation },
+            },
+          })),
+          links: [],
+          path: [],
+        },
+        lifecycle,
       })
     }
     if (path.startsWith(`/v1/projects/${pid}`)) {

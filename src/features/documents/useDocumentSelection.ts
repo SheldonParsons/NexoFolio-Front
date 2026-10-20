@@ -3,6 +3,7 @@ import { ApiError } from '@/api'
 import * as knowledge from '@/contracts/knowledge/source'
 import type { EndpointDetail } from '@/contracts/knowledge/types'
 import { useDocumentSamples } from './useDocumentSamples'
+import { publicEndpoint } from './public/source'
 import type { DocumentRequests, DocumentErrorReporter } from './documentRequests'
 
 /** Selection, field/example tabs and sample reads. */
@@ -12,13 +13,20 @@ export function useDocumentSelection(
   requests: DocumentRequests,
   report: DocumentErrorReporter,
   onForbidden?: () => void,
+  readOnly = false,
 ) {
   const selectedId = ref('')
   const detail = shallowRef<EndpointDetail | null>(null)
   const detailLoading = ref(false),
     detailError = ref(''),
     activeTab = ref('fields')
-  const samples = useDocumentSamples(projectId, () => selectedId.value, environmentId, report)
+  const samples = useDocumentSamples(
+    projectId,
+    () => selectedId.value,
+    environmentId,
+    report,
+    readOnly,
+  )
   const examples = computed(() =>
     (detail.value?.facts.examples ?? []).filter((e) => e.environment_id === environmentId()),
   )
@@ -41,7 +49,9 @@ export function useDocumentSelection(
     detailLoading.value = true
     detailError.value = ''
     try {
-      const value = await knowledge.endpoint(projectId(), id, request.signal)
+      const value = readOnly
+        ? await publicEndpoint(projectId(), id, environmentId(), request.signal)
+        : await knowledge.endpoint(projectId(), id, request.signal)
       if (request.current()) detail.value = value
     } catch (cause) {
       if (request.current()) {

@@ -1,13 +1,13 @@
+import { ApiError } from '@/api'
 import { computed, onScopeDispose, ref } from 'vue'
-import type { Project, ProjectAccess, ProjectListQuery, ProjectSource } from './types'
+import type { Project, ProjectListQuery, ProjectSource } from './types'
 import { browserViewGeneration, readBrowserView, saveBrowserView } from './browserState'
 import { resolveRecent } from './recent'
 
-export function useProjectBrowser(source: ProjectSource, scope: string, supportsQuery: boolean) {
+export function useProjectBrowser(source: ProjectSource, scope: string) {
   const saved = readBrowserView(scope)
   const owner = browserViewGeneration()
-  const query = ref(supportsQuery ? saved.query : '')
-  const access = ref<ProjectAccess | 'all'>(supportsQuery ? saved.access : 'all')
+  const query = ref(saved.query)
   const page = ref(saved.page)
   const items = ref(saved.result?.items ?? [])
   const total = ref(saved.result?.total ?? 0)
@@ -28,7 +28,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
   let sequence = 0
   let disposed = false
   let composing = false
-  const activeFilters = computed(() => !!query.value.trim() || access.value !== 'all')
+  const activeFilters = computed(() => !!query.value.trim())
   const busy = computed(() => loading.value || pendingInput.value)
   const pages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
   let committed = saved.result
@@ -37,7 +37,6 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
       scope,
       {
         query: query.value,
-        access: access.value,
         page: page.value,
         scrollTop: scrollTop.value,
         result: committed,
@@ -60,8 +59,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
       if (current === sequence) showProgress.value = true
     }, 120)
     const params: ProjectListQuery = { page: page.value, limit }
-    if (supportsQuery && query.value.trim()) params.q = query.value.trim()
-    if (supportsQuery && access.value !== 'all') params.access_state = access.value
+    if (query.value.trim()) params.q = query.value.trim()
     try {
       const result = await source.list(params, request.signal)
       if (disposed || current !== sequence || request.signal.aborted) return
@@ -80,6 +78,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
       }
       revision.value++
       persist()
+      if (activeFilters.value) return
       // Convenience data does not delay the main result or keep the UI busy.
       void resolveRecent(scope, source, result.items, request.signal)
         .then((value) => {
@@ -90,7 +89,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
         })
         .catch((cause) => {
           if (!disposed && current === sequence) {
-            error.value = cause
+            if (cause instanceof ApiError && cause.status === 401) error.value = cause
             recentReady.value = true
           }
         })
@@ -128,19 +127,8 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
     page.value = 1
     void load(true)
   }
-  function changeAccess(value: ProjectAccess | 'all') {
-    access.value = value
-    page.value = 1
-    void load(true)
-  }
   function clearQuery() {
     query.value = ''
-    page.value = 1
-    void load(true)
-  }
-  function resetFilters() {
-    query.value = ''
-    access.value = 'all'
     page.value = 1
     void load(true)
   }
@@ -166,7 +154,6 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
   })
   return {
     query,
-    access,
     page,
     items,
     total,
@@ -186,8 +173,6 @@ export function useProjectBrowser(source: ProjectSource, scope: string, supports
     changeQuery,
     submitQuery,
     clearQuery,
-    resetFilters,
-    changeAccess,
     changePage,
     compositionStart,
     compositionEnd,

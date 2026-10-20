@@ -1,24 +1,35 @@
 import { describe, expect, it, vi } from 'vitest'
-import { parseDownloadsResponse, type DesktopChannel } from '../src/features/downloads/releases'
+import {
+  parseDownloadsResponse,
+  type DesktopChannel,
+  type FetcherChannel,
+} from '../src/features/downloads/releases'
 import { createDownloadCatalog } from '../src/features/downloads/useDownloads'
 
 const base = 'https://asynctest.oss-cn-shenzhen.aliyuncs.com/'
-function response(channel: DesktopChannel, desktopVersion = '3.3.10', fetcherVersion = '0.1.0') {
+function response(
+  channel: DesktopChannel,
+  desktopVersion = '3.3.10',
+  fetcherVersion = '0.1.0',
+  fetcherChannel: FetcherChannel = 'internal',
+) {
   const filename = `NexoFolio-Fetcher-${fetcherVersion}-dev.zip`
   return {
     schema_version: 1,
     desktop_channel: channel,
+    fetcher_channel: fetcherChannel,
     fetcher: {
       status: 'ready',
       release: {
         version: fetcherVersion,
-        url: `${base}nexofolio_fetcher/${filename}`,
+        url: `${base}nexofolio_fetcher/${fetcherChannel === 'internal' ? 'internal/' : ''}${filename}`,
         filename,
         size: 176441,
         sha256: 'a'.repeat(64),
         minimum_chrome_version: '125',
         channel: 'development',
         installation: 'load-unpacked',
+        distribution_channel: fetcherChannel,
       },
     },
     desktop: [
@@ -56,7 +67,13 @@ function response(channel: DesktopChannel, desktopVersion = '3.3.10', fetcherVer
   }
 }
 const channelOf = (input: unknown): DesktopChannel =>
-  String(input).endsWith('desktop_channel=public') ? 'public' : 'internal'
+  new URL(String(input), 'https://site.test').searchParams.get('desktop_channel') === 'public'
+    ? 'public'
+    : 'internal'
+const fetcherChannelOf = (input: unknown): FetcherChannel =>
+  new URL(String(input), 'https://site.test').searchParams.get('fetcher_channel') === 'public'
+    ? 'public'
+    : 'internal'
 
 describe('backend download response contract', () => {
   it('maps development installation details and all desktop platforms', () => {
@@ -89,6 +106,16 @@ describe('backend download response contract', () => {
     data.fetcher.release.channel = 'stable'
     expect(() => parseDownloadsResponse(data, 'internal')).toThrow()
   })
+  it('rejects legacy unlabelled or mismatched Fetcher channels instead of treating a public ZIP as internal', () => {
+    const data = response('internal') as Record<string, any>
+    delete data.fetcher_channel
+    expect(() => parseDownloadsResponse(data, 'internal')).toThrow()
+    data.fetcher_channel = 'public'
+    expect(() => parseDownloadsResponse(data, 'internal')).toThrow()
+    data.fetcher_channel = 'internal'
+    data.fetcher.release.distribution_channel = 'public'
+    expect(() => parseDownloadsResponse(data, 'internal')).toThrow()
+  })
   it.each([
     'javascript:alert(1)',
     'http://example.test/app.zip',
@@ -115,7 +142,9 @@ describe('same-origin backend download requests', () => {
     await catalog.refresh()
     expect(catalog.state.channel).toBe('internal')
     expect(fetcher).toHaveBeenCalledTimes(1)
-    expect(fetcher.mock.calls[0]![0]).toBe('/api/v1/downloads?desktop_channel=internal')
+    expect(fetcher.mock.calls[0]![0]).toBe(
+      '/api/v1/downloads?desktop_channel=internal&fetcher_channel=internal',
+    )
     expect(new Headers(fetcher.mock.calls[0]![1]?.headers).has('Authorization')).toBe(false)
     await catalog.selectChannel('public')
     expect(catalog.state.desktop.public.every((p) => p.release?.url.includes('/public/'))).toBe(
@@ -127,9 +156,54 @@ describe('same-origin backend download requests', () => {
     expect(fetcher).toHaveBeenCalledTimes(3)
     expect(
       fetcher.mock.calls.every(([url]) =>
-        /^\/api\/v1\/downloads\?desktop_channel=(internal|public)$/.test(String(url)),
+        /^\/api\/v1\/downloads\?desktop_channel=(internal|public)&fetcher_channel=internal$/.test(
+          String(url),
+        ),
       ),
     ).toBe(true)
+  })
+  it('selects Fetcher and desktop channels independently, defaulting both to internal', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async (input) =>
+        Response.json(
+          response(
+            channelOf(input),
+            '3.3.10',
+            fetcherChannelOf(input) === 'internal' ? '0.2.2' : '0.2.3',
+            fetcherChannelOf(input),
+          ),
+        ),
+      )
+    const catalog = createDownloadCatalog(fetcher)
+    await catalog.refresh()
+    expect(catalog.state.fetcherChannel).toBe('internal')
+    expect(catalog.state.fetcher.release?.url).toContain('/nexofolio_fetcher/internal/')
+    await catalog.selectFetcherChannel('public')
+    expect(catalog.state.channel).toBe('internal')
+    expect(catalog.state.fetcher.release?.distributionChannel).toBe('public')
+    expect(catalog.state.fetcher.release?.url).not.toContain('/internal/')
+    await catalog.selectChannel('public')
+    expect(catalog.state.fetcherChannel).toBe('public')
+    await catalog.selectFetcherChannel('internal')
+    expect(catalog.state.channel).toBe('public')
+    expect(catalog.state.fetcher.release?.version).toBe('0.2.2')
+    await catalog.selectChannel('internal')
+    expect(fetcher).toHaveBeenCalledTimes(4)
+  })
+  it('does not substitute a ready public package for an unpublished internal package', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+      const channel = fetcherChannelOf(input)
+      const data = response(channelOf(input), '3.3.10', '0.2.2', channel) as Record<string, any>
+      if (channel === 'internal') data.fetcher = { status: 'unpublished', release: null }
+      return Response.json(data)
+    })
+    const catalog = createDownloadCatalog(fetcher)
+    await catalog.selectFetcherChannel('public')
+    expect(catalog.state.fetcher.release).not.toBeNull()
+    await catalog.selectFetcherChannel('internal')
+    expect(catalog.state.fetcher).toEqual({ status: 'unpublished', release: null })
+    expect(catalog.state.fetchers.public.status).toBe('ready')
   })
   it('deduplicates concurrent reads of the same channel', async () => {
     let resolve!: (data: Response) => void

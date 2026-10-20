@@ -2,18 +2,19 @@
 
 ## 后端版本接口
 
-网页仅请求现有同源 API：`GET /api/v1/downloads?desktop_channel=internal|public`，由代理转发到后端 `/v1/downloads`。默认 internal。获取版本不再依赖 OSS CORS；安装包仍通过普通链接从 OSS 下载。
+网页仅请求同源 API：`GET /api/v1/downloads?desktop_channel=internal|public&fetcher_channel=internal|public`，由代理转发到后端 `/v1/downloads`。两个产品独立选择渠道，网页默认均为 internal。内网构建通过 `/nexofolio/api` 请求同一路由。获取版本不依赖 OSS CORS；安装包仍通过普通链接从 OSS 下载。后端省略 `fetcher_channel` 时保留历史公网行为；新版网页始终显式传入并核对响应渠道，不能把旧后端的未标记公网包当作内网包。
 
 ### 服务端读取的发布地址
 
-- Fetcher：`https://asynctest.oss-cn-shenzhen.aliyuncs.com/nexofolio_fetcher/latest.json`
+- Fetcher 公网版：`https://asynctest.oss-cn-shenzhen.aliyuncs.com/nexofolio_fetcher/latest.json`
+- Fetcher Gree 内部版：`https://asynctest.oss-cn-shenzhen.aliyuncs.com/nexofolio_fetcher/internal/latest.json`
 - AsyncTest 默认 Gree 内部版：`https://asynctest.oss-cn-shenzhen.aliyuncs.com/core/updates/internal/`。
 - AsyncTest 公网版：`https://asynctest.oss-cn-shenzhen.aliyuncs.com/core/updates/public/`。两个渠道分别读取各平台已有的 latest.yml / latest-mac.yml。
 - 这些上游地址由后端配置；前端删除了对应 `VITE_*_RELEASE_BASE_URL` 配置，只使用网站已有的 `VITE_API_BASE_URL`（默认 `/api`）。部署时保持 `/api` 与网页同源反向代理。
 
 Fetcher 标为开发版，下载 ZIP 后解压，直接选内含 manifest.json 的文件夹加载。AsyncTest 菜单区分 Windows x64、Mac Apple Silicon 与 Mac Intel；Mac 选择 DMG，不把自动更新器 ZIP 当作安装包。
 
-AsyncTest 下载面板使用单选分段控件切换「Gree 内部版 / 公网版」，每次整页启动默认内部版，同一页面会话内保留当前选择。Header 版本号和三个安装包均属于选中渠道；两渠道独立缓存、独立在途请求，未发布/加载失败不会替用户切换到另一渠道。
+Fetcher 与 AsyncTest 下载面板均使用单选分段控件切换「Gree 内部版 / 公网版」，每次整页启动默认内部版，同一页面会话内保留各自选择。切换其中一个产品不会改变另一个产品。Header 版本号与下载地址属于各自选中渠道；未发布/加载失败不会替用户切换到另一渠道。教程里的 Fetcher 下载按钮也使用已选渠道，并在文案中标明渠道。
 
 Fetcher 的下载 URL 由后端根据发布目录与已验证的 artifact.filename 组成，前端使用后端返回的 URL。已上传旧清单可能保留 artifact.url 的连字符路径，这个旧地址不再控制网页下载目标。本地发布清单和后续打包脚本已同步为下划线目录，建议覆盖上传新的 latest.json；ZIP 内容与校验值不变。
 
@@ -21,18 +22,18 @@ Fetcher 的下载 URL 由后端根据发布目录与已验证的 artifact.filena
 
 `WorkspaceDownloads.vue` 是两个 NavigationMenuItem，加入现有 NavigationMenuRoot，共用原来的浮层与切换动画。Header 显示产品图标、版本号，展开后点击安装包链接下载。Fetcher 使用既有 NexoFolio 图标；AsyncTest 图标取自用户提供的 `core/logo/logo_full.svg`，本地保存在 `public/brand/asynctest-icon.svg`。
 
-版本由 `useDownloads.ts` 通过网站 API 客户端读取：每个渠道一次请求，不携带登录凭据、不进入项目请求计数、不阻塞项目转场，前端请求超时 10 秒。后端负责 5 分钟缓存，前端不再叠加另一层时效缓存；仅保留各渠道展示状态及在途请求去重。切换渠道和手动“重新检查版本”都会请求后端，但不发送后端不支持的强制刷新参数。失败时不回退到浏览器直读 OSS。
+版本由 `useDownloads.ts` 通过网站 API 客户端读取：最多四种渠道组合，按成功读取的 5 分钟时效合并读取与在途请求，错误不作为成功缓存。多个展示组件共用一个可见页面检查时钟，后台页面或最后一个组件卸载后停止；恢复可见或联网时按时效检查。不携带登录凭据、不进入项目请求计数、不阻塞项目转场，前端请求超时 10 秒。显式“重新检查版本”绕过前端时效，不发送后端不支持的强制刷新参数；后端按各产品/渠道缓存 5 分钟。失败时不回退到浏览器直读 OSS。
 
-后端返回 schema_version、desktop_channel、fetcher 与 desktop。每项独立包含 ready/unpublished/error 状态与 release；Fetcher 同时返回 minimum_chrome_version、development、load-unpacked 信息。前端校验响应渠道、三个平台、文件类型、文件名和 HTTPS 链接，保留开发版说明。已移除前端 YAML 解析及 yaml 直接依赖。
+后端返回 schema_version、desktop_channel、fetcher_channel、fetcher 与 desktop。每项独立包含 ready/unpublished/error 状态与 release；Fetcher 同时返回 distribution_channel、minimum_chrome_version、development、load-unpacked 信息。前端校验响应与插件包的渠道、三个平台、文件类型、文件名和 HTTPS 链接，保留开发版说明。内网清单要求明确的 distributionChannel: internal；旧公网清单仍兼容。已移除前端 YAML 解析及 yaml 直接依赖。
 
-并行切换渠道时，每个响应只更新自己的桌面列表；共用 Fetcher 信息仅由较新的请求更新，旧响应不会覆盖新结果。
+并行切换渠道时，每个响应只更新自己拥有的产品/渠道状态；同一渠道只接受最新发起请求的响应，迟到请求不会覆盖更新的数据。
 
 1280px 以下 Header 分行，以免下载入口挤到账户区；手机保留两个下载入口和开发版标记。
 
 ## 用户上传步骤
 
-1. 先上传 `NexoFolio-Fetcher-0.1.0-dev.zip` 至 bucket 根目录下的 `nexofolio_fetcher/`。
-2. 确认文件可下载后，将同批生成的 `latest.json` 上传到相同目录。
+1. 同一源码构建两个渠道，公网 ZIP 上传到 `nexofolio_fetcher/`，内网 ZIP 上传到 `nexofolio_fetcher/internal/`，两者文件名均为 `NexoFolio-Fetcher-<版本>-dev.zip`。
+2. 确认两个 ZIP 可下载且大小、SHA-256 均匹配后，再将各自的 `latest.json` 发布到对应目录，使用 distributionChannel 标记各自渠道。保留已有最低版本/强制更新策略，不因新增下载渠道自动提高门槛。
 3. latest.json 使用 `application/json`，建议 `Cache-Control: no-cache`；ZIP 使用 `application/zip`，可设置 `Content-Disposition: attachment`。
 4. 后端需要能读取清单，浏览器需要能下载安装包；网页不再获取 OSS JSON/YAML，因此不需要为版本获取新增 OSS CORS 配置。
 5. 后端缓存最长 5 分钟；缓存更新后，回到 Header 点“重新检查版本”即可读取后端结果。

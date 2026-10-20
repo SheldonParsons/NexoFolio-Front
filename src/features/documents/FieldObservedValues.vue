@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch, onScopeDispose } from 'vue'
+import { inject, ref, shallowRef, watch, onScopeDispose } from 'vue'
+import { publicDocumentReads } from './public/source'
 import { useRoute } from 'vue-router'
 import { observedValues, observedValueJson } from './observedValues'
 import type { FieldObservationSummary, ObservedValuePage } from '@/contracts/knowledge/types'
@@ -10,6 +11,7 @@ const props = defineProps<{
   environmentId?: string
 }>()
 const emit = defineEmits<{ example: [id: string] }>()
+const publicRead = inject(publicDocumentReads, false)
 const route = useRoute(),
   page = shallowRef<ObservedValuePage>(),
   loading = ref(false),
@@ -28,6 +30,7 @@ const labels: Record<string, string> = {
   unavailable: '未捕获或缺少来源',
 }
 const scope = () => ({
+  publicRead,
   project: String(route.params.projectId),
   endpoint: props.endpointId,
   archive: props.summary.archive_id!,

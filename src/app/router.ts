@@ -6,6 +6,7 @@ import { authErrorMessage } from '@/api/auth'
 import { useNavigationTransition } from '@/stores/navigationTransition'
 import { workspaceEnabled } from './deployment'
 import { sameDocumentProject } from '@/features/documents/documentRoutes'
+import { reportRouteLoadFailure, routeLoadFailure } from './routeLoadFailure'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -214,6 +215,7 @@ router.afterEach(async (to, from, failure) => {
     routeTransitionId = null
   }
   if (failure) return
+  routeLoadFailure.value = null
   document.title = `${String(to.meta.title ?? '工作空间')} · NexoFolio`
   if (to.path === from.path || sameDocumentProject(to, from)) return
   await nextTick()
@@ -221,7 +223,8 @@ router.afterEach(async (to, from, failure) => {
   document.querySelector<HTMLElement>('#main-content')?.focus({ preventScroll: true })
 })
 
-router.onError(() => {
+router.onError((error, to) => {
   if (routeTransitionId !== null) useNavigationTransition(pinia).finish(routeTransitionId)
   routeTransitionId = null
+  reportRouteLoadFailure(error, router.resolve(to.fullPath).href)
 })
