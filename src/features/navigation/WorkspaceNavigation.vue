@@ -12,6 +12,8 @@ import {
   NavigationMenuViewport,
 } from 'reka-ui'
 import AppIcon from '@/components/icons/AppIcon.vue'
+import AppDialog from '@/components/ui/AppDialog.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 import LoginMark from '@/features/auth/LoginMark.vue'
 import WorkspaceDownloads from '@/features/downloads/WorkspaceDownloads.vue'
 import type { IconName } from '@/components/icons/registry'
@@ -19,13 +21,28 @@ import { documentLocation } from '@/features/documents/documentRoutes'
 import { useCurationReviewEntry } from '@/features/curation/useCurationReviewEntry'
 import CurationEntryNotice from '@/features/curation/CurationEntryNotice.vue'
 import { useActiveProject } from '@/features/projects/useActiveProject'
+import { projectSource } from '@/features/projects/source'
+import { useProjectEntry } from '@/features/projects/useProjectEntry'
+import type { Project } from '@/features/projects/types'
 import { navigationProject } from './navigationProject'
+import { useNavigationRecentProjects } from './useNavigationRecentProjects'
+import NavigationRecentProjects from './NavigationRecentProjects.vue'
 import './workspace-navigation.css'
 
 const route = useRoute()
 const router = useRouter()
 const openMenu = ref('')
 const activeProject = useActiveProject()
+const recent = useNavigationRecentProjects(
+  projectSource,
+  activeProject.scope,
+  () => openMenu.value === 'projects',
+)
+const entry = useProjectEntry(projectSource, activeProject.scope)
+function enterProject(project: Project) {
+  openMenu.value = ''
+  void entry.open(project)
+}
 const resources: { id: string; label: string; description: string; icon: IconName; to: string }[] =
   [
     {
@@ -110,13 +127,12 @@ watch(
               </RouterLink>
             </NavigationMenuLink>
             <div class="navigation-project-links">
-              <p class="navigation-eyebrow">从项目开始</p>
               <NavigationMenuLink as-child :active="route.name === 'projects'">
-                <RouterLink to="/projects" class="navigation-destination">
+                <RouterLink to="/projects" class="navigation-destination navigation-all-projects">
                   <span class="navigation-item-icon"
                     ><AppIcon name="layout-grid" mode="static" :size="20"
                   /></span>
-                  <span><strong>全部项目</strong><small>浏览项目，进入你的知识空间</small></span>
+                  <span><strong>全部项目</strong><small>浏览所有项目</small></span>
                   <AppIcon
                     class="navigation-item-arrow"
                     name="arrow-up-right"
@@ -125,7 +141,14 @@ watch(
                   />
                 </RouterLink>
               </NavigationMenuLink>
-              <p class="navigation-project-note">以项目组织接口，让采集、文档与知识保持关联。</p>
+              <NavigationRecentProjects
+                :items="recent.items.value"
+                :loading="recent.loading.value"
+                :message="recent.message.value"
+                :opening-id="entry.openingId.value"
+                :current-id="projectId"
+                @enter="enterProject"
+              />
             </div>
           </div>
         </NavigationMenuContent>
@@ -140,13 +163,11 @@ watch(
           <AppIcon class="navigation-chevron" name="chevron-down" mode="static" :size="14" />
         </NavigationMenuTrigger>
         <NavigationMenuContent class="workspace-navigation-content">
-          <div class="navigation-resources-panel">
+          <div class="navigation-resources-panel navigation-interfaces-panel">
             <div v-if="projectId" class="navigation-selected-project">
-              <AppIcon name="folder" mode="static" :size="18" />
-              <div>
-                <p class="navigation-eyebrow">当前项目</p>
-                <strong>{{ projectName || '正在读取项目…' }}</strong>
-              </div>
+              <AppIcon name="folder" mode="static" :size="16" />
+              <span class="navigation-eyebrow">当前项目</span>
+              <strong data-navigation-project-name>{{ projectName || '正在读取项目…' }}</strong>
             </div>
             <p v-else class="navigation-eyebrow">从项目进入接口知识</p>
             <NavigationMenuLink as-child :active="documentActive">
@@ -221,6 +242,14 @@ watch(
     </NavigationMenuList>
     <NavigationMenuViewport class="workspace-navigation-viewport" />
   </NavigationMenuRoot>
+  <AppDialog
+    v-model:open="entry.dialogOpen.value"
+    :title="entry.projectName.value"
+    description="项目访问说明"
+  >
+    <p role="status">{{ entry.explanation.value }}</p>
+    <AppButton @click="entry.dialogOpen.value = false">知道了</AppButton>
+  </AppDialog>
   <CurationEntryNotice
     v-model:message="review.message.value"
     :retryable="review.retryable.value"

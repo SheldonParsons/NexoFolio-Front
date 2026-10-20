@@ -1,4 +1,4 @@
-import { onScopeDispose, ref } from 'vue'
+import { onScopeDispose, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useRouter } from 'vue-router'
 import { ApiError } from '@/api'
 import { clearCredential } from '@/api/session'
@@ -10,7 +10,7 @@ import type { Project, ProjectSource } from './types'
 
 export function useProjectEntry(
   source: ProjectSource,
-  scope: string,
+  scope: MaybeRefOrGetter<string>,
   onUnavailable?: (id: string) => void,
 ) {
   const router = useRouter()
@@ -25,29 +25,48 @@ export function useProjectEntry(
   let disposed = false
   let run: number | null = null
   let navigating = false
+  let identityVersion = 0
+  watch(
+    [() => toValue(scope), () => auth.user?.id],
+    () => {
+      identityVersion++
+      controller?.abort()
+      openingId.value = null
+      dialogOpen.value = false
+      if (run !== null) transition.finish(run)
+    },
+    { flush: 'sync' },
+  )
   async function open(project: Project) {
     if (openingId.value) return
     const ownerId = auth.user?.id
+    const ownerScope = toValue(scope)
+    const version = identityVersion
+    const sameOwner = () =>
+      version === identityVersion && auth.user?.id === ownerId && toValue(scope) === ownerScope
     const request = new AbortController()
     controller = request
     openingId.value = project.project_id
+    let navigationRun: number | null = null
     async function navigate(current: Project, member: boolean) {
-      run = transition.start(`正在进入${current.name}`, 2000)
+      navigationRun = transition.start(`正在进入${current.name}`, 2000)
+      run = navigationRun
       navigating = true
       try {
         const failure = await router.push(
           `/projects/${encodeURIComponent(current.project_id)}/interfaces`,
         )
-        if (failure) transition.finish(run)
+        if (failure) transition.finish(navigationRun)
         else {
-          if (member && auth.user?.id === ownerId) {
+          if (member && sameOwner()) {
             activeProject.remember(current)
-            recordVisit(scope, current.project_id)
+            recordVisit(ownerScope, current)
           }
-          transition.settle(run)
+          transition.settle(navigationRun)
         }
       } catch {
-        transition.finish(run)
+        transition.finish(navigationRun)
+        if (disposed || !sameOwner()) return
         projectName.value = current.name
         explanation.value = '暂时无法打开文档，请稍后重试。'
         dialogOpen.value = true
@@ -55,7 +74,7 @@ export function useProjectEntry(
     }
     try {
       const current = await source.get(project.project_id, request.signal)
-      if (disposed || request.signal.aborted || auth.user?.id !== ownerId) return
+      if (disposed || request.signal.aborted || !sameOwner()) return
       if (!current.can_access || current.access_state !== 'allowed')
         throw new ApiError(
           '暂时无法确认项目权限。',
@@ -64,10 +83,10 @@ export function useProjectEntry(
         )
       await navigate(current, true)
     } catch (cause) {
-      if (run !== null) transition.finish(run)
-      if (disposed || request.signal.aborted) return
+      if (navigationRun !== null) transition.finish(navigationRun)
+      if (disposed || request.signal.aborted || !sameOwner()) return
       if (cause instanceof ApiError && (cause.status === 403 || cause.status === 404)) {
-        removeVisit(scope, project.project_id)
+        removeVisit(ownerScope, project.project_id)
         if (cause.status === 404) onUnavailable?.(project.project_id)
       }
       if (cause instanceof ApiError && cause.status === 401) {
@@ -86,8 +105,10 @@ export function useProjectEntry(
           : '暂时无法确认项目权限，请稍后重试。你的登录状态已保留。'
       dialogOpen.value = true
     } finally {
-      navigating = false
-      if (!disposed) openingId.value = null
+      if (controller === request) {
+        navigating = false
+        if (!disposed) openingId.value = null
+      }
     }
   }
   onScopeDispose(() => {

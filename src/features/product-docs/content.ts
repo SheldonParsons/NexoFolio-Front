@@ -18,6 +18,7 @@ import curationUpdate from '@/content/changelog/2026-10-09-curation-experience.m
 import mcpCompactUpdate from '@/content/changelog/2026-10-19-mcp-compact-evidence.md?raw'
 import projectsAndMcpUpdate from '@/content/changelog/2026-10-20-projects-and-mcp-reading.md?raw'
 import fetcher024Update from '@/content/changelog/2026-10-20-fetcher-0-2-4.md?raw'
+import workspaceNavigationUpdate from '@/content/changelog/2026-10-20-workspace-navigation.md?raw'
 
 export interface ProductArticle {
   slug: string
@@ -83,6 +84,17 @@ export interface ProductUpdate {
 }
 // Feature updates, versioned releases, and preview records share one timeline.
 export const productUpdates: ProductUpdate[] = [
+  {
+    slug: '2026-10-20-workspace-navigation',
+    product: 'nexofolio',
+    date: '2026-10-20',
+    version: '功能更新',
+    status: 'update',
+    title: '项目切换更顺手，悬停反馈更清楚',
+    description:
+      '顶部增加最近项目入口，接口文档菜单更紧凑；修复切换后最近访问消失，统一菜单与列表的图标、动画和文字对比度。',
+    body: workspaceNavigationUpdate,
+  },
   {
     slug: '2026-10-20-projects-and-mcp-reading',
     product: 'nexofolio',

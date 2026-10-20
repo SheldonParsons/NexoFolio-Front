@@ -4,6 +4,7 @@ export interface BrowserSnapshot {
   page: number
   scrollTop: number
   result: ProjectPage | null
+  validatedAt?: number
 }
 const views = new Map<string, BrowserSnapshot>()
 let generation = 0

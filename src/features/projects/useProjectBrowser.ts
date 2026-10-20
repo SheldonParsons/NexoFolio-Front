@@ -32,6 +32,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string) {
   const busy = computed(() => loading.value || pendingInput.value)
   const pages = computed(() => Math.max(1, Math.ceil(total.value / limit)))
   let committed = saved.result
+  let validatedAt = saved.validatedAt ?? 0
   function persist() {
     saveBrowserView(
       scope,
@@ -40,6 +41,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string) {
         page: page.value,
         scrollTop: scrollTop.value,
         result: committed,
+        validatedAt,
       },
       owner,
     )
@@ -72,6 +74,7 @@ export function useProjectBrowser(source: ProjectSource, scope: string) {
       total.value = result.total
       hasResult.value = true
       committed = result
+      validatedAt = Date.now()
       if (resetScroll) {
         scrollTop.value = 0
         restoreScroll.value = true

@@ -1,0 +1,28 @@
+{
+  "user": {
+    "id": "navigation-fixture-a",
+    "account": "fixture-a",
+    "display_name": "导航验收",
+    "enabled": true
+  },
+  "names": [
+    "跨组织业务协同与统一接口知识管理平台的超长项目名称ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "云售后",
+    "售前协作",
+    "商用订单",
+    "现场服务",
+    "开放平台"
+  ],
+  "visits": [
+    { "id": "deleted", "visitedAt": 999 },
+    { "id": "denied", "visitedAt": 998 },
+    { "id": "unknown", "visitedAt": 997 },
+    { "id": "p1", "visitedAt": 100 },
+    { "id": "p2", "visitedAt": 90 },
+    { "id": "p3", "visitedAt": 80 },
+    { "id": "p4", "visitedAt": 70 },
+    { "id": "p5", "visitedAt": 60 },
+    { "id": "p6", "visitedAt": 50 },
+    { "id": "p2", "visitedAt": 10 }
+  ]
+}

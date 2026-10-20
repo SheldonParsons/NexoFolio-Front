@@ -1,3 +1,4 @@
+import { shallowRef } from 'vue'
 import type { Project, ProjectSource } from './types'
 export interface RecentVisit {
   id: string
@@ -5,6 +6,8 @@ export interface RecentVisit {
 }
 type StoragePort = Pick<Storage, 'getItem' | 'setItem'>
 export const RECENT_PROJECT_LIMIT = 5
+// Notify mounted consumers without creating another history or persisting project metadata.
+export const recentVisitChange = shallowRef<{ scope: string; project?: Project }>()
 const VISIT_HISTORY_LIMIT = 20
 const keyFor = (scope: string) => `nexofolio.recent-projects.v1:${encodeURIComponent(scope)}`
 export function readVisits(scope: string, storage?: StoragePort): RecentVisit[] {
@@ -43,7 +46,13 @@ function write(scope: string, entries: RecentVisit[], storage?: StoragePort) {
     /* Convenience only: unavailable storage must never block access. */
   }
 }
-export function recordVisit(scope: string, id: string, storage?: StoragePort, now = Date.now()) {
+export function recordVisit(
+  scope: string,
+  project: string | Project,
+  storage?: StoragePort,
+  now = Date.now(),
+) {
+  const id = typeof project === 'string' ? project : project.project_id
   write(
     scope,
     [
@@ -52,6 +61,7 @@ export function recordVisit(scope: string, id: string, storage?: StoragePort, no
     ].slice(0, VISIT_HISTORY_LIMIT),
     storage,
   )
+  recentVisitChange.value = { scope, project: typeof project === 'string' ? undefined : project }
 }
 export function removeVisit(scope: string, id: string, storage?: StoragePort) {
   write(
@@ -59,6 +69,7 @@ export function removeVisit(scope: string, id: string, storage?: StoragePort) {
     readVisits(scope, storage).filter((visit) => visit.id !== id),
     storage,
   )
+  recentVisitChange.value = { scope }
 }
 export async function resolveRecent(
   scope: string,
@@ -96,7 +107,13 @@ export async function resolveRecent(
   if (removed.size)
     write(
       scope,
-      readVisits(scope, storage).filter((visit) => !removed.has(visit.id)),
+      readVisits(scope, storage).filter(
+        (visit) =>
+          !removed.has(visit.id) ||
+          !visits.some(
+            (checked) => checked.id === visit.id && checked.visitedAt === visit.visitedAt,
+          ),
+      ),
       storage,
     )
   return recent

@@ -200,23 +200,33 @@
 .navigation-selected-project {
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin: 0 12px 10px;
-  padding-bottom: 15px;
+  gap: 9px;
+  min-width: 0;
+  height: 36px;
+  margin: 0 12px 6px;
   border-bottom: 1px solid var(--border);
   color: var(--muted);
 }
-.navigation-selected-project > div {
-  min-width: 0;
+.navigation-interfaces-panel {
+  padding-top: 12px;
+}
+.navigation-selected-project > svg,
+.navigation-selected-project > .navigation-eyebrow {
+  flex: none;
+}
+.navigation-selected-project > svg {
+  margin-inline: 2px;
 }
 .navigation-selected-project strong {
   display: block;
-  margin-top: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text);
   font-size: 13px;
   font-weight: 550;
   line-height: 1.6;
-  overflow-wrap: anywhere;
 }
 .navigation-resource {
   cursor: pointer;
@@ -225,7 +235,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 10px 0 4px;
+  padding: 4px 0;
 }
 .navigation-eyebrow {
   margin: 0;
@@ -233,9 +243,6 @@
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.05em;
-}
-.navigation-project-links > .navigation-eyebrow {
-  margin: 0 12px 12px;
 }
 .navigation-destination {
   display: flex;
@@ -292,14 +299,95 @@ button.navigation-destination:disabled {
   flex: none;
   color: var(--muted);
 }
-.navigation-project-note {
-  margin: auto 12px 0;
-  padding-top: 20px;
+.navigation-all-projects {
+  padding-block: 8px;
+}
+.navigation-all-projects small {
+  margin-top: 1px;
+}
+.navigation-recent {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+.navigation-recent > .navigation-eyebrow {
+  margin: 0 12px 6px;
+}
+.navigation-recent-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.navigation-recent-link {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.navigation-recent-link[data-interacting='true'],
+.navigation-recent-link.is-current {
+  background: var(--surface-muted);
+}
+.navigation-recent-link > :not(.project-hover-fill) {
+  position: relative;
+  z-index: 1;
+}
+.navigation-recent-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 6px;
+  color: var(--muted);
+  transition:
+    background-color 160ms,
+    color 160ms;
+}
+.navigation-recent-link[data-interacting='true'] .navigation-recent-icon {
+  background: var(--surface);
+  color: var(--text);
+}
+.navigation-recent-check {
+  flex: none;
+  margin-inline-end: 4px;
+  color: var(--muted);
+}
+.navigation-recent-link > [data-navigation-project-name] {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.navigation-recent-empty {
+  margin: 8px 12px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.8;
 }
 .workspace-navigation a:focus-visible,
+.navigation-recent-link:focus-visible,
 .workspace-navigation button.navigation-destination:focus-visible,
 .workspace-navigation-trigger:focus-visible {
   outline: 2px solid var(--input-focus-border);
@@ -427,13 +515,17 @@ button.navigation-destination:disabled {
   .navigation-item-arrow {
     display: none;
   }
-  .navigation-project-note {
-    margin-inline: 8px;
-    padding-top: 12px;
-    font-size: 11px;
+  .navigation-recent-link {
+    padding-inline: 8px;
+    gap: 6px;
   }
-  .navigation-project-links > .navigation-eyebrow {
+  .navigation-recent > .navigation-eyebrow,
+  .navigation-recent-empty {
     margin-inline: 8px;
+  }
+  .navigation-selected-project {
+    margin-inline: 8px;
+    gap: 7px;
   }
 }
 @media (max-width: 360px) {

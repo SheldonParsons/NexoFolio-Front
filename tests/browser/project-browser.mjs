@@ -111,6 +111,10 @@ try {
   await page.goto(`${origin}/projects`)
   await ready()
   await page.waitForFunction(() => document.querySelector('.group-count')?.textContent === '5')
+  assert.equal(
+    await page.locator('.project-toolbar').evaluate((el) => getComputedStyle(el).borderBottomWidth),
+    '0px',
+  )
   assert.equal(await page.locator('.project-filter').count(), 0)
   assert.equal(await page.getByText('全项目搜索与权限筛选', { exact: false }).count(), 0)
   assert.deepEqual(
@@ -141,13 +145,9 @@ try {
   checks.push({ name: 'keyboard-full-curator-tooltip', passed: true })
   await page.keyboard.press('Escape')
   await page.locator('.project-name-button').filter({ hasText: '跨组织' }).first().hover()
-  await page
-    .locator('.nf-project-tooltip')
-    .filter({
-      hasText: '跨组织业务协同与统一接口知识管理平台的超长项目名称ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    })
-    .waitFor()
-  checks.push({ name: 'long-project-tooltip', passed: true })
+  await page.waitForTimeout(500)
+  assert.equal(await page.locator('.nf-project-tooltip').count(), 0)
+  checks.push({ name: 'long-project-name-without-hover-popup', passed: true })
   await page.locator('.project-results').focus()
   await page.mouse.move(0, 0)
   await layout(1024, 850, 'tablet')

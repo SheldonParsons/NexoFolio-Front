@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { effectScope } from 'vue'
+import { effectScope, reactive, ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { ApiError } from '../src/api/client'
 import { useProjectEntry } from '../src/features/projects/useProjectEntry'
@@ -12,7 +12,7 @@ const { push, auth, clearCredential } = vi.hoisted(() => ({
   clearCredential: vi.fn(),
 }))
 vi.mock('vue-router', () => ({ useRouter: () => ({ push }) }))
-vi.mock('@/stores/auth', () => ({ useAuthStore: () => auth }))
+vi.mock('@/stores/auth', () => ({ useAuthStore: () => reactive(auth) }))
 vi.mock('@/api/session', () => ({ clearCredential }))
 vi.mock('@/features/projects/source', () => ({ projectScope: 'mock:projects' }))
 const item: Project = {
@@ -36,6 +36,7 @@ function setup(get = vi.fn().mockResolvedValue(item)) {
 }
 beforeEach(() => {
   vi.clearAllMocks()
+  reactive(auth).user = { id: 'a' }
   setActivePinia(createPinia())
   push.mockResolvedValue(undefined)
   const data = new Map<string, string>()
@@ -153,5 +154,48 @@ describe('project admission and navigation lifecycle', () => {
     const { entry } = setup(vi.fn().mockRejectedValue(new ApiError('revoked', 'http', 403)))
     await entry.open(item)
     expect(readVisits('api:mock:user')).toEqual([])
+  })
+  it.each([401, 404, 503])(
+    'ignores a late %i from an old account without clearing the new session or navigating',
+    async (status) => {
+      let reject!: (cause: unknown) => void
+      const get = vi.fn(
+        () =>
+          new Promise<Project>((_resolve, no) => {
+            reject = no
+          }),
+      )
+      recordVisit('api:mock:user', item.project_id)
+      const { entry } = setup(get)
+      const pending = entry.open(item)
+      reactive(auth).user = { id: 'b' }
+      reject(new ApiError('old request', 'http', status))
+      await pending
+      expect(push).not.toHaveBeenCalled()
+      expect(clearCredential).not.toHaveBeenCalled()
+      expect(readVisits('api:mock:user')).toHaveLength(1)
+      expect(entry.dialogOpen.value).toBe(false)
+    },
+  )
+  it('does not record a navigation completed after the service scope changes', async () => {
+    const owner = ref('intranet:user')
+    const lifecycle = effectScope()
+    scopes.push(lifecycle)
+    const entry = lifecycle.run(() =>
+      useProjectEntry({ get: vi.fn().mockResolvedValue(item), list: vi.fn() }, owner),
+    )!
+    push.mockImplementation(async () => {
+      owner.value = 'internet:user'
+    })
+    await entry.open(item)
+    expect(readVisits('intranet:user')).toEqual([])
+    expect(readVisits('internet:user')).toEqual([])
+  })
+  it('retains an existing visit on temporary admission failure', async () => {
+    recordVisit('api:mock:user', item.project_id, undefined, 100)
+    const { entry } = setup(vi.fn().mockRejectedValue(new ApiError('offline', 'http', 503)))
+    await entry.open(item)
+    expect(readVisits('api:mock:user')).toEqual([{ id: 'one', visitedAt: 100 }])
+    expect(push).toHaveBeenCalledWith('/projects/one/interfaces')
   })
 })

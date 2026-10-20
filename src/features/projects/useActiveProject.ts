@@ -14,5 +14,5 @@ export function useActiveProject() {
   function remember(project: Project, environmentId?: string) {
     context.remember(scope.value, project, environmentId)
   }
-  return { current, remember }
+  return { scope, current, remember }
 }
