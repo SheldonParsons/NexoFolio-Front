@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   collectCurl,
   collectQuickExamples,
@@ -13,6 +13,16 @@ const body = readFileSync(
   fileURLToPath(new URL('../src/content/docs/api.md', import.meta.url)),
   'utf8',
 )
+afterEach(() => vi.unstubAllGlobals())
+it('generates valid fresh collection examples without HTTP-only randomUUID support', () => {
+  vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) })
+  for (const example of collectQuickExamples(body)) {
+    const prepared = prepareCollectExample(example.text)
+    expect(checkBatch(prepared).valid).toBe(true)
+    expect(JSON.parse(prepared).batch_id).not.toBe(JSON.parse(example.text).batch_id)
+    expect(JSON.parse(prepared).batch_id).not.toBe(JSON.parse(prepared).records[0].id)
+  }
+})
 describe('guided collection examples', () => {
   it('loads both documented batch types, excluding receipts and errors', () => {
     const examples = collectQuickExamples(body)

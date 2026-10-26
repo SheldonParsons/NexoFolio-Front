@@ -1,3 +1,5 @@
+import { createUuid } from '../../app/uuid'
+
 export const collectDocHeadings = [
   { id: 'api-agent', title: '交给 Agent 开发', level: 2 },
   { id: 'api-overview', title: '先选接入方式', level: 2 },
@@ -68,7 +70,7 @@ export function collectServiceBase(apiBase: string, pageUrl: string): string {
 export function prepareCollectExample(
   text: string,
   context: { projectId?: string; environmentId?: string } = {},
-  createId: () => string = () => crypto.randomUUID(),
+  createId: () => string = createUuid,
   observedAt = new Date().toISOString(),
 ): string {
   const value = JSON.parse(text) as {

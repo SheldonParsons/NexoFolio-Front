@@ -377,13 +377,11 @@ it('pauses uncertain-write reconciliation while hidden and checks the saved stat
   const post = vi
     .spyOn(source, 'applyCandidate')
     .mockRejectedValue(new ApiError('timeout', 'timeout'))
-  const read = vi
-    .spyOn(source, 'applyStatus')
-    .mockResolvedValue({
-      candidate: status,
-      operation: 'fixture',
-      progress: { stage: 'writing', processed: 1, total: 2 },
-    } as never)
+  const read = vi.spyOn(source, 'applyStatus').mockResolvedValue({
+    candidate: status,
+    operation: 'fixture',
+    progress: { stage: 'writing', processed: 1, total: 2 },
+  } as never)
   const f = mount(() =>
     useCurationReview(
       () => 'p',
@@ -420,6 +418,7 @@ function decisionTransport() {
     post = deferred<unknown>()
   const reads: Array<{ path: string; signal?: AbortSignal | null }> = []
   let posts = 0
+  let storedState = 'ready'
   const status = (stage: string | null, state = 'ready') => ({
     candidate: {
       ...row(state),
@@ -442,7 +441,7 @@ function decisionTransport() {
       return post.promise as never
     }
     const parts = path.split('?')[0]!.split('/')
-    const summary = { ...row(), id: parts[5] ?? 'c', project_id: parts[2], progress: {} }
+    const summary = { ...row(storedState), id: parts[5] ?? 'c', project_id: parts[2], progress: {} }
     if (path.endsWith('/candidates')) return Promise.resolve([summary]) as never
     if (path.includes('/document-lifecycle'))
       return Promise.resolve({ version: 0, reconciled_version: 0, decisions: [] }) as never
@@ -472,8 +471,57 @@ function decisionTransport() {
       vi.fn(),
     ),
   )
-  return { ...f, pid, cid, observer, reconciliation, post, reads, status, posts: () => posts }
+  return {
+    ...f,
+    pid,
+    cid,
+    observer,
+    reconciliation,
+    post,
+    reads,
+    status,
+    posts: () => posts,
+    setStoredState: (state: string) => {
+      storedState = state
+    },
+  }
 }
+
+it('applies over HTTP without randomUUID, keeping one operation for the POST and progress', async () => {
+  vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) })
+  const f = decisionTransport()
+  await flush()
+  const decision = f.state.decide('apply', 'c')
+  await flush()
+  expect(f.posts()).toBe(1)
+  const operation = new URL(f.reads[0]!.path, 'http://fixture.test').searchParams.get('operation')
+  expect(operation).toMatch(/^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/)
+  const post = vi.mocked(api.request).mock.calls.find(([, options]) => options?.method === 'POST')!
+  expect(new URL(post[0], 'http://fixture.test').searchParams.get('operation')).toBe(operation)
+  f.post.reject(new ApiError('lost response', 'network'))
+  await flush()
+  expect(f.reads[1]!.path).toBe(f.reads[0]!.path)
+  f.setStoredState('applied')
+  f.reconciliation.resolve(f.status('committed', 'applied'))
+  await expect(decision).resolves.toBe(true)
+  f.observer.resolve(f.status('writing'))
+  await vi.advanceTimersByTimeAsync(1800)
+  expect(f.posts()).toBe(1)
+  expect(f.reads).toHaveLength(2)
+  expect(f.state.deciding.value).toBe(false)
+  expect(f.state.candidate.value?.state).toBe('applied')
+})
+
+it('reports unavailable secure randomness without sending a decision or leaving it pending', async () => {
+  vi.stubGlobal('crypto', {})
+  const f = decisionTransport()
+  await flush()
+  await expect(f.state.decide('apply', 'c')).resolves.toBe(false)
+  expect(f.state.error.value).toContain('无法生成操作标识')
+  expect(f.state.deciding.value).toBe(false)
+  expect(f.posts()).toBe(0)
+  expect(f.reads).toHaveLength(0)
+})
 
 it.each([
   ['failed', 'after decision'],

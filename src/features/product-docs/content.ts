@@ -19,6 +19,9 @@ import mcpCompactUpdate from '@/content/changelog/2026-10-19-mcp-compact-evidenc
 import projectsAndMcpUpdate from '@/content/changelog/2026-10-20-projects-and-mcp-reading.md?raw'
 import fetcher024Update from '@/content/changelog/2026-10-20-fetcher-0-2-4.md?raw'
 import workspaceNavigationUpdate from '@/content/changelog/2026-10-20-workspace-navigation.md?raw'
+import projectWorkspaceLayoutUpdate from '@/content/changelog/2026-10-26-project-workspace-layout.md?raw'
+import fetcher025Update from '@/content/changelog/2026-10-26-fetcher-0-2-5.md?raw'
+import curationSaveAndReviewUpdate from '@/content/changelog/2026-10-26-curation-save-and-review.md?raw'
 
 export interface ProductArticle {
   slug: string
@@ -84,6 +87,39 @@ export interface ProductUpdate {
 }
 // Feature updates, versioned releases, and preview records share one timeline.
 export const productUpdates: ProductUpdate[] = [
+  {
+    slug: '2026-10-26-curation-save-and-review',
+    product: 'nexofolio',
+    date: '2026-10-26',
+    version: '优化与修复',
+    status: 'update',
+    title: '整理成果保存更高效，结果读取与内网应用恢复正常',
+    description:
+      '合并保存已生成的字段成果，修复较大整理结果读取超时和内网 HTTP 确认应用报错，保留恢复能力与原有整理质量标准。',
+    body: curationSaveAndReviewUpdate,
+  },
+  {
+    slug: '2026-10-26-project-workspace-layout',
+    product: 'nexofolio',
+    date: '2026-10-26',
+    version: '界面更新',
+    status: 'update',
+    title: '项目空间布局更紧凑',
+    description: '标题、搜索与项目列表集中展示，减少独立介绍栏和装饰性文字，调整桌面与窄屏布局。',
+    body: projectWorkspaceLayoutUpdate,
+  },
+  {
+    slug: 'fetcher-0-2-5',
+    product: 'fetcher',
+    date: '2026-10-26',
+    version: 'v0.2.5 开发版 · 强制更新',
+    status: 'update',
+    title: 'Fetcher 首次安装与登录恢复，下载文件名统一',
+    description:
+      '修复部分 Chrome 环境首次安装卡在版本检查页的问题，完善重试、重新加载和服务读取提示；内外网强制更新至 0.2.5，下载文件名保持一致。',
+    documentation: '/docs/fetcher',
+    body: fetcher025Update,
+  },
   {
     slug: '2026-10-20-workspace-navigation',
     product: 'nexofolio',

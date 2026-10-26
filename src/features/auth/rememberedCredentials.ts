@@ -1,3 +1,5 @@
+import { createUuid } from '@/app/uuid'
+
 export interface RememberedCredentials {
   enabled: boolean
   account: string
@@ -31,7 +33,7 @@ export function setRememberPreference(enabled: boolean) {
   const value = enabled
     ? { ...readRememberedCredentials(), enabled }
     : { enabled, account: '', password: '' }
-  localStorage.setItem(key, JSON.stringify({ ...value, revision: crypto.randomUUID() }))
+  localStorage.setItem(key, JSON.stringify({ ...value, revision: createUuid() }))
 }
 export function rememberSuccessfulLogin(
   account: string,

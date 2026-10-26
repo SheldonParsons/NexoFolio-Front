@@ -2,6 +2,7 @@ import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { pageVisible, useVisiblePolling, waitForObservation } from './observation'
 import { onCurationChanged } from '@/contracts/knowledge/curationReads'
 import { api, ApiError } from '@/api'
+import { createUuid } from '@/app/uuid'
 import type { DocumentLifecycle } from '@/features/documents/lifecycle/model'
 import { projectSource } from '@/features/projects/source'
 import type { Project } from '@/features/projects/types'
@@ -251,7 +252,14 @@ export function useCurationReview(
       projectId() === pid &&
       candidateId() === id
     const accepted = action === 'apply' ? 'applied' : 'discarded'
-    const operation = crypto.randomUUID()
+    let operation: string
+    try {
+      operation = createUuid()
+    } catch (cause) {
+      report(cause)
+      decisionStatus.value = ''
+      return false
+    }
     deciding.value = true
     decisionStatus.value = action === 'apply' ? '等待服务器确认应用阶段…' : '正在保存废弃决定…'
     error.value = ''
