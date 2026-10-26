@@ -62,14 +62,14 @@ onMounted(() => {
 })
 </script>
 <template>
-  <section class="project-browser" :style="{ '--project-mark-image': watermarkUrl }">
-    <ProjectIntro />
+  <section
+    class="project-browser"
+    :style="{ '--project-mark-image': watermarkUrl }"
+    aria-labelledby="project-page-title"
+  >
     <div class="project-collection">
       <div class="project-toolbar">
-        <div class="project-collection-heading">
-          <h2>{{ activeFilters ? '搜索结果' : '全部项目' }}</h2>
-          <span v-if="hasResult && !error" class="project-total">{{ total }}</span>
-        </div>
+        <ProjectIntro :filtered="activeFilters" :total="hasResult && !error ? total : undefined" />
         <div class="project-tools">
           <ProjectSearch
             :model-value="query"
